@@ -217,3 +217,57 @@ body {
   background: #3b82f6;
   border-radius: 0 3px 3px 0;
 }
+
+/* Live activity feed animation */
+@keyframes feed-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-feed-in {
+  animation: feed-in 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+/* Pulse dot for live indicators */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Staggered delays for feed items */
+.feed-delay-1 { animation-delay: 0.5s; }
+.feed-delay-2 { animation-delay: 2s; }
+.feed-delay-3 { animation-delay: 3.5s; }
+.feed-delay-4 { animation-delay: 5s; }
+
+/* Gradient accent line */
+.gradient-line {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Status left border accent */
+.border-l-status-open { border-left: 3px solid #10b981; }
+.border-l-status-assigned { border-left: 3px solid #3b82f6; }
+.border-l-status-completed { border-left: 3px solid #94a3b8; }
+.border-l-status-cancelled { border-left: 3px solid #ef4444; }
+.border-l-status-pending { border-left: 3px solid #f59e0b; }
+
+/* Blur overlay for gated content */
+.blur-gate {
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+}

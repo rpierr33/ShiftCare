@@ -9,12 +9,14 @@ export default async function AuthLayout({
 }) {
   const user = await getSessionUser();
   const isProvider = user.role === "PROVIDER";
+  const initial = user.name?.charAt(0)?.toUpperCase() ?? "?";
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top bar */}
+      {/* Top navigation bar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+          {/* Left: Logo + Nav links */}
           <div className="flex items-center gap-6">
             <Link
               href="/"
@@ -22,7 +24,7 @@ export default async function AuthLayout({
             >
               ShiftCare
             </Link>
-            <nav className="hidden sm:flex items-center gap-1">
+            <nav className="flex items-center gap-1 flex-wrap">
               {isProvider ? (
                 <>
                   <Link
@@ -74,9 +76,22 @@ export default async function AuthLayout({
               )}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 hidden sm:inline">{user.name}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+
+          {/* Right: User info + Sign out */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+              {initial}
+            </div>
+            <span className="text-sm text-gray-700 font-medium hidden sm:inline">
+              {user.name}
+            </span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                isProvider
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-emerald-100 text-emerald-700"
+              }`}
+            >
               {isProvider ? "Provider" : "Worker"}
             </span>
             <SignOutButton />
@@ -84,8 +99,11 @@ export default async function AuthLayout({
         </div>
       </header>
 
+      {/* Gradient accent line */}
+      <div className="h-0.5 bg-gradient-to-r from-blue-500 to-purple-500" />
+
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
     </div>

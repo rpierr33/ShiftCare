@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getWorkerShifts } from "@/actions/shifts";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, Calendar, CheckCircle, XCircle, ArrowRight, Briefcase } from "lucide-react";
 
 function formatShiftDateTime(start: Date, end: Date): string {
   const dateStr = new Intl.DateTimeFormat("en-US", {
@@ -22,24 +21,49 @@ function formatShiftDateTime(start: Date, end: Date): string {
     hour12: true,
   }).format(end);
 
-  return `${dateStr} \u2022 ${startTime} \u2013 ${endTime}`;
+  return `${dateStr} \u00B7 ${startTime} \u2013 ${endTime}`;
 }
 
-const STATUS_STYLES: Record<string, { variant: "default" | "success" | "secondary" | "danger"; label: string }> = {
-  OPEN: { variant: "success", label: "Open" },
-  ASSIGNED: { variant: "default", label: "Assigned" },
-  COMPLETED: { variant: "secondary", label: "Completed" },
-  CANCELLED: { variant: "danger", label: "Cancelled" },
+const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
+  RN: { bg: "bg-blue-100", text: "text-blue-700" },
+  LPN: { bg: "bg-indigo-100", text: "text-indigo-700" },
+  CNA: { bg: "bg-purple-100", text: "text-purple-700" },
+  HHA: { bg: "bg-teal-100", text: "text-teal-700" },
+  MEDICAL_ASSISTANT: { bg: "bg-amber-100", text: "text-amber-700" },
+  COMPANION: { bg: "bg-pink-100", text: "text-pink-700" },
+  OTHER: { bg: "bg-gray-100", text: "text-gray-700" },
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  RN: "Registered Nurse",
-  LPN: "Licensed Practical Nurse",
-  CNA: "Certified Nursing Assistant",
-  HHA: "Home Health Aide",
-  MEDICAL_ASSISTANT: "Medical Assistant",
+  RN: "RN",
+  LPN: "LPN",
+  CNA: "CNA",
+  HHA: "HHA",
+  MEDICAL_ASSISTANT: "Med Asst",
   COMPANION: "Companion",
   OTHER: "Other",
+};
+
+const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; icon: "check" | "x" | null }> = {
+  ASSIGNED: { bg: "bg-blue-100", text: "text-blue-700", label: "Assigned", icon: null },
+  COMPLETED: { bg: "bg-emerald-100", text: "text-emerald-700", label: "Completed", icon: "check" },
+  CANCELLED: { bg: "bg-red-100", text: "text-red-700", label: "Cancelled", icon: "x" },
+};
+
+type ShiftData = {
+  id: string;
+  role: string;
+  title: string | null;
+  location: string;
+  startTime: Date;
+  endTime: Date;
+  payRate: number | { toString(): string };
+  status: string;
+  notes: string | null;
+  provider: {
+    name: string | null;
+    providerProfile: { companyName: string | null } | null;
+  } | null;
 };
 
 export default async function MyShiftsPage() {
@@ -55,6 +79,7 @@ export default async function MyShiftsPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">My Shifts</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -63,22 +88,19 @@ export default async function MyShiftsPage() {
       </div>
 
       {shifts.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center space-y-3">
-            <p className="text-gray-500">
-              You haven&apos;t accepted any shifts yet. Browse available shifts to get started.
-            </p>
-            <Link
-              href="/worker/shifts"
-              className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              Browse available shifts
-              <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-gray-100 bg-white shadow-sm py-16 text-center">
+          <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+          <p className="text-gray-500 mb-4">
+            You haven&apos;t accepted any shifts yet.
+          </p>
+          <Link
+            href="/worker/shifts"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-blue-600/20 hover:bg-blue-500 transition-all duration-200"
+          >
+            Browse Available Shifts
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       ) : (
         <>
           {/* Upcoming Shifts */}
@@ -93,15 +115,13 @@ export default async function MyShiftsPage() {
             </h2>
 
             {upcoming.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <p className="text-sm text-gray-500">No upcoming shifts.</p>
-                </CardContent>
-              </Card>
+              <div className="rounded-xl border border-gray-100 bg-white shadow-sm py-8 text-center">
+                <p className="text-sm text-gray-500">No upcoming shifts.</p>
+              </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-3">
                 {upcoming.map((shift) => (
-                  <ShiftCard key={shift.id} shift={shift} />
+                  <ShiftCard key={shift.id} shift={shift} variant="upcoming" />
                 ))}
               </div>
             )}
@@ -116,9 +136,9 @@ export default async function MyShiftsPage() {
                   ({past.length})
                 </span>
               </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-3">
                 {past.map((shift) => (
-                  <ShiftCard key={shift.id} shift={shift} />
+                  <ShiftCard key={shift.id} shift={shift} variant="past" />
                 ))}
               </div>
             </section>
@@ -129,70 +149,68 @@ export default async function MyShiftsPage() {
   );
 }
 
-function ShiftCard({
-  shift,
-}: {
-  shift: {
-    id: string;
-    role: string;
-    title: string | null;
-    location: string;
-    startTime: Date;
-    endTime: Date;
-    payRate: number | { toString(): string };
-    status: string;
-    notes: string | null;
-    provider: {
-      name: string | null;
-      providerProfile: { companyName: string | null } | null;
-    } | null;
-  };
-}) {
-  const statusStyle = STATUS_STYLES[shift.status] || {
-    variant: "secondary" as const,
-    label: shift.status,
-  };
+function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" | "past" }) {
   const companyName =
     shift.provider?.providerProfile?.companyName ||
     shift.provider?.name ||
     "Unknown Provider";
+  const roleColor = ROLE_COLORS[shift.role] || ROLE_COLORS.OTHER;
+  const roleLabel = ROLE_LABELS[shift.role] || shift.role;
+  const statusConfig = STATUS_CONFIG[shift.status] || {
+    bg: "bg-gray-100",
+    text: "text-gray-700",
+    label: shift.status,
+    icon: null,
+  };
+
+  const borderColor = variant === "upcoming" ? "border-l-emerald-500" : "border-l-gray-300";
+  const cardOpacity = shift.status === "CANCELLED" ? "opacity-60" : "";
 
   return (
-    <Card className={shift.status === "CANCELLED" ? "opacity-60" : ""}>
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <Badge variant={statusStyle.variant}>{statusStyle.label}</Badge>
-          <span className="text-lg font-semibold text-gray-900 whitespace-nowrap">
-            ${parseFloat(String(shift.payRate)).toFixed(2)}/hr
-          </span>
+    <div
+      className={`bg-white rounded-xl border border-gray-100 shadow-sm border-l-4 ${borderColor} p-5 transition-all duration-200 hover:shadow-md ${cardOpacity}`}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        {/* Left side: details */}
+        <div className="flex-1 space-y-2">
+          {/* Role + Status badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${roleColor.bg} ${roleColor.text}`}>
+              {roleLabel}
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${statusConfig.bg} ${statusConfig.text}`}>
+              {statusConfig.icon === "check" && <CheckCircle className="h-3 w-3" />}
+              {statusConfig.icon === "x" && <XCircle className="h-3 w-3" />}
+              {statusConfig.label}
+            </span>
+          </div>
+
+          {/* Provider */}
+          <p className="text-sm text-gray-500">{companyName}</p>
+
+          {/* Location */}
+          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+            <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            <span>{shift.location}</span>
+          </div>
+
+          {/* Date/Time */}
+          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+            <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            <span>
+              {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <p className="text-sm font-medium text-gray-900">
-            {ROLE_LABELS[shift.role] || shift.role}
-          </p>
-          {shift.title && (
-            <p className="text-sm text-gray-700">{shift.title}</p>
-          )}
-          <p className="text-sm text-gray-600">{companyName}</p>
-        </div>
-
-        <div className="space-y-1.5 text-sm text-gray-500">
-          <p className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
-            {shift.location}
-          </p>
-          <p className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+        {/* Right side: pay */}
+        <div className="sm:text-right">
+          <p className="text-2xl font-bold text-emerald-600">
+            ${parseFloat(String(shift.payRate)).toFixed(2)}
+            <span className="text-sm font-medium text-gray-500">/hr</span>
           </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
