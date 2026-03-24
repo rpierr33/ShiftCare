@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Shield,
   Clock,
@@ -15,36 +15,437 @@ import {
   MapPin,
   Star,
   ChevronRight,
+  Check,
+  Search,
+  Activity,
 } from "lucide-react";
 
+/* ─── Shift Fulfillment Data ─── */
+const SHIFT_DATA = [
+  {
+    role: "RN",
+    location: "Tampa, FL",
+    rate: "$38/hr",
+    time: "7AM-3PM Tomorrow",
+    workers: [
+      { initials: "MG", color: "bg-rose-400" },
+      { initials: "JW", color: "bg-blue-400" },
+      { initials: "AP", color: "bg-amber-400" },
+    ],
+    accepted: { name: "Maria G.", title: "CNA", exp: "4yr exp", rating: "4.9" },
+    fillTime: "8 minutes",
+  },
+  {
+    role: "CNA",
+    location: "Orlando, FL",
+    rate: "$26/hr",
+    time: "3PM-11PM Today",
+    workers: [
+      { initials: "DL", color: "bg-violet-400" },
+      { initials: "KR", color: "bg-emerald-400" },
+      { initials: "TN", color: "bg-cyan-400" },
+    ],
+    accepted: { name: "Derek L.", title: "CNA", exp: "6yr exp", rating: "4.8" },
+    fillTime: "5 minutes",
+  },
+  {
+    role: "LPN",
+    location: "St. Petersburg, FL",
+    rate: "$32/hr",
+    time: "11PM-7AM Tonight",
+    workers: [
+      { initials: "SR", color: "bg-pink-400" },
+      { initials: "BM", color: "bg-teal-400" },
+      { initials: "CJ", color: "bg-orange-400" },
+    ],
+    accepted: { name: "Sandra R.", title: "LPN", exp: "3yr exp", rating: "4.7" },
+    fillTime: "11 minutes",
+  },
+];
+
+const TICKER_ITEMS = [
+  "CNA shift filled in Tampa \u00b7 12 min ago",
+  "RN accepted shift in Orlando \u00b7 3 min ago",
+  "New LPN available in Clearwater",
+  "3 shifts filled in the last hour",
+  "CNA shift filled in St. Petersburg \u00b7 8 min ago",
+  "RN posted in Jacksonville \u00b7 just now",
+];
+
+/* ─── Shift Fulfillment Machine ─── */
+function ShiftFulfillmentEngine() {
+  const [phase, setPhase] = useState(0); // 0=posted, 1=matching, 2=accepted, 3=confirmed
+  const [shiftIndex, setShiftIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  const shift = SHIFT_DATA[shiftIndex];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase((prev) => {
+        if (prev >= 3) {
+          setShiftIndex((si) => (si + 1) % SHIFT_DATA.length);
+          setProgress(0);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const progressMap = [12, 50, 75, 100];
+    setProgress(progressMap[phase]);
+  }, [phase]);
+
+  const phaseLabels = ["SHIFT POSTED", "MATCHING", "ACCEPTED", "CONFIRMED"];
+  const phaseColors = [
+    "text-blue-400",
+    "text-amber-400",
+    "text-emerald-400",
+    "text-emerald-400",
+  ];
+  const phaseDotColors = [
+    "bg-blue-400",
+    "bg-amber-400",
+    "bg-emerald-400",
+    "bg-emerald-400",
+  ];
+
+  return (
+    <div className="bg-slate-950 rounded-2xl shadow-2xl shadow-black/40 p-6 ring-1 ring-white/10 overflow-hidden relative">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+          </span>
+          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-[0.15em]">
+            Fulfillment Engine
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Activity size={12} className="text-slate-600" />
+          <span className="text-[10px] text-slate-600 font-mono">LIVE</span>
+        </div>
+      </div>
+
+      {/* Phase indicator */}
+      <div className="flex items-center gap-2 mb-4">
+        <span
+          className={`inline-flex h-2 w-2 rounded-full transition-colors duration-500 ${phaseDotColors[phase]}`}
+        />
+        <span
+          className={`text-xs font-bold uppercase tracking-wider transition-colors duration-500 ${phaseColors[phase]}`}
+        >
+          {phaseLabels[phase]}
+        </span>
+      </div>
+
+      {/* Shift card */}
+      <div
+        className={`rounded-xl p-4 mb-4 border transition-all duration-700 ${
+          phase === 3
+            ? "bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/10"
+            : phase === 0
+            ? "bg-blue-500/10 border-blue-500/20 shadow-lg shadow-blue-500/10"
+            : "bg-white/5 border-white/10"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm font-bold text-white">
+              {shift.role} <span className="text-slate-500">\u00b7</span>{" "}
+              <span className="text-slate-300 font-medium">{shift.location}</span>{" "}
+              <span className="text-slate-500">\u00b7</span>{" "}
+              <span className="text-cyan-400 font-bold">{shift.rate}</span>
+            </span>
+            <p className="text-xs text-slate-500 mt-1">{shift.time}</p>
+          </div>
+          {phase === 3 && (
+            <div className="transition-all duration-500 flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+                <Check size={16} className="text-white" strokeWidth={3} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Workers section */}
+      <div className="mb-4 min-h-[72px]">
+        {phase >= 1 && (
+          <div className="space-y-3">
+            {/* Worker avatars */}
+            <div className="flex items-center gap-2">
+              {shift.workers.map((w, i) => (
+                <div
+                  key={w.initials}
+                  className="transition-all duration-500"
+                  style={{
+                    opacity: phase === 1 ? 1 : phase >= 2 && i === 0 ? 1 : 0.3,
+                    transform:
+                      phase >= 1
+                        ? "translateX(0) scale(1)"
+                        : "translateX(-20px) scale(0.8)",
+                    transitionDelay: `${i * 150}ms`,
+                  }}
+                >
+                  <div
+                    className={`relative w-10 h-10 rounded-full ${w.color} flex items-center justify-center text-xs font-bold text-white transition-all duration-500 ${
+                      phase >= 2 && i === 0
+                        ? "ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-950"
+                        : ""
+                    }`}
+                  >
+                    {w.initials}
+                    {phase >= 2 && i === 0 && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <Check size={10} className="text-white" strokeWidth={3} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Scanning line effect */}
+              {phase === 1 && (
+                <div className="ml-2 flex items-center gap-1.5">
+                  <Search size={12} className="text-amber-400 animate-pulse" />
+                  <span className="text-[11px] text-amber-400 font-medium">
+                    Scanning...
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Phase text */}
+            <div className="transition-all duration-500">
+              {phase === 1 && (
+                <p className="text-xs text-slate-400">
+                  Matching{" "}
+                  <span className="text-amber-400 font-semibold">
+                    3 qualified workers
+                  </span>
+                  ...
+                </p>
+              )}
+              {phase === 2 && (
+                <p className="text-xs text-slate-400">
+                  <span className="text-emerald-400 font-semibold">
+                    {shift.accepted.name}
+                  </span>{" "}
+                  accepted \u00b7 {shift.accepted.title} \u00b7{" "}
+                  {shift.accepted.exp} \u00b7{" "}
+                  <span className="text-amber-300">\u2605</span>{" "}
+                  {shift.accepted.rating}
+                </p>
+              )}
+              {phase === 3 && (
+                <p className="text-xs text-emerald-400 font-semibold">
+                  Shift filled in {shift.fillTime}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {phase === 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+            <p className="text-xs text-slate-500">
+              Broadcasting to available workers...
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-slate-600 font-medium">
+            Pipeline
+          </span>
+          <span className="text-[10px] text-slate-600 font-mono">{progress}%</span>
+        </div>
+        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${
+              progress === 100 ? "bg-emerald-500" : "bg-cyan-500"
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Phase steps */}
+      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+        {["Posted", "Match", "Accept", "Done"].map((label, i) => (
+          <div key={label} className="flex flex-col items-center gap-1">
+            <div
+              className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-500 ${
+                i <= phase
+                  ? i === phase
+                    ? "bg-cyan-500 text-white scale-110"
+                    : "bg-cyan-500/30 text-cyan-400"
+                  : "bg-white/5 text-slate-600"
+              }`}
+            >
+              {i < phase ? (
+                <Check size={9} strokeWidth={3} />
+              ) : (
+                i + 1
+              )}
+            </div>
+            <span
+              className={`text-[9px] font-medium transition-colors duration-500 ${
+                i <= phase ? "text-slate-400" : "text-slate-700"
+              }`}
+            >
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Animated Counter Hook ─── */
+function useCountUp(target: number, duration: number = 1000, start: boolean = true) {
+  const [count, setCount] = useState(0);
+  const frameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!start) {
+      setCount(0);
+      return;
+    }
+
+    const startTime = performance.now();
+
+    function animate(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(animate);
+      }
+    }
+
+    frameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [target, duration, start]);
+
+  return count;
+}
+
+/* ─── Live Counter (ticks up slowly) ─── */
+function LiveShiftCounter() {
+  const [count, setCount] = useState(2847);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCount((c) => c + 1);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="inline-flex items-center gap-2.5 bg-slate-900 border border-slate-800 rounded-full px-5 py-2 mb-6">
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+      </span>
+      <span className="text-sm font-mono font-bold text-emerald-400">
+        {count.toLocaleString()}
+      </span>
+      <span className="text-sm text-slate-400 font-medium">shifts filled</span>
+    </div>
+  );
+}
+
+/* ─── Scrolling Ticker ─── */
+function ActivityTicker() {
+  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
+
+  return (
+    <div className="w-full overflow-hidden bg-slate-950/60 backdrop-blur border-t border-b border-white/5 py-3">
+      <div className="ticker-track flex items-center gap-8 whitespace-nowrap">
+        {doubled.map((item, i) => (
+          <span key={i} className="flex items-center gap-2 text-sm">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+            <span className="text-slate-400">{item}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Animated Stat ─── */
+function AnimatedStat({
+  value,
+  suffix,
+  label,
+  showDivider,
+}: {
+  value: number;
+  suffix: string;
+  label: string;
+  showDivider: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const animated = useCountUp(value, 1200, visible);
+
+  return (
+    <div ref={ref} className={`text-center ${showDivider ? "stat-divider" : ""}`}>
+      <div className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight font-mono">
+        {visible ? animated.toLocaleString() : "0"}
+        {suffix}
+      </div>
+      <div className="text-sm text-slate-500 mt-1 font-medium">{label}</div>
+    </div>
+  );
+}
+
+/* ─── Main Page ─── */
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes ticker-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-        }
-        .animate-feed-1 { animation: fadeInUp 0.5s ease-out 0.2s both; }
-        .animate-feed-2 { animation: fadeInUp 0.5s ease-out 1.4s both; }
-        .animate-feed-3 { animation: fadeInUp 0.5s ease-out 2.6s both; }
-        .animate-feed-4 { animation: fadeInUp 0.5s ease-out 3.8s both; }
-        .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        .hero-gradient {
-          background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(8,145,178,0.06) 0%, rgba(248,250,252,0.5) 60%, white 100%);
+        .ticker-track {
+          animation: ticker-scroll 30s linear infinite;
         }
         .stat-divider {
           position: relative;
@@ -72,11 +473,14 @@ export default function LandingPage() {
             right: -16%;
             width: 32%;
             height: 2px;
-            background: repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 6px, transparent 6px, transparent 12px);
+            background: repeating-linear-gradient(90deg, #06b6d4 0, #06b6d4 6px, transparent 6px, transparent 12px);
           }
           .step-connector:last-child::after {
             display: none;
           }
+        }
+        .hero-gradient {
+          background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(8,145,178,0.08) 0%, rgba(248,250,252,0.5) 60%, white 100%);
         }
       `}</style>
 
@@ -135,19 +539,11 @@ export default function LandingPage() {
       </nav>
 
       {/* ─── Hero Section ─── */}
-      <section className="hero-gradient pt-28 pb-16 sm:pt-36 sm:pb-24 px-4">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <section className="hero-gradient pt-28 pb-0 sm:pt-36 sm:pb-0 px-4">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center pb-12 sm:pb-16">
           {/* Left: Copy */}
           <div>
-            <div className="inline-flex items-center gap-2 bg-cyan-50 border border-cyan-100 rounded-full px-4 py-1.5 mb-6">
-              <span className="relative flex h-2 w-2">
-                <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-sm font-medium text-cyan-700">
-                247 shifts filled this week
-              </span>
-            </div>
+            <LiveShiftCounter />
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] text-slate-900">
               Fill Open Shifts
@@ -204,113 +600,24 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right: Live System Preview */}
+          {/* Right: Shift Fulfillment Engine */}
           <div className="hidden lg:block">
-            <div className="animate-float bg-slate-900 rounded-2xl shadow-2xl shadow-slate-900/20 p-6 ring-1 ring-white/10">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2.5">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-                    Live
-                  </span>
-                </div>
-                <span className="text-xs text-slate-600 font-medium">
-                  Real-time activity
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="animate-feed-1 flex items-start gap-3 bg-white/5 rounded-xl p-3.5">
-                  <span className="mt-1 flex-shrink-0 h-2.5 w-2.5 rounded-full bg-blue-400"></span>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-200 leading-snug">
-                      New shift posted &mdash;{" "}
-                      <span className="text-blue-400 font-medium">
-                        RN, Tampa FL
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">Just now</p>
-                  </div>
-                </div>
-
-                <div className="animate-feed-2 flex items-start gap-3 bg-white/5 rounded-xl p-3.5">
-                  <span className="mt-1 flex-shrink-0 h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-200 leading-snug">
-                      <span className="text-amber-400 font-medium">
-                        3 qualified workers
-                      </span>{" "}
-                      matched
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">2m ago</p>
-                  </div>
-                </div>
-
-                <div className="animate-feed-3 flex items-start gap-3 bg-white/5 rounded-xl p-3.5">
-                  <span className="mt-1 flex-shrink-0 h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-200 leading-snug">
-                      <span className="text-emerald-400 font-medium">
-                        Maria G.
-                      </span>{" "}
-                      accepted the shift
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">8m ago</p>
-                  </div>
-                </div>
-
-                <div className="animate-feed-4 flex items-start gap-3 bg-emerald-500/10 rounded-xl p-3.5 border border-emerald-500/20">
-                  <CheckCircle
-                    size={16}
-                    className="mt-0.5 flex-shrink-0 text-emerald-400"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-200 leading-snug">
-                      Shift confirmed in{" "}
-                      <span className="text-emerald-400 font-semibold">
-                        12 minutes
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">12m ago</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-white/5 text-center">
-                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-600 font-medium">
-                  Powered by ShiftCare
-                </span>
-              </div>
-            </div>
+            <ShiftFulfillmentEngine />
           </div>
         </div>
+
+        {/* Activity Ticker */}
+        <ActivityTicker />
       </section>
 
       {/* ─── Stats Bar ─── */}
-      <section className="bg-white border-y border-slate-100">
+      <section className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0">
-            {[
-              { value: "2,400+", label: "Shifts Filled" },
-              { value: "500+", label: "Healthcare Workers" },
-              { value: "120+", label: "Agencies" },
-              { value: "4hr", label: "Avg Fill Time" },
-            ].map((stat, i) => (
-              <div
-                key={stat.label}
-                className={`text-center ${i < 3 ? "stat-divider" : ""}`}
-              >
-                <div className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-slate-500 mt-1 font-medium">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+            <AnimatedStat value={2400} suffix="+" label="Shifts Filled" showDivider={true} />
+            <AnimatedStat value={500} suffix="+" label="Healthcare Workers" showDivider={true} />
+            <AnimatedStat value={120} suffix="+" label="Agencies" showDivider={true} />
+            <AnimatedStat value={4} suffix="hr" label="Avg Fill Time" showDivider={false} />
           </div>
         </div>
       </section>
@@ -354,33 +661,25 @@ export default function LandingPage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <TrustCard
-              icon={
-                <Shield size={24} className="text-cyan-400" />
-              }
+              icon={<Shield size={24} className="text-cyan-400" />}
               iconBg="bg-cyan-400/10"
               title="Verified Professionals"
               description="Every worker is credentialed and background-checked before they see a single shift."
             />
             <TrustCard
-              icon={
-                <Clock size={24} className="text-emerald-400" />
-              }
+              icon={<Clock size={24} className="text-emerald-400" />}
               iconBg="bg-emerald-400/10"
               title="Shifts Filled Fast"
               description="Average fill time under 4 hours. Most shifts get matched in under 30 minutes."
             />
             <TrustCard
-              icon={
-                <Lock size={24} className="text-amber-400" />
-              }
+              icon={<Lock size={24} className="text-amber-400" />}
               iconBg="bg-amber-400/10"
               title="HIPAA Compliant"
               description="Healthcare-grade security. Your data is encrypted, audited, and fully compliant."
             />
             <TrustCard
-              icon={
-                <Zap size={24} className="text-violet-400" />
-              }
+              icon={<Zap size={24} className="text-violet-400" />}
               iconBg="bg-violet-400/10"
               title="Real-Time Matching"
               description="Workers are matched and notified the moment you post. No waiting, no phone tag."

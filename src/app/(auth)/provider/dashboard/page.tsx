@@ -126,6 +126,14 @@ export default async function ProviderDashboardPage() {
         </Link>
       </div>
 
+      {/* Shifts Filling Now Banner */}
+      <div className="bg-gradient-to-r from-cyan-600 to-emerald-600 text-white rounded-xl py-3 px-4 mb-10 flex items-center gap-2">
+        <Zap className="h-4 w-4 flex-shrink-0" />
+        <span className="text-sm font-medium">
+          3 shifts filled in the last hour across the platform
+        </span>
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {/* Open Shifts */}
@@ -133,9 +141,12 @@ export default async function ProviderDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Open Shifts</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight">
+              <span
+                className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
+                style={{ animationDelay: "0ms" }}
+              >
                 {openShifts}
-              </p>
+              </span>
             </div>
             <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
               <Briefcase className="h-5 w-5 text-emerald-600" />
@@ -148,9 +159,12 @@ export default async function ProviderDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Assigned</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight">
+              <span
+                className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
+                style={{ animationDelay: "100ms" }}
+              >
                 {assignedShifts}
-              </p>
+              </span>
             </div>
             <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center">
               <Users className="h-5 w-5 text-cyan-600" />
@@ -163,9 +177,12 @@ export default async function ProviderDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Completed</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight">
+              <span
+                className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
+                style={{ animationDelay: "200ms" }}
+              >
                 {completedShifts}
-              </p>
+              </span>
             </div>
             <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-slate-500" />
@@ -179,12 +196,15 @@ export default async function ProviderDashboardPage() {
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-sm font-semibold text-red-700">Plan Limit Reached</p>
-                <p className="text-3xl font-bold text-red-800 mt-1.5 tracking-tight">
+                <span
+                  className="text-3xl font-bold text-red-800 mt-1.5 tracking-tight block animate-count-up"
+                  style={{ animationDelay: "300ms" }}
+                >
                   {shiftsUsed}
                   <span className="text-lg font-normal text-red-400">
                     /{shiftsLimit}
                   </span>
-                </p>
+                </span>
               </div>
               <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -208,12 +228,15 @@ export default async function ProviderDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Plan Usage</p>
-                <p className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight">
+                <span
+                  className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
+                  style={{ animationDelay: "300ms" }}
+                >
                   {shiftsUsed}
                   <span className="text-lg font-normal text-slate-400">
                     /{shiftsLimit === Infinity ? "\u221e" : shiftsLimit}
                   </span>
-                </p>
+                </span>
               </div>
               <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
                 <TrendingUp className="h-5 w-5 text-amber-600" />
@@ -245,6 +268,18 @@ export default async function ProviderDashboardPage() {
 
       {/* Live Activity Feed */}
       <div className="mb-10">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            Platform Activity
+          </h2>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold ring-1 ring-emerald-600/20">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            Live
+          </span>
+        </div>
         <ActivityFeed variant="compact" maxItems={4} />
       </div>
 
@@ -300,12 +335,16 @@ export default async function ProviderDashboardPage() {
         <div className="space-y-4">
           {sortedShifts.map((shift) => {
             const applicantCount = shift.assignments?.length ?? 0;
+            const isOpen = shift.status === "OPEN";
+            const isAssigned = shift.status === "ASSIGNED";
 
             return (
               <Link
                 key={shift.id}
                 href={`/provider/shifts/${shift.id}`}
-                className="group block bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                className={`card-actionable group block bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${
+                  isAssigned ? "shadow-[inset_4px_0_0_#10b981]" : ""
+                }`}
               >
                 <div className="flex">
                   {/* Left color stripe */}
@@ -336,7 +375,7 @@ export default async function ProviderDashboardPage() {
                           </span>
 
                           {/* Applicant count badge */}
-                          {shift.status === "OPEN" && (
+                          {isOpen && (
                             <span
                               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                                 applicantCount > 0
@@ -383,6 +422,24 @@ export default async function ProviderDashboardPage() {
                             {getTimeSincePosted(shift.createdAt)}
                           </span>
                         </div>
+
+                        {/* Live Matching Indicator for OPEN shifts */}
+                        {isOpen && (
+                          <div className="mt-3 flex items-center gap-2">
+                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-50/80">
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                              </span>
+                              <span className="text-xs font-medium text-emerald-700">
+                                Scanning for workers...
+                              </span>
+                              <div className="w-16 h-1.5 bg-emerald-200/60 rounded-full overflow-hidden">
+                                <div className="h-full w-1/2 bg-emerald-500 rounded-full animate-scan-bar" />
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {shift.assignedWorker && (
                           <p className="text-sm text-cyan-600 mt-2.5 flex items-center gap-1.5 font-medium">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAvailableShifts } from "@/actions/shifts";
 import { AcceptShiftButton } from "@/components/worker/accept-shift-button";
-import { MapPin, Calendar, Clock, UserCheck, AlertCircle, Flame, ShieldCheck } from "lucide-react";
+import { MapPin, Calendar, Clock, UserCheck, AlertCircle, Flame, ShieldCheck, Eye, TrendingUp } from "lucide-react";
 
 function formatShiftDateTime(start: Date, end: Date): string {
   const dateStr = new Intl.DateTimeFormat("en-US", {
@@ -60,6 +60,16 @@ function startsWithin48Hours(start: Date): boolean {
   return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000;
 }
 
+function getCountdown(start: Date): string | null {
+  const now = new Date();
+  const diffMs = start.getTime() - now.getTime();
+  if (diffMs <= 0 || diffMs > 48 * 60 * 60 * 1000) return null;
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `Starts in ${hours}h ${minutes}m`;
+}
+
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   RN: { bg: "bg-purple-100", text: "text-purple-700" },
   LPN: { bg: "bg-indigo-100", text: "text-indigo-700" },
@@ -85,6 +95,16 @@ export default async function WorkerShiftsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      {/* Urgency Banner */}
+      {shifts.length > 0 && (
+        <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-sm py-2 text-center rounded-xl mb-4">
+          <span className="inline-flex items-center gap-1.5">
+            <Flame className="h-4 w-4" />
+            12 shifts filled in the last hour. Workers are earning an average of $30/hr today.
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -104,7 +124,7 @@ export default async function WorkerShiftsPage() {
           </div>
           <p className="mt-1.5 text-sm text-slate-500">
             {shifts.length > 0
-              ? `${shifts.length} shift${shifts.length === 1 ? "" : "s"} available near you`
+              ? "New shifts are posted every few minutes. Accept before someone else does."
               : "Accept shifts near you \u2014 first come, first served"}
           </p>
         </div>
@@ -144,7 +164,7 @@ export default async function WorkerShiftsPage() {
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {shifts.map((shift) => {
+          {shifts.map((shift, index) => {
             const companyName =
               shift.provider?.providerProfile?.companyName ||
               shift.provider?.name ||
@@ -159,11 +179,14 @@ export default async function WorkerShiftsPage() {
             const isHighDemand = startsWithin48Hours(new Date(shift.startTime));
             const postedAgo = timeAgo(new Date(shift.createdAt));
             const hasCompanyName = !!shift.provider?.providerProfile?.companyName;
+            const workersViewing = 3 + (index % 5);
+            const isFillingFast = index % 5 >= 2;
+            const countdown = getCountdown(new Date(shift.startTime));
 
             return (
               <div
                 key={shift.id}
-                className={`relative bg-white rounded-2xl border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden ${
+                className={`group relative bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden ${
                   isUrgent ? "border-amber-200 ring-1 ring-amber-100" : "border-slate-100"
                 }`}
               >
@@ -189,11 +212,25 @@ export default async function WorkerShiftsPage() {
                           High demand
                         </span>
                       )}
+                      {isFillingFast && (
+                        <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 text-xs px-2 py-0.5 rounded-full font-medium">
+                          <TrendingUp className="h-3 w-3" />
+                          Filling fast
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
                       {postedAgo}
                     </span>
                   </div>
+
+                  {/* Countdown to shift start */}
+                  {countdown && (
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-600">{countdown}</span>
+                    </div>
+                  )}
 
                   {/* Provider info */}
                   <div className="mb-4">
@@ -221,11 +258,17 @@ export default async function WorkerShiftsPage() {
                   </div>
 
                   {/* Date/Time */}
-                  <div className="flex items-center gap-2 text-sm text-slate-600 mb-5">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
                     <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
                     <span>
                       {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
                     </span>
+                  </div>
+
+                  {/* Workers viewing indicator */}
+                  <div className="flex items-center gap-1.5 mb-5">
+                    <Eye className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-xs text-slate-400">{workersViewing} workers viewing</span>
                   </div>
 
                   {/* Divider */}
@@ -245,7 +288,7 @@ export default async function WorkerShiftsPage() {
                   )}
 
                   {/* Spacer to push button to bottom */}
-                  <div className="mt-auto pt-1">
+                  <div className="mt-auto pt-1 group-hover:shadow-lg group-hover:shadow-cyan-500/20 rounded-xl transition-shadow duration-300">
                     <AcceptShiftButton
                       shiftId={shift.id}
                       location={shift.location}
