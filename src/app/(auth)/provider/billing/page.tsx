@@ -6,6 +6,7 @@ import {
   Eye,
   TrendingUp,
   Shield,
+  ArrowRight,
 } from "lucide-react";
 import { getSubscriptionStatus } from "@/actions/billing";
 import { PLAN_LIMITS, PLAN_PRICES } from "@/types";
@@ -50,6 +51,8 @@ export default async function BillingPage() {
       ? 0
       : Math.min((workerUnlocksUsed / workerUnlocksLimit) * 100, 100);
 
+  const isFreeTier = currentPlan === "FREE";
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
@@ -58,6 +61,27 @@ export default async function BillingPage() {
           Manage your subscription and track usage
         </p>
       </div>
+
+      {/* Free tier upgrade banner */}
+      {isFreeTier && (
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-5 mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-white font-semibold text-lg">
+              You&apos;re on the Free plan
+            </h2>
+            <p className="text-blue-100 text-sm mt-0.5">
+              Upgrade to fill more shifts and unlock full worker profiles.
+            </p>
+          </div>
+          <Link
+            href="#plans"
+            className="flex-shrink-0 inline-flex items-center gap-2 bg-white text-blue-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors"
+          >
+            Upgrade Now
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      )}
 
       {/* Current Plan Card */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-8">
@@ -124,6 +148,7 @@ export default async function BillingPage() {
                   <div className="h-2.5 rounded-full bg-emerald-500 w-full" />
                 </div>
               )}
+              <p className="text-xs text-gray-400 mt-1.5">Resets monthly on the 1st</p>
             </div>
 
             <div>
@@ -154,6 +179,7 @@ export default async function BillingPage() {
                   <div className="h-2.5 rounded-full bg-emerald-500 w-full" />
                 </div>
               )}
+              <p className="text-xs text-gray-400 mt-1.5">Resets monthly on the 1st</p>
             </div>
           </div>
 
@@ -165,15 +191,16 @@ export default async function BillingPage() {
         </div>
       </div>
 
-      {/* MVP Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
-        <p className="text-sm text-blue-800">
-          Stripe integration coming soon. Plans activate immediately for MVP.
+      {/* Payment processing notice */}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-8 flex items-center gap-3">
+        <Shield className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+        <p className="text-sm text-emerald-800">
+          Secure payment processing. Plans activate immediately.
         </p>
       </div>
 
       {/* Plan Comparison */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">
+      <h2 id="plans" className="text-lg font-semibold text-gray-900 mb-6">
         Compare Plans
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -181,14 +208,26 @@ export default async function BillingPage() {
           const limits = PLAN_LIMITS[plan.key];
           const price = PLAN_PRICES[plan.key];
           const isCurrent = currentPlan === plan.key;
+          const isRecommended = plan.key === "STARTER";
 
           return (
             <div
               key={plan.key}
-              className={`bg-white rounded-xl shadow-sm overflow-hidden transition-shadow hover:shadow-md ${
-                isCurrent ? "ring-2 ring-blue-500" : ""
+              className={`bg-white rounded-xl shadow-sm overflow-hidden transition-shadow hover:shadow-md relative ${
+                isCurrent
+                  ? "ring-2 ring-blue-500"
+                  : isRecommended
+                    ? "ring-2 ring-blue-400 scale-[1.02]"
+                    : ""
               }`}
             >
+              {/* Recommended badge */}
+              {isRecommended && !isCurrent && (
+                <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-bl-lg">
+                  Recommended
+                </div>
+              )}
+
               {/* Gradient top border */}
               <div className={`h-1.5 bg-gradient-to-r ${plan.accent}`} />
 

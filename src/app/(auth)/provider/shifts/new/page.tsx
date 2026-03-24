@@ -11,6 +11,10 @@ import {
   DollarSign,
   MapPin,
   Plus,
+  CheckCircle,
+  Rocket,
+  X,
+  Zap,
 } from "lucide-react";
 import { createShift } from "@/actions/shifts";
 import type { WorkerRole } from "@prisma/client";
@@ -25,11 +29,22 @@ const ROLES: { value: WorkerRole; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
+const ROLE_LABELS: Record<string, string> = {
+  RN: "Registered Nurse",
+  LPN: "Licensed Practical Nurse",
+  CNA: "Certified Nursing Assistant",
+  HHA: "Home Health Aide",
+  MEDICAL_ASSISTANT: "Medical Assistant",
+  COMPANION: "Companion",
+  OTHER: "Other",
+};
+
 export default function CreateShiftPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLimitError, setIsLimitError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [form, setForm] = useState({
     role: "CNA" as WorkerRole,
@@ -42,12 +57,50 @@ export default function CreateShiftPage() {
     notes: "",
   });
 
+  // Store the submitted form values for the success modal
+  const [submittedForm, setSubmittedForm] = useState(form);
+
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  function handlePostAnother() {
+    setShowSuccessModal(false);
+    setForm({
+      role: "CNA",
+      title: "",
+      location: "",
+      date: "",
+      startTime: "",
+      endTime: "",
+      payRate: "",
+      notes: "",
+    });
+    setError(null);
+    setIsLimitError(false);
+  }
+
+  function formatTime12(time24: string): string {
+    if (!time24) return "";
+    const [h, m] = time24.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+  }
+
+  function formatDate(dateStr: string): string {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -107,7 +160,10 @@ export default function CreateShiftPage() {
         return;
       }
 
-      router.push("/provider/dashboard");
+      // Show success modal instead of silent redirect
+      setSubmittedForm({ ...form });
+      setShowSuccessModal(true);
+      setSubmitting(false);
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setSubmitting(false);
@@ -119,6 +175,97 @@ export default function CreateShiftPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowSuccessModal(false)}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Green header strip */}
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-5 text-center">
+              <div className="mx-auto h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-3">
+                <Rocket className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white">
+                Your shift is live!
+              </h2>
+            </div>
+
+            <div className="px-6 py-5">
+              {/* Shift summary */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Role</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {ROLE_LABELS[submittedForm.role] ?? submittedForm.role}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Date</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatDate(submittedForm.date)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Time</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatTime12(submittedForm.startTime)} -{" "}
+                    {formatTime12(submittedForm.endTime)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Pay</span>
+                  <span className="text-sm font-bold text-gray-900">
+                    ${parseFloat(submittedForm.payRate || "0").toFixed(2)}/hr
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Location</span>
+                  <span className="text-sm font-medium text-gray-900 text-right max-w-[200px] truncate">
+                    {submittedForm.location}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 text-center mb-5">
+                Workers in{" "}
+                <span className="font-medium text-gray-900">
+                  {submittedForm.location}
+                </span>{" "}
+                can see this right now.
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handlePostAnother}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Post Another Shift
+                </button>
+                <Link
+                  href="/provider/dashboard"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  View Dashboard
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Link
         href="/provider/dashboard"
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
@@ -136,28 +283,24 @@ export default function CreateShiftPage() {
 
       {/* Plan limit alert */}
       {isLimitError && error && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <div className="bg-gradient-to-br from-amber-50 to-red-50 border border-amber-300 rounded-xl p-5 mb-6">
           <div className="flex gap-3">
             <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-amber-600"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-amber-600" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-amber-800">{error}</p>
+            <div className="flex-1">
+              <p className="text-base font-semibold text-amber-900">
+                Monthly shift limit reached
+              </p>
+              <p className="text-sm text-amber-800 mt-1">{error}</p>
               <Link
                 href="/provider/billing"
-                className="inline-flex items-center mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 transition-colors"
               >
-                Upgrade your plan to post more shifts &rarr;
+                <Zap className="h-4 w-4" />
+                Upgrade Your Plan
               </Link>
             </div>
           </div>
@@ -242,6 +385,9 @@ export default function CreateShiftPage() {
                 placeholder="e.g. Sunrise Senior Living, 123 Main St, Austin TX"
                 className={inputClass}
               />
+              <p className="mt-1.5 text-xs text-gray-400">
+                Workers search by location first -- be specific to attract nearby candidates.
+              </p>
             </div>
           </div>
         </div>
@@ -349,6 +495,9 @@ export default function CreateShiftPage() {
                 <span className="text-gray-400 text-sm">/hr</span>
               </div>
             </div>
+            <p className="mt-1.5 text-xs text-gray-400">
+              Tampa avg: $28/hr. Competitive rates fill shifts faster.
+            </p>
           </div>
         </div>
 

@@ -35,7 +35,7 @@ export default async function AuthLayout({
                   </Link>
                   <Link
                     href="/provider/shifts/new"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="bg-blue-600 text-white px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Post Shift
                   </Link>
@@ -56,9 +56,13 @@ export default async function AuthLayout({
                 <>
                   <Link
                     href="/worker/shifts"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-1.5"
                   >
                     Available Shifts
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                    </span>
                   </Link>
                   <Link
                     href="/worker/my-shifts"

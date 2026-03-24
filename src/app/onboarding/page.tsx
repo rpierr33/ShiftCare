@@ -9,7 +9,7 @@ import {
   completeProviderOnboarding,
   completeWorkerOnboarding,
 } from "@/actions/onboarding";
-import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2, Check } from "lucide-react";
 import type { WorkerRole } from "@prisma/client";
 
 const WORKER_ROLES: { value: WorkerRole; label: string }[] = [
@@ -53,6 +53,19 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
   );
 }
 
+function CelebrationScreen() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="mx-auto w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-4 animate-[scale-in_0.3s_ease-out]">
+          <Check className="h-10 w-10 text-emerald-600" strokeWidth={3} />
+        </div>
+        <p className="text-lg font-semibold text-gray-900">You&apos;re all set!</p>
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -92,6 +105,7 @@ function ProviderOnboardingForm() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Step 1: Company info
   const [companyName, setCompanyName] = useState("");
@@ -135,7 +149,14 @@ function ProviderOnboardingForm() {
       return;
     }
 
-    window.location.href = "/provider/shifts/new";
+    setShowCelebration(true);
+    setTimeout(() => {
+      window.location.href = "/provider/shifts/new";
+    }, 1000);
+  }
+
+  if (showCelebration) {
+    return <CelebrationScreen />;
   }
 
   return (
@@ -167,6 +188,9 @@ function ProviderOnboardingForm() {
                 </h1>
                 <p className="text-sm text-gray-500">
                   Tell us about your healthcare facility
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Your company name helps workers identify you. We&apos;ll show you to workers in your area.
                 </p>
               </div>
 
@@ -337,7 +361,7 @@ function ProviderOnboardingForm() {
                     Back
                   </Button>
                   <Button type="submit" className="flex-1" loading={loading}>
-                    Start Posting Shifts
+                    Post Your First Shift — Workers Are Online Now
                     <ArrowRight size={16} />
                   </Button>
                 </div>
@@ -356,6 +380,7 @@ function WorkerOnboardingForm() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Step 1: Professional info
   const [workerRole, setWorkerRole] = useState<WorkerRole | "">("");
@@ -407,7 +432,14 @@ function WorkerOnboardingForm() {
       return;
     }
 
-    window.location.href = "/worker/shifts";
+    setShowCelebration(true);
+    setTimeout(() => {
+      window.location.href = "/worker/shifts";
+    }, 1000);
+  }
+
+  if (showCelebration) {
+    return <CelebrationScreen />;
   }
 
   return (
@@ -440,6 +472,9 @@ function WorkerOnboardingForm() {
                 <p className="text-sm text-gray-500">
                   Tell us about yourself so we can match you with the right
                   shifts
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  We&apos;ll show you shifts that match your role and location. Most workers see 5+ shifts right away.
                 </p>
               </div>
 
@@ -588,7 +623,7 @@ function WorkerOnboardingForm() {
                     Back
                   </Button>
                   <Button type="submit" className="flex-1" loading={loading}>
-                    Browse Available Shifts
+                    Find Shifts Near You
                     <ArrowRight size={16} />
                   </Button>
                 </div>

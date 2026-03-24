@@ -9,6 +9,9 @@ import {
   Users,
   Briefcase,
   Shield,
+  AlertCircle,
+  Lightbulb,
+  UserCheck,
 } from "lucide-react";
 import { getShiftById } from "@/actions/shifts";
 import { ShiftActions } from "./shift-actions";
@@ -58,6 +61,21 @@ const ASSIGNMENT_STATUS_BADGE: Record<string, string> = {
   CANCELLED: "bg-slate-50 text-slate-600 ring-1 ring-slate-500/20",
 };
 
+function getTimeSincePosted(createdAt: Date | string): string {
+  const now = new Date();
+  const posted = new Date(createdAt);
+  const diffMs = now.getTime() - posted.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) return "just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "1 day ago";
+  return `${diffDays} days ago`;
+}
+
 export default async function ShiftDetailPage({
   params,
 }: {
@@ -83,6 +101,20 @@ export default async function ShiftDetailPage({
     hour12: true,
   });
 
+  const applicantCount = shift.assignments.length;
+  const isAssigned = shift.status === "ASSIGNED";
+  const isOpen = shift.status === "OPEN";
+
+  // Find the confirmed/accepted assignment for the assigned worker
+  const assignedAssignment = isAssigned
+    ? shift.assignments.find(
+        (a) =>
+          a.status === "CONFIRMED" ||
+          a.status === "ACCEPTED" ||
+          a.workerProfile.user.name === shift.assignedWorker?.name
+      )
+    : null;
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <Link
@@ -93,7 +125,90 @@ export default async function ShiftDetailPage({
         Back to Dashboard
       </Link>
 
-      {/* Hero Header */}
+      {/* Assigned Worker Hero Card */}
+      {isAssigned && shift.assignedWorker && (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-100 overflow-hidden mb-6">
+          <div className="h-1.5 bg-blue-500" />
+          <div className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <UserCheck className="h-5 w-5 text-blue-600" />
+              <h2 className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                Assigned Worker
+              </h2>
+            </div>
+            <div className="flex items-center gap-5">
+              <div className="h-16 w-16 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl font-bold text-blue-600">
+                  {shift.assignedWorker.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)}
+                </span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {shift.assignedWorker.name}
+                </h3>
+                <p className="text-sm text-blue-600 font-medium mt-0.5">
+                  {ROLE_LABELS[shift.role] ?? shift.role}
+                </p>
+                {assignedAssignment &&
+                  assignedAssignment.workerProfile.credentials.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <Shield className="h-4 w-4 text-emerald-500" />
+                      {assignedAssignment.workerProfile.credentials.map(
+                        (c, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20"
+                          >
+                            {c.name}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Open with 0 applicants diagnostic */}
+      {isOpen && applicantCount === 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Posted {getTimeSincePosted(shift.createdAt)} &middot; Visible to
+                workers in {shift.location}. No applicants yet.
+              </p>
+              <div className="mt-3 space-y-2">
+                <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                  Tips to attract applicants:
+                </p>
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="h-3.5 w-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-amber-700">
+                    Try increasing the pay rate -- competitive rates fill faster.
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="h-3.5 w-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-amber-700">
+                    Add more details in the notes section to help workers understand the role.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shift Header */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
         <div
           className={`h-2 ${STATUS_COLOR[shift.status] ?? "bg-gray-400"}`}
@@ -188,7 +303,7 @@ export default async function ShiftDetailPage({
               </div>
             </div>
 
-            {shift.assignedWorker && (
+            {!isAssigned && shift.assignedWorker && (
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                   <Users className="h-4.5 w-4.5 text-blue-500" />
@@ -214,13 +329,14 @@ export default async function ShiftDetailPage({
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Actions - Prominent, full-width */}
       {(shift.status === "OPEN" || shift.status === "ASSIGNED") && (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
-            Actions
-          </h2>
-          <ShiftActions shiftId={shift.id} status={shift.status} />
+          <ShiftActions
+            shiftId={shift.id}
+            status={shift.status}
+            isAssigned={isAssigned}
+          />
         </div>
       )}
 
