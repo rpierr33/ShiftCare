@@ -61,11 +61,11 @@ function startsWithin48Hours(start: Date): boolean {
 }
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  RN: { bg: "bg-blue-100", text: "text-blue-700" },
+  RN: { bg: "bg-purple-100", text: "text-purple-700" },
   LPN: { bg: "bg-indigo-100", text: "text-indigo-700" },
-  CNA: { bg: "bg-purple-100", text: "text-purple-700" },
-  HHA: { bg: "bg-teal-100", text: "text-teal-700" },
-  MEDICAL_ASSISTANT: { bg: "bg-amber-100", text: "text-amber-700" },
+  CNA: { bg: "bg-teal-100", text: "text-teal-700" },
+  HHA: { bg: "bg-orange-100", text: "text-orange-700" },
+  MEDICAL_ASSISTANT: { bg: "bg-cyan-100", text: "text-cyan-700" },
   COMPANION: { bg: "bg-pink-100", text: "text-pink-700" },
   OTHER: { bg: "bg-gray-100", text: "text-gray-700" },
 };
@@ -84,50 +84,58 @@ export default async function WorkerShiftsPage() {
   const shifts = await getAvailableShifts();
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Available Shifts</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Accept shifts near you &mdash; first come, first served
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Available Shifts
+            </h1>
+            {shifts.length > 0 && (
+              <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/10">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                Live
+              </div>
+            )}
+          </div>
+          <p className="mt-1.5 text-sm text-slate-500">
+            {shifts.length > 0
+              ? `${shifts.length} shift${shifts.length === 1 ? "" : "s"} available near you`
+              : "Accept shifts near you \u2014 first come, first served"}
           </p>
         </div>
-        {shifts.length > 0 && (
-          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-600/10 whitespace-nowrap">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            {shifts.length} shift{shifts.length === 1 ? "" : "s"} available and counting
-          </div>
-        )}
       </div>
 
       {/* Content */}
       {shifts.length === 0 ? (
-        <div className="rounded-xl border border-gray-100 bg-white shadow-sm py-16 px-6 text-center">
-          <div className="mb-4">
-            <Calendar className="h-12 w-12 mx-auto text-gray-300" />
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 py-20 px-6 text-center">
+          <div className="mb-5">
+            <div className="mx-auto h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center">
+              <Calendar className="h-8 w-8 text-slate-300" />
+            </div>
           </div>
-          <p className="text-gray-700 font-medium mb-2">
-            No shifts match your area right now.
-          </p>
-          <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-2">
+            No shifts match your area right now
+          </h3>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
             Complete your profile to get matched faster. Providers look for
             workers with full profiles and up-to-date locations.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link
               href="/worker/profile"
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm shadow-blue-600/20 hover:bg-blue-500 transition-all duration-200"
+              className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-700 transition-all duration-200"
             >
               <UserCheck className="h-4 w-4" />
               Update Profile
             </Link>
             <Link
               href="/worker/profile#location-section"
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50 transition-all duration-200"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 transition-all duration-200"
             >
               <MapPin className="h-4 w-4" />
               Expand Location
@@ -135,7 +143,7 @@ export default async function WorkerShiftsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {shifts.map((shift) => {
             const companyName =
               shift.provider?.providerProfile?.companyName ||
@@ -155,81 +163,89 @@ export default async function WorkerShiftsPage() {
             return (
               <div
                 key={shift.id}
-                className={`relative bg-white rounded-xl border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col ${
-                  isUrgent ? "border-amber-200 ring-1 ring-amber-100" : "border-gray-100"
+                className={`relative bg-white rounded-2xl border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden ${
+                  isUrgent ? "border-amber-200 ring-1 ring-amber-100" : "border-slate-100"
                 }`}
               >
-                {/* Top row: Role Badge + Urgency + Demand */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${roleColor.bg} ${roleColor.text}`}>
-                      {roleLabel}
+                {/* Top accent bar */}
+                <div className={`h-1 w-full ${roleColor.bg}`} />
+
+                <div className="p-5 flex flex-col flex-1">
+                  {/* Top row: Role Badge + Posted time */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${roleColor.bg} ${roleColor.text}`}>
+                        {roleLabel}
+                      </span>
+                      {isUrgent && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                          <AlertCircle className="h-3 w-3" />
+                          Urgent
+                        </span>
+                      )}
+                      {isHighDemand && !isUrgent && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                          <Flame className="h-3 w-3" />
+                          High demand
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
+                      {postedAgo}
                     </span>
-                    {isUrgent && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
-                        <AlertCircle className="h-3 w-3" />
-                        Starts tomorrow!
-                      </span>
-                    )}
-                    {isHighDemand && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600">
-                        <Flame className="h-3 w-3" />
-                        High demand
-                      </span>
-                    )}
                   </div>
-                  <span className="text-xs text-gray-400 whitespace-nowrap">
-                    Posted {postedAgo}
-                  </span>
-                </div>
 
-                {/* Provider — more prominent */}
-                <p className="text-sm font-semibold text-gray-800 mb-1">{companyName}</p>
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs text-gray-400">
-                    {hasCompanyName ? "Verified provider" : "New provider"}
-                  </p>
-                  {hasCompanyName && (
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                      <ShieldCheck className="h-3 w-3" />
-                      Verified agency
+                  {/* Provider info */}
+                  <div className="mb-4">
+                    <p className="text-sm font-bold text-slate-900 mb-1">{companyName}</p>
+                    <div className="flex items-center gap-1.5">
+                      {hasCompanyName && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          Verified
+                        </span>
+                      )}
+                      {!hasCompanyName && (
+                        <span className="text-xs text-slate-400">New provider</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+                    <MapPin className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                    <span className="truncate">
+                      {shift.location}
+                      {location && ` \u00B7 ${location}`}
                     </span>
+                  </div>
+
+                  {/* Date/Time */}
+                  <div className="flex items-center gap-2 text-sm text-slate-600 mb-5">
+                    <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                    <span>
+                      {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+                    </span>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-slate-100 -mx-5 mb-5" />
+
+                  {/* Pay Rate */}
+                  <div className="mb-4">
+                    <p className="text-3xl font-bold text-emerald-600 tracking-tight">
+                      ${parseFloat(String(shift.payRate)).toFixed(2)}
+                      <span className="text-base font-normal text-slate-400 ml-0.5">/hr</span>
+                    </p>
+                  </div>
+
+                  {/* Notes */}
+                  {shift.notes && (
+                    <p className="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">{shift.notes}</p>
                   )}
-                </div>
 
-                {/* Location */}
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-1.5">
-                  <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span>
-                    {shift.location}
-                    {location && ` \u00B7 ${location}`}
-                  </span>
-                </div>
-
-                {/* Date/Time */}
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-4">
-                  <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span>
-                    {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
-                  </span>
-                </div>
-
-                {/* Pay Rate — most visually prominent */}
-                <p className="text-3xl font-bold text-emerald-600 mb-3">
-                  ${parseFloat(String(shift.payRate)).toFixed(2)}
-                  <span className="text-sm font-medium text-gray-500">/hr</span>
-                </p>
-
-                {/* Notes */}
-                {shift.notes && (
-                  <p className="text-xs text-gray-400 line-clamp-2 mb-3">{shift.notes}</p>
-                )}
-
-                {/* Spacer to push button to bottom */}
-                <div className="mt-auto pt-2 relative">
-                  {/* Subtle pulse ring around button area for OPEN shifts */}
-                  <div className="absolute -inset-1 rounded-xl bg-blue-400/10 animate-pulse-ring-slow pointer-events-none" />
-                  <div className="relative">
+                  {/* Spacer to push button to bottom */}
+                  <div className="mt-auto pt-1">
                     <AcceptShiftButton
                       shiftId={shift.id}
                       location={shift.location}

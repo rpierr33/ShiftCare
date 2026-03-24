@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/providers/session-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
+});
 
 export const metadata: Metadata = {
   title: "ShiftCare — Fill Shifts Fast",
@@ -12,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2563eb",
+  themeColor: "#0891B2",
 };
 
 export default function RootLayout({
@@ -22,7 +26,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased bg-gray-50`}>
+      <body
+        className={`${dmSans.className} antialiased bg-slate-50 text-slate-900`}
+      >
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

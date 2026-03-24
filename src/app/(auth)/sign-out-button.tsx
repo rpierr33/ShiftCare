@@ -20,7 +20,7 @@ export function SignOutButton() {
     <button
       onClick={handleSignOut}
       disabled={isPending}
-      className="inline-flex items-center gap-1.5 px-2 py-1 text-sm text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 rounded-md hover:bg-gray-50"
+      className="inline-flex items-center gap-1.5 px-2 py-1 text-sm text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50 rounded-md"
     >
       <LogOut size={14} />
       {isPending ? "Signing out..." : "Sign Out"}

@@ -12,15 +12,15 @@ export default async function AuthLayout({
   const initial = user.name?.charAt(0)?.toUpperCase() ?? "?";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Top navigation bar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           {/* Left: Logo + Nav links */}
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-lg font-bold text-blue-600 hover:text-blue-700 transition-colors"
+              className="text-xl font-bold text-cyan-600 hover:text-cyan-700 transition-colors"
             >
               ShiftCare
             </Link>
@@ -29,25 +29,25 @@ export default async function AuthLayout({
                 <>
                   <Link
                     href="/provider/dashboard"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
                   >
                     Dashboard
                   </Link>
                   <Link
                     href="/provider/shifts/new"
-                    className="bg-blue-600 text-white px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-cyan-600 text-white px-4 py-2 text-sm font-semibold rounded-xl hover:bg-cyan-700 shadow-sm transition-colors"
                   >
                     Post Shift
                   </Link>
                   <Link
                     href="/provider/workers"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
                   >
                     Workers
                   </Link>
                   <Link
                     href="/provider/billing"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
                   >
                     Billing
                   </Link>
@@ -56,7 +56,7 @@ export default async function AuthLayout({
                 <>
                   <Link
                     href="/worker/shifts"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-1.5"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors flex items-center gap-1.5"
                   >
                     Available Shifts
                     <span className="relative flex h-2.5 w-2.5">
@@ -66,13 +66,13 @@ export default async function AuthLayout({
                   </Link>
                   <Link
                     href="/worker/my-shifts"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
                   >
                     My Shifts
                   </Link>
                   <Link
                     href="/worker/profile"
-                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
                   >
                     Profile
                   </Link>
@@ -83,16 +83,16 @@ export default async function AuthLayout({
 
           {/* Right: User info + Sign out */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
               {initial}
             </div>
-            <span className="text-sm text-gray-700 font-medium hidden sm:inline">
+            <span className="text-sm text-slate-700 font-medium hidden sm:inline">
               {user.name}
             </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 isProvider
-                  ? "bg-blue-100 text-blue-700"
+                  ? "bg-cyan-100 text-cyan-700"
                   : "bg-emerald-100 text-emerald-700"
               }`}
             >
@@ -104,7 +104,7 @@ export default async function AuthLayout({
       </header>
 
       {/* Gradient accent line */}
-      <div className="h-0.5 bg-gradient-to-r from-blue-500 to-purple-500" />
+      <div className="h-0.5 bg-gradient-to-r from-cyan-500 to-emerald-500" />
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
