@@ -42,7 +42,11 @@ export function AcceptShiftButton({ shiftId, location, startTime }: AcceptShiftB
   if (status === "success") {
     return (
       <div className="w-full rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-2.5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
+          {/* Confetti dots */}
+          <span className="absolute -top-2 -left-1 h-2 w-2 rounded-full bg-emerald-400 animate-confetti-fade" />
+          <span className="absolute -top-3 left-4 h-1.5 w-1.5 rounded-full bg-blue-400 animate-confetti-fade delay-200" />
+          <span className="absolute -top-1 left-8 h-2 w-2 rounded-full bg-amber-400 animate-confetti-fade delay-400" />
           <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
           <p className="text-sm font-semibold text-emerald-800">
             You&apos;re booked! This shift is confirmed.
@@ -105,7 +109,7 @@ export function AcceptShiftButton({ shiftId, location, startTime }: AcceptShiftB
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full animate-scale-in">
       <button
         onClick={handleAccept}
         disabled={status === "loading"}

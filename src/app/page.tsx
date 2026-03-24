@@ -113,7 +113,7 @@ export default function LandingPage() {
             <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
               <Link
                 href="/signup?role=PROVIDER"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold px-8 py-3.5 rounded-lg hover:bg-blue-700 transition-colors text-base"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold px-8 py-3.5 rounded-lg hover:bg-blue-700 transition-colors text-base animate-cta-pulse-ring"
               >
                 Post a Shift
                 <ArrowRight size={18} />
@@ -126,14 +126,18 @@ export default function LandingPage() {
                 <ArrowRight size={18} />
               </Link>
             </div>
-            <div className="mt-6 flex items-center gap-2 text-sm text-gray-400">
+            <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span>247 shifts filled this week</span>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
               <Shield size={14} className="text-gray-400" />
               <span>Trusted by 120+ healthcare agencies</span>
             </div>
           </div>
 
           {/* Right: Live System Preview */}
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 shadow-2xl">
+          <div className="bg-slate-900 rounded-2xl border border-slate-700 ring-1 ring-white/10 shadow-2xl shadow-blue-500/10 p-6">
             <div className="flex items-center gap-2 mb-5">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -181,6 +185,9 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+            <div className="mt-5 pt-4 border-t border-slate-700/50 text-center">
+              <span className="text-[10px] uppercase tracking-widest text-slate-600">Powered by ShiftCare</span>
+            </div>
           </div>
         </div>
       </section>
@@ -205,7 +212,7 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-14">
             Built for Healthcare Trust
           </h2>
-          <div className="grid sm:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <TrustCard
               icon={<Shield size={28} className="text-blue-600" />}
               title="Verified Professionals"
@@ -220,6 +227,11 @@ export default function LandingPage() {
               icon={<Lock size={28} className="text-blue-600" />}
               title="HIPAA Compliant"
               description="Your data is secure and healthcare-grade."
+            />
+            <TrustCard
+              icon={<Zap size={28} className="text-blue-600" />}
+              title="Real-Time Matching"
+              description="Workers are matched and notified the moment you post a shift."
             />
           </div>
         </div>
@@ -243,6 +255,16 @@ export default function LandingPage() {
               <span className="text-sm text-slate-400 flex items-center gap-2">
                 <Zap size={12} className="text-yellow-400" />
                 3 new shifts posted today
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-sm text-slate-400 flex items-center gap-2">
+                <Zap size={12} className="text-purple-400" />
+                LPN shift confirmed in Clearwater
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-sm text-slate-400 flex items-center gap-2">
+                <Zap size={12} className="text-cyan-400" />
+                New HHA available in Brandon area
               </span>
               <span className="text-slate-600">•</span>
             </div>

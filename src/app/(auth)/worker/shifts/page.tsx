@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAvailableShifts } from "@/actions/shifts";
 import { AcceptShiftButton } from "@/components/worker/accept-shift-button";
-import { MapPin, Calendar, Clock, UserCheck, AlertCircle } from "lucide-react";
+import { MapPin, Calendar, Clock, UserCheck, AlertCircle, Flame, ShieldCheck } from "lucide-react";
 
 function formatShiftDateTime(start: Date, end: Date): string {
   const dateStr = new Intl.DateTimeFormat("en-US", {
@@ -54,6 +54,12 @@ function startsWithin24Hours(start: Date): boolean {
   return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
 }
 
+function startsWithin48Hours(start: Date): boolean {
+  const now = new Date();
+  const diffMs = start.getTime() - now.getTime();
+  return diffMs > 0 && diffMs <= 48 * 60 * 60 * 1000;
+}
+
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   RN: { bg: "bg-blue-100", text: "text-blue-700" },
   LPN: { bg: "bg-indigo-100", text: "text-indigo-700" },
@@ -93,7 +99,7 @@ export default async function WorkerShiftsPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            {shifts.length} shift{shifts.length === 1 ? "" : "s"} available
+            {shifts.length} shift{shifts.length === 1 ? "" : "s"} available and counting
           </div>
         )}
       </div>
@@ -142,18 +148,20 @@ export default async function WorkerShiftsPage() {
             const roleColor = ROLE_COLORS[shift.role] || ROLE_COLORS.OTHER;
             const roleLabel = ROLE_LABELS[shift.role] || shift.role;
             const isUrgent = startsWithin24Hours(new Date(shift.startTime));
+            const isHighDemand = startsWithin48Hours(new Date(shift.startTime));
             const postedAgo = timeAgo(new Date(shift.createdAt));
+            const hasCompanyName = !!shift.provider?.providerProfile?.companyName;
 
             return (
               <div
                 key={shift.id}
-                className={`bg-white rounded-xl border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col ${
+                className={`relative bg-white rounded-xl border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col ${
                   isUrgent ? "border-amber-200 ring-1 ring-amber-100" : "border-gray-100"
                 }`}
               >
-                {/* Top row: Role Badge + Urgency */}
+                {/* Top row: Role Badge + Urgency + Demand */}
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${roleColor.bg} ${roleColor.text}`}>
                       {roleLabel}
                     </span>
@@ -161,6 +169,12 @@ export default async function WorkerShiftsPage() {
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
                         <AlertCircle className="h-3 w-3" />
                         Starts tomorrow!
+                      </span>
+                    )}
+                    {isHighDemand && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600">
+                        <Flame className="h-3 w-3" />
+                        High demand
                       </span>
                     )}
                   </div>
@@ -171,9 +185,17 @@ export default async function WorkerShiftsPage() {
 
                 {/* Provider — more prominent */}
                 <p className="text-sm font-semibold text-gray-800 mb-1">{companyName}</p>
-                <p className="text-xs text-gray-400 mb-2">
-                  {shift.provider?.providerProfile?.companyName ? "Verified provider" : "New provider"}
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs text-gray-400">
+                    {hasCompanyName ? "Verified provider" : "New provider"}
+                  </p>
+                  {hasCompanyName && (
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                      <ShieldCheck className="h-3 w-3" />
+                      Verified agency
+                    </span>
+                  )}
+                </div>
 
                 {/* Location */}
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-1.5">
@@ -204,12 +226,16 @@ export default async function WorkerShiftsPage() {
                 )}
 
                 {/* Spacer to push button to bottom */}
-                <div className="mt-auto pt-2">
-                  <AcceptShiftButton
-                    shiftId={shift.id}
-                    location={shift.location}
-                    startTime={formatStartTime(new Date(shift.startTime))}
-                  />
+                <div className="mt-auto pt-2 relative">
+                  {/* Subtle pulse ring around button area for OPEN shifts */}
+                  <div className="absolute -inset-1 rounded-xl bg-blue-400/10 animate-pulse-ring-slow pointer-events-none" />
+                  <div className="relative">
+                    <AcceptShiftButton
+                      shiftId={shift.id}
+                      location={shift.location}
+                      startTime={formatStartTime(new Date(shift.startTime))}
+                    />
+                  </div>
                 </div>
               </div>
             );

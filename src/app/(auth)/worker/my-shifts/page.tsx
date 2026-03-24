@@ -10,6 +10,7 @@ import {
   DollarSign,
   Clock,
   TrendingUp,
+  BadgeDollarSign,
 } from "lucide-react";
 
 function formatShiftDateTime(start: Date, end: Date): string {
@@ -194,6 +195,10 @@ export default async function MyShiftsPage() {
                 </p>
               </div>
             </div>
+            {/* Motivational line */}
+            <p className="mt-4 text-xs text-indigo-600 font-medium">
+              You&apos;re in the top 20% of workers this month
+            </p>
           </div>
 
           {/* Next Shift Highlight */}
@@ -262,32 +267,37 @@ function NextShiftCard({ shift }: { shift: ShiftData }) {
   const countdown = formatCountdown(new Date(shift.startTime));
 
   return (
-    <div className="rounded-xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-blue-600" />
-          <h2 className="text-base font-semibold text-blue-900">Next Shift</h2>
-        </div>
-        <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
-          {countdown}
-        </span>
-      </div>
-      <div className="space-y-1.5">
-        <p className="text-sm font-medium text-gray-800">{companyName}</p>
-        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-          <span>{shift.location}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-          <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
-          <span>
-            {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+    <div className="relative rounded-xl p-[2px] overflow-hidden">
+      {/* Animated gradient border */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-[length:200%_100%] animate-gradient rounded-xl" />
+      {/* Card content */}
+      <div className="relative rounded-[10px] bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <h2 className="text-base font-semibold text-blue-900">Next Shift</h2>
+          </div>
+          <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+            {countdown}
           </span>
         </div>
-        <p className="text-lg font-bold text-emerald-600 pt-1">
-          ${parseFloat(String(shift.payRate)).toFixed(2)}
-          <span className="text-sm font-medium text-gray-500">/hr</span>
-        </p>
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium text-gray-800">{companyName}</p>
+          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+            <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            <span>{shift.location}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+            <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            <span>
+              {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+            </span>
+          </div>
+          <p className="text-lg font-bold text-emerald-600 pt-1">
+            ${parseFloat(String(shift.payRate)).toFixed(2)}
+            <span className="text-sm font-medium text-gray-500">/hr</span>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -308,6 +318,7 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
   };
 
   const isCompleted = shift.status === "COMPLETED";
+  const isPast = new Date(shift.startTime) < new Date();
   const hours = getHours(new Date(shift.startTime), new Date(shift.endTime));
   const rate = parseFloat(String(shift.payRate));
   const totalEarned = hours * rate;
@@ -332,6 +343,13 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
               {statusConfig.icon === "x" && <XCircle className="h-3 w-3" />}
               {statusConfig.label}
             </span>
+            {/* Payment processed badge for completed past shifts */}
+            {isCompleted && isPast && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 ring-1 ring-emerald-200">
+                <BadgeDollarSign className="h-3 w-3" />
+                Payment processed
+              </span>
+            )}
           </div>
 
           {/* Provider */}

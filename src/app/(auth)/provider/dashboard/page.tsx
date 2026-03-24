@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Zap,
 } from "lucide-react";
+import { ActivityFeed } from "@/components/shared/activity-feed";
 import { getProviderShifts } from "@/actions/shifts";
 import { getSubscriptionStatus } from "@/actions/billing";
 import { getSessionUser } from "@/lib/auth-utils";
@@ -240,6 +241,11 @@ export default async function ProviderDashboardPage() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Live Activity Feed */}
+      <div className="mb-6">
+        <ActivityFeed variant="compact" maxItems={4} />
       </div>
 
       {/* Shifts Section */}
