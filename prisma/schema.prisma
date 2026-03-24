@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────
+
+enum UserRole {
+  PROVIDER
+  WORKER
+}
+
+enum WorkerRole {
+  RN
+  LPN
+  CNA
+  HHA
+  MEDICAL_ASSISTANT
+  COMPANION
+  OTHER
+}
+
+enum ShiftStatus {
+  OPEN
+  PENDING
+  ASSIGNED
+  COMPLETED
+  CANCELLED
+}
+
+enum AssignmentStatus {
+  REQUESTED
+  HELD
+  ACCEPTED
+  CONFIRMED
+  REJECTED
+  CANCELLED
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  TRIALING
+}
+
+enum CredentialType {
+  LICENSE
+  CERTIFICATION
+  BACKGROUND_CHECK
+  TB_TEST
+  CPR
+  OTHER
+}
+
+enum CredentialStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  REJECTED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// ─── Models ──────────────────────────────────────────────────────
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String
+  passwordHash        String
+  role                UserRole
+  phone               String?
+  avatarUrl           String?
+  emailVerified       DateTime?
+  isActive            Boolean   @default(true)
+  onboardingCompleted Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  workerProfile   WorkerProfile?
+  providerProfile ProviderProfile?
+  shifts          Shift[]          @relation("ProviderShifts")
+  assignedShifts  Shift[]          @relation("AssignedWorker")
+  notifications   Notification[]
+  sessions        Session[]
+  accounts        Account[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Provider Profile ────────────────────────────────────────────
+
+model ProviderProfile {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  companyName  String
+  description  String?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  phone        String?
+  website      String?
+  npiNumber    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription?
+  usageRecords UsageTracking[]
+
+  @@map("provider_profiles")
+}
+
+// ─── Worker Profile ──────────────────────────────────────────────
+
+model WorkerProfile {
+  id                 String      @id @default(cuid())
+  userId             String      @unique
+  workerRole         WorkerRole?
+  licenseNumber      String?
+  licenseState       String?
+  licenseExpiry      DateTime?
+  certifications     String[]    @default([])
+  bio                String?
+  hourlyRate         Float?
+  yearsExperience    Int?
+  serviceRadiusMiles Int?
+  city               String?
+  state              String?
+  zipCode            String?
+  isAvailable        Boolean     @default(true)
+  profileComplete    Boolean     @default(false)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments       Assignment[]
+  availabilitySlots AvailabilitySlot[]
+  credentials       Credential[]
+
+  @@map("worker_profiles")
+}
+
+model AvailabilitySlot {
+  id              String    @id @default(cuid())
+  workerProfileId String
+  dayOfWeek       DayOfWeek
+  startTime       String    // "06:00" format
+  endTime         String    // "18:00" format
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId, dayOfWeek])
+  @@map("availability_slots")
+}
+
+model Credential {
+  id               String           @id @default(cuid())
+  workerProfileId  String
+  type             CredentialType
+  name             String
+  licenseNumber    String?
+  issuingAuthority String?
+  issueDate        DateTime?
+  expiryDate       DateTime?
+  status           CredentialStatus @default(PENDING)
+  documentUrl      String?
+  verifiedAt       DateTime?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
+  @@map("credentials")
+}
+
+// ─── Shifts ──────────────────────────────────────────────────────
+
+model Shift {
+  id               String      @id @default(cuid())
+  providerId       String
+  role             WorkerRole
+  title            String?
+  location         String
+  startTime        DateTime
+  endTime          DateTime
+  payRate          Float
+  notes            String?
+  status           ShiftStatus @default(OPEN)
+  // Assignment tracking
+  assignedWorkerId String?
+  // Optimistic locking
+  version          Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  provider       User         @relation("ProviderShifts", fields: [providerId], references: [id], onDelete: Cascade)
+  assignedWorker User?        @relation("AssignedWorker", fields: [assignedWorkerId], references: [id], onDelete: SetNull)
+  assignments    Assignment[]
+
+  @@index([providerId])
+  @@index([status])
+  @@index([role, status])
+  @@index([startTime])
+  @@index([assignedWorkerId])
+  @@index([providerId, status])
+  @@map("shifts")
+}
+
+// ─── Assignments ─────────────────────────────────────────────────
+
+model Assignment {
+  id              String           @id @default(cuid())
+  shiftId         String
+  workerProfileId String
+  status          AssignmentStatus @default(REQUESTED)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  shift         Shift         @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  // Only one active assignment per worker per shift
+  @@unique([shiftId, workerProfileId])
+  @@index([shiftId])
+  @@index([workerProfileId])
+  @@map("assignments")
+}
+
+// ─── Subscription & Usage ────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  providerProfileId    String             @unique
+  plan                 SubscriptionPlan   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  // Stripe placeholders
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  trialEndsAt          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model UsageTracking {
+  id                String   @id @default(cuid())
+  providerProfileId String
+  periodStart       DateTime
+  periodEnd         DateTime
+  shiftsPosted      Int      @default(0)
+  shiftsAssigned    Int      @default(0)
+  workerUnlocks     Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  providerProfile ProviderProfile @relation(fields: [providerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([providerProfileId, periodStart])
+  @@index([providerProfileId])
+  @@map("usage_tracking")
+}
+
+// ─── Notifications ───────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─── Rate Limiting ───────────────────────────────────────────────
+
+model RateLimitEntry {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  attempts    Int      @default(1)
+  lastAttempt DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([expiresAt])
+  @@map("rate_limit_entries")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("email_verification_tokens")
+}
