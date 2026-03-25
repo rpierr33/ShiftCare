@@ -121,8 +121,8 @@ export default function OnboardingPage() {
 
   if (user!.onboardingCompleted) {
     const dest = user!.role === "PROVIDER" ? "/provider/dashboard" : "/worker/shifts";
-    router.push(dest);
-    return null;
+    window.location.href = dest;
+    return <LoadingScreen />;
   }
 
   if (user!.role === "PROVIDER" && providerType === "AGENCY") {
@@ -143,6 +143,7 @@ export default function OnboardingPage() {
 /* ─── Agency Onboarding (3 steps) ──────────────────────────────────── */
 
 function AgencyOnboardingForm() {
+  const { update: updateSession } = useSession();
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -212,16 +213,18 @@ function AgencyOnboardingForm() {
       contactPersonPhone: contactPersonPhone || undefined,
     });
 
-    if (result.error) {
-      setError(result.error);
+    if (!result.success) {
+      setError(result.error || "Failed to complete onboarding.");
       setLoading(false);
       return;
     }
 
+    await updateSession({ onboardingCompleted: true });
+
     setShowCelebration(true);
     setTimeout(() => {
       window.location.href = "/provider/shifts/new";
-    }, 1000);
+    }, 1200);
   }
 
   if (showCelebration) return <CelebrationScreen />;
@@ -544,6 +547,7 @@ function AgencyOnboardingForm() {
 /* ─── Private Employer Onboarding (2 steps) ────────────────────────── */
 
 function PrivateEmployerOnboardingForm() {
+  const { update: updateSession } = useSession();
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -587,11 +591,13 @@ function PrivateEmployerOnboardingForm() {
       zipCode: zipCode || undefined,
     });
 
-    if (result.error) {
-      setError(result.error);
+    if (!result.success) {
+      setError(result.error || "Failed to complete onboarding.");
       setLoading(false);
       return;
     }
+
+    await updateSession({ onboardingCompleted: true });
 
     setShowCelebration(true);
     setTimeout(() => {
@@ -788,7 +794,9 @@ function PrivateEmployerOnboardingForm() {
 /* ─── Worker Onboarding (5 steps) ──────────────────────────────────── */
 
 function WorkerOnboardingForm() {
+  const { update: updateSession } = useSession();
   const [step, setStep] = useState(1);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [workerRole, setWorkerRole] = useState<string>("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -804,6 +812,32 @@ function WorkerOnboardingForm() {
   const [showCelebration, setShowCelebration] = useState(false);
 
   const totalSteps = 5;
+
+  // Load existing profile data for returning users
+  useEffect(() => {
+    async function loadExisting() {
+      try {
+        const { getWorkerProfile } = await import("@/actions/worker");
+        const profile = await getWorkerProfile();
+        if (profile) {
+          if (profile.workerRole) setWorkerRole(profile.workerRole);
+          if (profile.city) setCity(profile.city);
+          if (profile.state) setState(profile.state);
+          if (profile.zipCode) setZipCode(profile.zipCode);
+          if (profile.workAreas?.length) setWorkAreasList(profile.workAreas);
+          if (profile.serviceRadiusMiles) setServiceRadius(String(profile.serviceRadiusMiles));
+          if (profile.licenseNumber) setLicenseNumber(profile.licenseNumber);
+          if (profile.licenseState) setLicenseState(profile.licenseState);
+          if (profile.certifications?.length) setCertifications(profile.certifications.join(", "));
+          if (profile.user?.phone) setPhone(profile.user.phone);
+        }
+      } catch {
+        // First time — no profile yet, that's fine
+      }
+      setProfileLoaded(true);
+    }
+    loadExisting();
+  }, []);
 
   function nextStep() {
     setError("");
@@ -875,10 +909,13 @@ function WorkerOnboardingForm() {
       return;
     }
 
+    // Update the JWT session so middleware knows onboarding is complete
+    await updateSession({ onboardingCompleted: true });
+
     setShowCelebration(true);
     setTimeout(() => {
       window.location.href = "/worker/shifts";
-    }, 1000);
+    }, 1200);
   }
 
   if (showCelebration) return <CelebrationScreen />;
