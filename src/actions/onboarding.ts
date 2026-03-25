@@ -106,6 +106,11 @@ interface WorkerOnboardingInput {
   state: string;
   zipCode?: string;
   phone?: string;
+  workAreas?: string[];
+  serviceRadiusMiles?: number;
+  licenseNumber?: string;
+  licenseState?: string;
+  certifications?: string[];
 }
 
 export async function completeWorkerOnboarding(
@@ -121,6 +126,10 @@ export async function completeWorkerOnboarding(
   }
 
   await db.$transaction(async (tx) => {
+    // 30-day verification deadline from now
+    const verificationDeadline = new Date();
+    verificationDeadline.setDate(verificationDeadline.getDate() + 30);
+
     await tx.workerProfile.upsert({
       where: { userId: user.id },
       create: {
@@ -129,14 +138,28 @@ export async function completeWorkerOnboarding(
         city: input.city,
         state: input.state,
         zipCode: input.zipCode,
+        workAreas: input.workAreas || [],
+        serviceRadiusMiles: input.serviceRadiusMiles,
+        licenseNumber: input.licenseNumber,
+        licenseState: input.licenseState,
+        certifications: input.certifications || [],
         profileComplete: true,
+        verificationDeadline,
+        verificationStatus: "pending",
       },
       update: {
         workerRole: input.workerRole,
         city: input.city,
         state: input.state,
         zipCode: input.zipCode,
+        workAreas: input.workAreas || [],
+        serviceRadiusMiles: input.serviceRadiusMiles,
+        licenseNumber: input.licenseNumber,
+        licenseState: input.licenseState,
+        certifications: input.certifications || [],
         profileComplete: true,
+        verificationDeadline,
+        verificationStatus: "pending",
       },
     });
 

@@ -11,7 +11,7 @@ import {
   getProviderType,
 } from "@/actions/onboarding";
 import { ArrowRight, ArrowLeft, Loader2, Check } from "lucide-react";
-import { LocationAutocomplete } from "@/components/shared/location-autocomplete";
+import { LocationAutocomplete, WorkAreaPicker } from "@/components/shared/location-autocomplete";
 import type { WorkerRole } from "@prisma/client";
 
 const WORKER_ROLES: { value: WorkerRole; label: string }[] = [
@@ -785,31 +785,68 @@ function PrivateEmployerOnboardingForm() {
   );
 }
 
-/* ─── Worker Onboarding (2 steps, unchanged) ───────────────────────── */
+/* ─── Worker Onboarding (5 steps) ──────────────────────────────────── */
 
 function WorkerOnboardingForm() {
   const [step, setStep] = useState(1);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
-
-  // Step 1: Professional info
-  const [workerRole, setWorkerRole] = useState<WorkerRole | "">("");
-
-  // Step 2: Location
+  const [workerRole, setWorkerRole] = useState<string>("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [phone, setPhone] = useState("");
+  const [workAreasList, setWorkAreasList] = useState<string[]>([]);
+  const [serviceRadius, setServiceRadius] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const [licenseState, setLicenseState] = useState("");
+  const [certifications, setCertifications] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
-  function handleNextStep(e: React.FormEvent<HTMLFormElement>) {
+  const totalSteps = 5;
+
+  function nextStep() {
+    setError("");
+    setStep((s) => Math.min(s + 1, totalSteps));
+  }
+
+  function prevStep() {
+    setError("");
+    setStep((s) => Math.max(s - 1, 1));
+  }
+
+  function handleStep1(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     if (!workerRole) {
       setError("Please select your role.");
       return;
     }
-    setStep(2);
+    nextStep();
+  }
+
+  function handleStep2(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    if (!city.trim()) {
+      setError("City is required.");
+      return;
+    }
+    if (!state) {
+      setError("State is required.");
+      return;
+    }
+    nextStep();
+  }
+
+  function handleStep3(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    nextStep();
+  }
+
+  function handleStep4(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    nextStep();
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -817,28 +854,23 @@ function WorkerOnboardingForm() {
     setLoading(true);
     setError("");
 
-    if (!city.trim()) {
-      setError("City is required.");
-      setLoading(false);
-      return;
-    }
-
-    if (!state) {
-      setError("State is required.");
-      setLoading(false);
-      return;
-    }
-
     const result = await completeWorkerOnboarding({
       workerRole: workerRole as WorkerRole,
       city,
       state,
-      phone: phone || undefined,
       zipCode: zipCode || undefined,
+      phone: phone || undefined,
+      workAreas: workAreasList,
+      serviceRadiusMiles: serviceRadius ? parseInt(serviceRadius) : undefined,
+      licenseNumber: licenseNumber || undefined,
+      licenseState: licenseState || undefined,
+      certifications: certifications
+        ? certifications.split(",").map(c => c.trim()).filter(Boolean)
+        : undefined,
     });
 
-    if (result.error) {
-      setError(result.error);
+    if (!result.success) {
+      setError(result.error || "Failed to complete onboarding.");
       setLoading(false);
       return;
     }
@@ -850,6 +882,8 @@ function WorkerOnboardingForm() {
   }
 
   if (showCelebration) return <CelebrationScreen />;
+
+  const roleLabel = WORKER_ROLES.find((r) => r.value === workerRole)?.label;
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -863,40 +897,37 @@ function WorkerOnboardingForm() {
 
         {/* Progress */}
         <div className="mb-6">
-          <ProgressDots current={step} total={2} />
+          <ProgressDots current={step} total={totalSteps} />
           <p className="text-center text-sm text-gray-500 mt-2">
-            Step {step} of 2
+            Step {step} of {totalSteps}
           </p>
         </div>
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          {/* Step 1: Professional Info */}
+          {/* Step 1: Your Role */}
           {step === 1 && (
             <>
               <div className="text-center mb-6">
                 <h1 className="text-xl font-bold text-gray-900 mb-1">
-                  Complete your profile
+                  Your Role
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Tell us about yourself so we can match you with the right shifts
-                </p>
-                <p className="text-sm text-gray-400 mt-2">
-                  We&apos;ll show you shifts that match your role and location. Most workers see 5+ shifts right away.
+                  This determines which shifts you&apos;ll see
                 </p>
               </div>
 
-              <form onSubmit={handleNextStep} className="space-y-4">
+              <form onSubmit={handleStep1} className="space-y-4">
                 <ErrorBanner message={error} />
 
                 <div>
                   <label htmlFor="workerRole" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Your Role <span className="text-red-500">*</span>
+                    Role <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="workerRole"
                     value={workerRole}
-                    onChange={(e) => setWorkerRole(e.target.value as WorkerRole)}
+                    onChange={(e) => setWorkerRole(e.target.value)}
                     required
                     className={selectClass}
                   >
@@ -917,54 +948,53 @@ function WorkerOnboardingForm() {
             </>
           )}
 
-          {/* Step 2: Location */}
+          {/* Step 2: Location & Work Area */}
           {step === 2 && (
             <>
               <div className="text-center mb-6">
                 <h1 className="text-xl font-bold text-gray-900 mb-1">
-                  Your Location
+                  Location &amp; Work Area
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Help us find shifts near you
+                  Tell us where you want to work
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleStep2} className="space-y-4">
                 <ErrorBanner message={error} />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <LocationAutocomplete
-                      id="city"
-                      value={city}
-                      onChange={setCity}
-                      onSelect={(loc) => {
-                        setCity(loc.city);
-                        if (loc.state) setState(loc.state);
-                        if (loc.zipCode) setZipCode(loc.zipCode);
-                      }}
-                      label="City"
-                      required
-                      placeholder="Search your city..."
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      State <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="state"
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      required
-                      className={selectClass}
-                    >
-                      <option value="">Select...</option>
-                      {US_STATES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
+                  <LocationAutocomplete
+                    id="city"
+                    value={city}
+                    onChange={setCity}
+                    onSelect={(loc) => {
+                      setCity(loc.city);
+                      if (loc.state) setState(loc.state);
+                      if (loc.zipCode) setZipCode(loc.zipCode);
+                    }}
+                    label="City"
+                    required
+                    placeholder="Search your city..."
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    State <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="state"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    required
+                    className={selectClass}
+                  >
+                    <option value="">Select...</option>
+                    {US_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -997,7 +1027,268 @@ function WorkerOnboardingForm() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => { setStep(1); setError(""); }}
+                    onClick={prevStep}
+                    className="flex-1"
+                  >
+                    <ArrowLeft size={16} />
+                    Back
+                  </Button>
+                  <Button type="submit" className="flex-1 bg-cyan-600 hover:bg-cyan-700">
+                    Next
+                    <ArrowRight size={16} />
+                  </Button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {/* Step 3: Work Preferences */}
+          {step === 3 && (
+            <>
+              <div className="text-center mb-6">
+                <h1 className="text-xl font-bold text-gray-900 mb-1">
+                  Work Preferences
+                </h1>
+                <p className="text-sm text-gray-500">
+                  You&apos;ll only see shifts in these areas. Leave empty to see all.
+                </p>
+              </div>
+
+              <form onSubmit={handleStep3} className="space-y-4">
+                <ErrorBanner message={error} />
+
+                <div>
+                  <WorkAreaPicker
+                    areas={workAreasList}
+                    onChange={setWorkAreasList}
+                    label="Work Areas"
+                    placeholder="Add cities you want to work in..."
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="serviceRadius" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Service Radius (miles)
+                  </label>
+                  <Input
+                    id="serviceRadius"
+                    type="number"
+                    min="1"
+                    value={serviceRadius}
+                    onChange={(e) => setServiceRadius(e.target.value)}
+                    placeholder="25"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevStep}
+                    className="flex-1"
+                  >
+                    <ArrowLeft size={16} />
+                    Back
+                  </Button>
+                  <Button type="submit" className="flex-1 bg-cyan-600 hover:bg-cyan-700">
+                    Next
+                    <ArrowRight size={16} />
+                  </Button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Skip for now
+                </button>
+              </form>
+            </>
+          )}
+
+          {/* Step 4: Credentials & License */}
+          {step === 4 && (
+            <>
+              <div className="text-center mb-6">
+                <h1 className="text-xl font-bold text-gray-900 mb-1">
+                  Credentials &amp; License
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Upload or enter your credentials. You have 30 days to complete verification.
+                </p>
+              </div>
+
+              <form onSubmit={handleStep4} className="space-y-4">
+                <ErrorBanner message={error} />
+
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm">
+                  Your credentials will be verified within 30 days. You can start accepting shifts immediately while verification is in progress.
+                </div>
+
+                <div>
+                  <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    License Number
+                  </label>
+                  <Input
+                    id="licenseNumber"
+                    value={licenseNumber}
+                    onChange={(e) => setLicenseNumber(e.target.value)}
+                    placeholder="e.g. RN-123456"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="licenseState" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    License State
+                  </label>
+                  <select
+                    id="licenseState"
+                    value={licenseState}
+                    onChange={(e) => setLicenseState(e.target.value)}
+                    className={selectClass}
+                  >
+                    <option value="">Select...</option>
+                    {US_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="certifications" className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Certifications
+                  </label>
+                  <Input
+                    id="certifications"
+                    value={certifications}
+                    onChange={(e) => setCertifications(e.target.value)}
+                    placeholder="BLS, CPR, ACLS"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Comma-separated</p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevStep}
+                    className="flex-1"
+                  >
+                    <ArrowLeft size={16} />
+                    Back
+                  </Button>
+                  <Button type="submit" className="flex-1 bg-cyan-600 hover:bg-cyan-700">
+                    Next
+                    <ArrowRight size={16} />
+                  </Button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Skip for now
+                </button>
+              </form>
+            </>
+          )}
+
+          {/* Step 5: Review & Complete */}
+          {step === 5 && (
+            <>
+              <div className="text-center mb-6">
+                <h1 className="text-xl font-bold text-gray-900 mb-1">
+                  Review &amp; Complete
+                </h1>
+                <p className="text-sm text-gray-500">
+                  You can update these anytime in your profile
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <ErrorBanner message={error} />
+
+                <div className="space-y-3">
+                  {/* Role */}
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span className="text-emerald-600 mt-0.5">&#10003;</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Role</p>
+                      <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-medium">
+                        {roleLabel}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span className="text-emerald-600 mt-0.5">&#10003;</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Location</p>
+                      <p className="text-sm text-gray-500">{city}, {state}</p>
+                    </div>
+                  </div>
+
+                  {/* Work Areas */}
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span className={`mt-0.5 ${workAreasList.length > 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                      {workAreasList.length > 0 ? "\u2713" : "\u2014"}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Work Areas</p>
+                      <p className="text-sm text-gray-500">
+                        {workAreasList.length > 0 ? workAreasList.join(", ") : "Not set"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Service Radius */}
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span className={`mt-0.5 ${serviceRadius ? "text-emerald-600" : "text-gray-400"}`}>
+                      {serviceRadius ? "\u2713" : "\u2014"}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Service Radius</p>
+                      <p className="text-sm text-gray-500">
+                        {serviceRadius ? `${serviceRadius} miles` : "Not set"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* License */}
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span className={`mt-0.5 ${licenseNumber ? "text-emerald-600" : "text-gray-400"}`}>
+                      {licenseNumber ? "\u2713" : "\u2014"}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">License</p>
+                      <p className="text-sm text-gray-500">
+                        {licenseNumber ? `${licenseNumber}${licenseState ? ` (${licenseState})` : ""}` : "Not entered"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Certifications */}
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span className={`mt-0.5 ${certifications ? "text-emerald-600" : "text-gray-400"}`}>
+                      {certifications ? "\u2713" : "\u2014"}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Certifications</p>
+                      <p className="text-sm text-gray-500">
+                        {certifications || "Not entered"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={prevStep}
                     className="flex-1"
                   >
                     <ArrowLeft size={16} />
