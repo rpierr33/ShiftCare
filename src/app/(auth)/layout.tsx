@@ -46,6 +46,12 @@ export default async function AuthLayout({
                     Workers
                   </Link>
                   <Link
+                    href="/provider/payments"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
+                  >
+                    Payments
+                  </Link>
+                  <Link
                     href="/provider/billing"
                     className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
                   >

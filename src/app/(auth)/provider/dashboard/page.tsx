@@ -144,62 +144,79 @@ export default async function ProviderDashboardPage({
         </Link>
       </div>
 
-      {/* Plan limit warning — only when at limit */}
+      {/* Stat Cards — clickable filters */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[
+          { key: "OPEN", label: "Open", sublabel: "Actively matching", count: openShifts, icon: Briefcase, iconBg: "bg-emerald-100", iconColor: "text-emerald-600", border: "border-l-emerald-500", activeBorder: "ring-emerald-300" },
+          { key: "ASSIGNED", label: "Assigned", sublabel: "Workers confirmed", count: assignedShifts, icon: Users, iconBg: "bg-cyan-100", iconColor: "text-cyan-600", border: "border-l-cyan-500", activeBorder: "ring-cyan-300" },
+          { key: "COMPLETED", label: "Completed", sublabel: "Shifts finished", count: completedShifts, icon: CheckCircle, iconBg: "bg-slate-100", iconColor: "text-slate-500", border: "border-l-slate-400", activeBorder: "ring-slate-300" },
+          { key: "PLAN", label: "Plan Usage", sublabel: `${planName} plan`, count: -1, icon: Zap, iconBg: isAtLimit ? "bg-red-100" : "bg-amber-100", iconColor: isAtLimit ? "text-red-600" : "text-amber-600", border: isAtLimit ? "border-l-red-500" : "border-l-amber-500", activeBorder: "ring-amber-300" },
+        ].map((card) => {
+          const isActive = activeFilter === card.key;
+          const isPlan = card.key === "PLAN";
+          const Icon = card.icon;
+          const href = isPlan ? "/provider/billing" : card.key === "ALL" ? "/provider/dashboard" : `/provider/dashboard?filter=${card.key}`;
+
+          return (
+            <Link
+              key={card.key}
+              href={href}
+              className={`bg-white rounded-2xl shadow-sm border border-l-4 ${card.border} p-5 hover:shadow-md transition-all duration-200 cursor-pointer block ${
+                isActive ? `ring-2 ${card.activeBorder}` : "border-slate-100"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{card.label}</p>
+                  {isPlan ? (
+                    <p className="text-2xl font-bold text-slate-900 mt-1">
+                      {shiftsUsed}<span className="text-base font-normal text-slate-400">/{shiftsLimit === Infinity ? "∞" : shiftsLimit}</span>
+                    </p>
+                  ) : (
+                    <p className="text-2xl font-bold text-slate-900 mt-1">{card.count}</p>
+                  )}
+                  <p className="text-xs text-slate-400 mt-0.5">{card.sublabel}</p>
+                </div>
+                <div className={`h-10 w-10 rounded-xl ${card.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                </div>
+              </div>
+              {isPlan && shiftsLimit !== Infinity && (
+                <div className="mt-3">
+                  <div className="w-full bg-slate-100 rounded-full h-1.5">
+                    <div
+                      className={`h-1.5 rounded-full transition-all duration-500 ${isAtLimit ? "bg-red-500" : "bg-amber-500"}`}
+                      style={{ width: `${Math.min((shiftsUsed / shiftsLimit) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Plan limit warning */}
       {isAtLimit && (
         <div className="rounded-xl border border-amber-200 p-4 bg-gradient-to-r from-amber-50 to-red-50 mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-red-700">Plan limit reached ({shiftsUsed}/{shiftsLimit} shifts)</p>
-              <p className="text-xs text-red-600">Upgrade to post more shifts</p>
-            </div>
+            <p className="text-sm font-semibold text-red-700">Upgrade to post more shifts</p>
           </div>
-          <Link
-            href="/provider/billing"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 transition-colors"
-          >
-            <Zap className="h-3.5 w-3.5" />
-            Upgrade
+          <Link href="/provider/billing" className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 transition-colors">
+            <Zap className="h-3.5 w-3.5" /> Upgrade
           </Link>
         </div>
       )}
 
-      {/* Shifts Section — single filter bar, no duplication */}
-      <div id="shifts" className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Your Shifts</h2>
-          {!isAtLimit && (
-            <span className="text-xs text-slate-400">
-              {planName} plan &middot; {shiftsUsed}/{shiftsLimit === Infinity ? "∞" : shiftsLimit} posted this month
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {[
-            { key: "ALL", label: "All", count: shifts.length, color: "slate" },
-            { key: "OPEN", label: "Open", count: openShifts, color: "emerald" },
-            { key: "ASSIGNED", label: "Assigned", count: assignedShifts, color: "cyan" },
-            { key: "COMPLETED", label: "Completed", count: completedShifts, color: "slate" },
-          ].map((tab) => {
-            const isActive = activeFilter === tab.key;
-            return (
-              <Link
-                key={tab.key}
-                href={tab.key === "ALL" ? "/provider/dashboard" : `/provider/dashboard?filter=${tab.key}`}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                {tab.label}
-                <span className={`text-xs font-bold ${isActive ? "text-slate-400" : "text-slate-400"}`}>
-                  {tab.count}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+      {/* Shifts list header */}
+      <div id="shifts" className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-slate-900">
+          {activeFilter === "ALL" ? "All Shifts" : `${activeFilter.charAt(0) + activeFilter.slice(1).toLowerCase()} Shifts`}
+        </h2>
+        <span className="text-sm text-slate-400">
+          {sortedShifts.length} shift{sortedShifts.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
       {shifts.length === 0 ? (

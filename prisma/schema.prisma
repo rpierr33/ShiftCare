@@ -96,13 +96,15 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  workerProfile   WorkerProfile?
-  providerProfile ProviderProfile?
-  shifts          Shift[]          @relation("ProviderShifts")
-  assignedShifts  Shift[]          @relation("AssignedWorker")
-  notifications   Notification[]
-  sessions        Session[]
-  accounts        Account[]
+  workerProfile    WorkerProfile?
+  providerProfile  ProviderProfile?
+  shifts           Shift[]          @relation("ProviderShifts")
+  assignedShifts   Shift[]          @relation("AssignedWorker")
+  paymentsMade     Payment[]        @relation("ProviderPayments")
+  paymentsReceived Payment[]        @relation("WorkerPayments")
+  notifications    Notification[]
+  sessions         Session[]
+  accounts         Account[]
 
   @@map("users")
 }
@@ -261,6 +263,7 @@ model Shift {
   provider       User         @relation("ProviderShifts", fields: [providerId], references: [id], onDelete: Cascade)
   assignedWorker User?        @relation("AssignedWorker", fields: [assignedWorkerId], references: [id], onDelete: SetNull)
   assignments    Assignment[]
+  payment        Payment?
 
   @@index([providerId])
   @@index([status])
@@ -330,6 +333,42 @@ model UsageTracking {
   @@unique([providerProfileId, periodStart])
   @@index([providerProfileId])
   @@map("usage_tracking")
+}
+
+// ─── Payments ────────────────────────────────────────────────────
+
+enum PaymentStatus {
+  PENDING
+  SCHEDULED
+  PROCESSING
+  PAID
+  FAILED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  shiftId       String
+  providerId    String
+  workerId      String
+  hoursWorked   Float
+  hourlyRate    Float
+  totalAmount   Float
+  status        PaymentStatus @default(PENDING)
+  scheduledDate DateTime?     // Provider-set payment date
+  paidAt        DateTime?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  shift    Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  provider User  @relation("ProviderPayments", fields: [providerId], references: [id])
+  worker   User  @relation("WorkerPayments", fields: [workerId], references: [id])
+
+  @@unique([shiftId])
+  @@index([providerId])
+  @@index([workerId])
+  @@index([status])
+  @@map("payments")
 }
 
 // ─── Notifications ───────────────────────────────────────────────
