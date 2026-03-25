@@ -124,6 +124,75 @@ export async function createShift(input: CreateShiftInput): Promise<ActionResult
   }
 }
 
+// ─── Edit Shift (Provider) ───────────────────────────────────────
+
+interface EditShiftInput {
+  role?: WorkerRole;
+  title?: string;
+  location?: string;
+  startTime?: string;
+  endTime?: string;
+  payRate?: number;
+  notes?: string;
+  minExperience?: number | null;
+}
+
+export async function editShift(shiftId: string, input: EditShiftInput): Promise<ActionResult> {
+  const user = await getSessionUser();
+  if (user.role !== "PROVIDER") {
+    return { success: false, error: "Only providers can edit shifts." };
+  }
+
+  const shift = await db.shift.findUnique({ where: { id: shiftId } });
+  if (!shift || shift.providerId !== user.id) {
+    return { success: false, error: "Shift not found." };
+  }
+  if (shift.status === "COMPLETED" || shift.status === "CANCELLED") {
+    return { success: false, error: "Cannot edit a completed or cancelled shift." };
+  }
+
+  const data: Record<string, unknown> = {};
+
+  if (input.role !== undefined) data.role = input.role;
+  if (input.title !== undefined) data.title = input.title || null;
+  if (input.location !== undefined) {
+    if (!input.location.trim()) return { success: false, error: "Location cannot be empty." };
+    data.location = input.location.trim();
+  }
+  if (input.startTime !== undefined) {
+    const st = new Date(input.startTime);
+    if (isNaN(st.getTime())) return { success: false, error: "Invalid start time." };
+    data.startTime = st;
+  }
+  if (input.endTime !== undefined) {
+    const et = new Date(input.endTime);
+    if (isNaN(et.getTime())) return { success: false, error: "Invalid end time." };
+    data.endTime = et;
+  }
+  if (input.payRate !== undefined) {
+    if (input.payRate <= 0) return { success: false, error: "Pay rate must be positive." };
+    data.payRate = input.payRate;
+  }
+  if (input.notes !== undefined) data.notes = input.notes || null;
+  if (input.minExperience !== undefined) data.minExperience = input.minExperience;
+
+  // Validate times if both provided
+  const newStart = (data.startTime as Date) ?? shift.startTime;
+  const newEnd = (data.endTime as Date) ?? shift.endTime;
+  if (newEnd <= newStart) {
+    return { success: false, error: "End time must be after start time." };
+  }
+
+  data.version = { increment: 1 };
+
+  await db.shift.update({
+    where: { id: shiftId },
+    data,
+  });
+
+  return { success: true };
+}
+
 // ─── Get Provider's Shifts ───────────────────────────────────────
 
 export async function getProviderShifts() {
@@ -156,10 +225,10 @@ export async function getAvailableShifts(filters?: {
   const user = await getSessionUser();
   if (user.role !== "WORKER") return [];
 
-  // Get worker's profile to match against provider preferences
+  // Get worker's profile to match against provider preferences and location
   const workerProfile = await db.workerProfile.findUnique({
     where: { userId: user.id },
-    select: { workerRole: true, yearsExperience: true },
+    select: { workerRole: true, yearsExperience: true, city: true, state: true, workAreas: true },
   });
 
   const where: Record<string, unknown> = {
@@ -194,6 +263,15 @@ export async function getAvailableShifts(filters?: {
     // Check minimum experience requirement
     if (shift.minExperience != null && workerProfile?.yearsExperience != null) {
       if (workerProfile.yearsExperience < shift.minExperience) return false;
+    }
+    // Location filter: if worker has work areas defined, only show shifts in those areas
+    if (workerProfile?.workAreas && workerProfile.workAreas.length > 0) {
+      const locationLower = shift.location.toLowerCase();
+      const workerAreas = workerProfile.workAreas.map((a) => a.toLowerCase());
+      // Also include worker's home city
+      if (workerProfile.city) workerAreas.push(workerProfile.city.toLowerCase());
+      const matchesArea = workerAreas.some((area) => locationLower.includes(area));
+      if (!matchesArea) return false;
     }
     return true;
   });

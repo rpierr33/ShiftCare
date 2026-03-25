@@ -16,6 +16,7 @@ interface UpdateWorkerProfileInput {
   city?: string;
   state?: string;
   zipCode?: string;
+  workAreas?: string[];
 }
 
 export async function updateWorkerProfile(input: UpdateWorkerProfileInput): Promise<ActionResult> {
@@ -46,6 +47,7 @@ export async function updateWorkerProfile(input: UpdateWorkerProfileInput): Prom
       city: input.city,
       state: input.state,
       zipCode: input.zipCode,
+      workAreas: input.workAreas || [],
       profileComplete,
     },
   });

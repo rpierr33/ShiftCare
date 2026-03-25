@@ -13,6 +13,7 @@ import {
   Lightbulb,
   UserCheck,
   Info,
+  Pencil,
 } from "lucide-react";
 import { getShiftById } from "@/actions/shifts";
 import { ShiftActions } from "./shift-actions";
@@ -115,13 +116,24 @@ export default async function ShiftDetailPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <Link
-        href="/provider/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Link>
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          href="/provider/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Link>
+        {(shift.status === "OPEN" || shift.status === "ASSIGNED") && (
+          <Link
+            href={`/provider/shifts/${shift.id}/edit`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-cyan-700 bg-cyan-50 rounded-lg hover:bg-cyan-100 transition-colors"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Shift
+          </Link>
+        )}
+      </div>
 
       {/* Assigned Worker Hero Card */}
       {isAssigned && shift.assignedWorker && (

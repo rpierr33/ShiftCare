@@ -189,6 +189,7 @@ model WorkerProfile {
   city               String?
   state              String?
   zipCode            String?
+  workAreas          String[]    @default([])  // Cities/areas the worker will travel to
   isAvailable        Boolean     @default(true)
   profileComplete    Boolean     @default(false)
   createdAt          DateTime    @default(now())
