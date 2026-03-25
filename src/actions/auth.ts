@@ -11,6 +11,7 @@ export async function signUpAction(formData: FormData): Promise<ActionResult<{ r
   const password = formData.get("password") as string;
   const name = (formData.get("name") as string)?.trim();
   const role = formData.get("role") as "PROVIDER" | "WORKER";
+  const providerType = (formData.get("providerType") as "AGENCY" | "PRIVATE") || "AGENCY";
 
   if (!email || !password || !name || !role) {
     return { success: false, error: "All fields are required." };
@@ -56,6 +57,7 @@ export async function signUpAction(formData: FormData): Promise<ActionResult<{ r
       data: {
         userId: user.id,
         companyName: name,
+        providerType: providerType === "PRIVATE" ? "PRIVATE" : "AGENCY",
       },
     });
     await db.subscription.create({

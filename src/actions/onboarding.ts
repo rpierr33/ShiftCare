@@ -13,6 +13,14 @@ interface ProviderOnboardingInput {
   state?: string;
   zipCode?: string;
   description?: string;
+  // Agency-specific
+  npiNumber?: string;
+  einNumber?: string;
+  licenseNumber?: string;
+  licenseState?: string;
+  contactPerson?: string;
+  contactPersonEmail?: string;
+  contactPersonPhone?: string;
 }
 
 export async function completeProviderOnboarding(
@@ -24,14 +32,18 @@ export async function completeProviderOnboarding(
   }
 
   if (!input.companyName?.trim()) {
-    return { success: false, error: "Company name is required." };
+    return { success: false, error: "Company or employer name is required." };
   }
 
   await db.$transaction(async (tx) => {
+    const existing = await tx.providerProfile.findUnique({ where: { userId: user.id } });
+    const providerType = existing?.providerType ?? "AGENCY";
+
     await tx.providerProfile.upsert({
       where: { userId: user.id },
       create: {
         userId: user.id,
+        providerType,
         companyName: input.companyName.trim(),
         phone: input.phone,
         address: input.address,
@@ -39,6 +51,13 @@ export async function completeProviderOnboarding(
         state: input.state,
         zipCode: input.zipCode,
         description: input.description,
+        npiNumber: input.npiNumber,
+        einNumber: input.einNumber,
+        licenseNumber: input.licenseNumber,
+        licenseState: input.licenseState,
+        contactPerson: input.contactPerson,
+        contactPersonEmail: input.contactPersonEmail,
+        contactPersonPhone: input.contactPersonPhone,
       },
       update: {
         companyName: input.companyName.trim(),
@@ -48,6 +67,13 @@ export async function completeProviderOnboarding(
         state: input.state,
         zipCode: input.zipCode,
         description: input.description,
+        npiNumber: input.npiNumber,
+        einNumber: input.einNumber,
+        licenseNumber: input.licenseNumber,
+        licenseState: input.licenseState,
+        contactPerson: input.contactPerson,
+        contactPersonEmail: input.contactPersonEmail,
+        contactPersonPhone: input.contactPersonPhone,
       },
     });
 
@@ -124,4 +150,16 @@ export async function completeWorkerOnboarding(
   });
 
   return { success: true };
+}
+
+// ─── Get provider type for current user ──────────────────────────
+
+export async function getProviderType(): Promise<string | null> {
+  const user = await getSessionUser();
+  if (user.role !== "PROVIDER") return null;
+  const profile = await db.providerProfile.findUnique({
+    where: { userId: user.id },
+    select: { providerType: true },
+  });
+  return profile?.providerType ?? null;
 }

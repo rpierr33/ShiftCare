@@ -14,6 +14,8 @@ import {
   User,
   Mail,
   Lock,
+  Building2,
+  Home,
 } from "lucide-react";
 
 export default function SignUpPage() {
@@ -25,6 +27,7 @@ export default function SignUpPage() {
 }
 
 type Role = "PROVIDER" | "WORKER";
+type ProvType = "AGENCY" | "PRIVATE";
 
 function SignUpForm() {
   const searchParams = useSearchParams();
@@ -32,16 +35,26 @@ function SignUpForm() {
   const hasPresetRole =
     urlRole !== null && ["PROVIDER", "WORKER"].includes(urlRole);
 
-  const [step, setStep] = useState<1 | 2>(hasPresetRole ? 2 : 1);
-  const [role, setRole] = useState<Role>(
-    hasPresetRole ? urlRole! : "PROVIDER"
+  const [step, setStep] = useState<"role" | "providerType" | "register">(
+    hasPresetRole ? (urlRole === "WORKER" ? "register" : "providerType") : "role"
   );
+  const [role, setRole] = useState<Role>(hasPresetRole ? urlRole! : "PROVIDER");
+  const [providerType, setProviderType] = useState<ProvType>("AGENCY");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleRoleSelect(selectedRole: Role) {
     setRole(selectedRole);
-    setStep(2);
+    if (selectedRole === "WORKER") {
+      setStep("register");
+    } else {
+      setStep("providerType");
+    }
+  }
+
+  function handleProviderTypeSelect(type: ProvType) {
+    setProviderType(type);
+    setStep("register");
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -51,6 +64,7 @@ function SignUpForm() {
 
     const formData = new FormData(e.currentTarget);
     formData.set("role", role);
+    formData.set("providerType", providerType);
 
     const result = await signUpAction(formData);
 
@@ -62,6 +76,12 @@ function SignUpForm() {
 
     window.location.href = "/onboarding";
   }
+
+  const getStepTitle = () => {
+    if (role === "WORKER") return "Sign up as a Healthcare Professional";
+    if (providerType === "AGENCY") return "Sign up as a Healthcare Agency";
+    return "Sign up as a Private Employer";
+  };
 
   return (
     <div
@@ -83,8 +103,9 @@ function SignUpForm() {
 
         {/* Card */}
         <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+
           {/* Step 1: Role Selection */}
-          {step === 1 && (
+          {step === "role" && (
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-slate-900 mb-2">
@@ -99,16 +120,9 @@ function SignUpForm() {
                 <button
                   type="button"
                   onClick={() => handleRoleSelect("PROVIDER")}
-                  className={`relative text-left p-8 rounded-2xl border-2 transition-all duration-200 group ${
-                    role === "PROVIDER"
-                      ? "bg-cyan-50 border-cyan-400 ring-2 ring-cyan-500"
-                      : "bg-cyan-50 border-cyan-200 hover:border-cyan-400"
-                  }`}
+                  className="relative text-left p-6 rounded-2xl border-2 bg-cyan-50 border-cyan-200 hover:border-cyan-400 transition-all duration-200 group"
                 >
-                  <Briefcase
-                    size={32}
-                    className="text-cyan-600 mb-3"
-                  />
+                  <Briefcase size={28} className="text-cyan-600 mb-2" />
                   <h3 className="text-lg font-bold text-slate-900 mb-1">
                     I Need Staff
                   </h3>
@@ -120,16 +134,9 @@ function SignUpForm() {
                 <button
                   type="button"
                   onClick={() => handleRoleSelect("WORKER")}
-                  className={`relative text-left p-8 rounded-2xl border-2 transition-all duration-200 group ${
-                    role === "WORKER"
-                      ? "bg-emerald-50 border-emerald-400 ring-2 ring-emerald-500"
-                      : "bg-emerald-50 border-emerald-200 hover:border-emerald-400"
-                  }`}
+                  className="relative text-left p-6 rounded-2xl border-2 bg-emerald-50 border-emerald-200 hover:border-emerald-400 transition-all duration-200 group"
                 >
-                  <Calendar
-                    size={32}
-                    className="text-emerald-600 mb-3"
-                  />
+                  <Calendar size={28} className="text-emerald-600 mb-2" />
                   <h3 className="text-lg font-bold text-slate-900 mb-1">
                     I&apos;m Looking for Shifts
                   </h3>
@@ -141,34 +148,92 @@ function SignUpForm() {
             </>
           )}
 
-          {/* Step 2: Registration Form */}
-          {step === 2 && (
+          {/* Step 1.5: Provider Type Selection */}
+          {step === "providerType" && (
             <>
               <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                  {role === "PROVIDER"
-                    ? "Sign up as a Provider"
-                    : "Sign up as a Worker"}
+                  What type of employer?
+                </h1>
+                <p className="text-sm text-slate-500">
+                  This determines what information we&apos;ll need
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("role");
+                  setError("");
+                }}
+                className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-6"
+              >
+                <ArrowLeft size={16} />
+                Back
+              </button>
+
+              <div className="grid grid-cols-1 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleProviderTypeSelect("AGENCY")}
+                  className="relative text-left p-6 rounded-2xl border-2 bg-cyan-50 border-cyan-200 hover:border-cyan-400 transition-all duration-200"
+                >
+                  <Building2 size={28} className="text-cyan-600 mb-2" />
+                  <h3 className="text-base font-bold text-slate-900 mb-1">
+                    Healthcare Agency
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Licensed agency, nurse registry, or staffing organization
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Requires: NPI, EIN, license info
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleProviderTypeSelect("PRIVATE")}
+                  className="relative text-left p-6 rounded-2xl border-2 bg-violet-50 border-violet-200 hover:border-violet-400 transition-all duration-200"
+                >
+                  <Home size={28} className="text-violet-600 mb-2" />
+                  <h3 className="text-base font-bold text-slate-900 mb-1">
+                    Private Employer
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Individual or family hiring healthcare workers directly
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Quick setup — just add payment to start posting
+                  </p>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Step 2: Registration Form */}
+          {step === "register" && (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-xl font-bold text-slate-900 mb-2">
+                  {getStepTitle()}
                 </h1>
                 <p className="text-sm text-slate-500">
                   Fill in your details to get started
                 </p>
               </div>
 
-              {/* Back to role selection (only if role was not pre-set via URL) */}
-              {!hasPresetRole && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep(1);
-                    setError("");
-                  }}
-                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-6"
-                >
-                  <ArrowLeft size={16} />
-                  Change role
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (role === "WORKER") setStep("role");
+                  else setStep("providerType");
+                  setError("");
+                }}
+                className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-6"
+              >
+                <ArrowLeft size={16} />
+                Back
+              </button>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
@@ -178,10 +243,7 @@ function SignUpForm() {
                 )}
 
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-slate-700 mb-2"
-                  >
+                  <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2">
                     Full Name
                   </label>
                   <div className="relative">
@@ -199,10 +261,7 @@ function SignUpForm() {
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-slate-700 mb-2"
-                  >
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
                     Email
                   </label>
                   <div className="relative">
@@ -221,10 +280,7 @@ function SignUpForm() {
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-slate-700 mb-2"
-                  >
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
                     Password
                   </label>
                   <div className="relative">

@@ -54,6 +54,11 @@ enum SubscriptionStatus {
   TRIALING
 }
 
+enum ProviderType {
+  AGENCY
+  PRIVATE
+}
+
 enum CredentialType {
   LICENSE
   CERTIFICATION
@@ -152,17 +157,25 @@ model VerificationToken {
 // ─── Provider Profile ────────────────────────────────────────────
 
 model ProviderProfile {
-  id           String  @id @default(cuid())
-  userId       String  @unique
-  companyName  String
-  description  String?
-  address      String?
-  city         String?
-  state        String?
-  zipCode      String?
-  phone        String?
-  website      String?
-  npiNumber    String?
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  providerType       ProviderType  @default(AGENCY)
+  companyName        String
+  description        String?
+  address            String?
+  city               String?
+  state              String?
+  zipCode            String?
+  phone              String?
+  website            String?
+  // Agency-specific fields
+  npiNumber          String?
+  einNumber          String?
+  licenseNumber      String?
+  licenseState       String?
+  contactPerson      String?       // If different from the account holder
+  contactPersonEmail String?
+  contactPersonPhone String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
