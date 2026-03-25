@@ -6,6 +6,23 @@ import { canPostShift, incrementShiftUsage } from "@/lib/subscription";
 import type { ActionResult } from "@/types";
 import type { WorkerRole } from "@prisma/client";
 
+const STATE_NAMES: Record<string, string> = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
+  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
+  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
+  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
+  MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
+  NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina",
+  ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania",
+  RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee",
+  TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
+  WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+};
+function getStateName(abbr: string): string {
+  return STATE_NAMES[abbr.toUpperCase()] || abbr;
+}
+
 // ─── Create Shift (Provider only) ───────────────────────────────
 
 interface CreateShiftInput {
@@ -228,7 +245,7 @@ export async function getAvailableShifts(filters?: {
   // Get worker's profile to match against provider preferences and location
   const workerProfile = await db.workerProfile.findUnique({
     where: { userId: user.id },
-    select: { workerRole: true, yearsExperience: true, city: true, state: true, workAreas: true },
+    select: { workerRole: true, yearsExperience: true, city: true, state: true, workAreas: true, serviceRadiusMiles: true },
   });
 
   const where: Record<string, unknown> = {
@@ -264,14 +281,42 @@ export async function getAvailableShifts(filters?: {
     if (shift.minExperience != null && workerProfile?.yearsExperience != null) {
       if (workerProfile.yearsExperience < shift.minExperience) return false;
     }
-    // Location filter: if worker has work areas defined, only show shifts in those areas
-    if (workerProfile?.workAreas && workerProfile.workAreas.length > 0) {
-      const locationLower = shift.location.toLowerCase();
-      const workerAreas = workerProfile.workAreas.map((a) => a.toLowerCase());
-      // Also include worker's home city
-      if (workerProfile.city) workerAreas.push(workerProfile.city.toLowerCase());
-      const matchesArea = workerAreas.some((area) => locationLower.includes(area));
-      if (!matchesArea) return false;
+    // Location filter
+    // If worker has a service radius set, we can't calculate actual distance
+    // without geocoding, so we do a best-effort text match but are lenient.
+    // If service radius is large (100+ miles), show all shifts in the same state.
+    // If worker has specific work areas, match against shift location text.
+    if (workerProfile) {
+      const hasWorkAreas = workerProfile.workAreas && workerProfile.workAreas.length > 0;
+      const hasLargeRadius = (workerProfile.serviceRadiusMiles ?? 0) >= 100;
+      const shiftLoc = shift.location.toLowerCase();
+
+      if (hasLargeRadius && workerProfile.state) {
+        // Large radius: show all shifts in the same state
+        const stateAbbr = workerProfile.state.toLowerCase();
+        const stateName = getStateName(workerProfile.state).toLowerCase();
+        const matchesState = shiftLoc.includes(stateAbbr) || shiftLoc.includes(stateName);
+        if (!matchesState) return false;
+      } else if (hasWorkAreas) {
+        // Specific work areas: match city names bidirectionally
+        const searchTerms: string[] = [];
+        // Add work area city names (extract city from "City, State" format)
+        for (const area of workerProfile.workAreas!) {
+          const city = area.split(",")[0].trim().toLowerCase();
+          if (city.length >= 3) searchTerms.push(city);
+        }
+        // Add home city
+        if (workerProfile.city) {
+          searchTerms.push(workerProfile.city.toLowerCase());
+        }
+        // Check if shift location contains any of the worker's areas, OR
+        // if any search term appears in the shift location
+        if (searchTerms.length > 0) {
+          const matchesArea = searchTerms.some((term) => shiftLoc.includes(term));
+          if (!matchesArea) return false;
+        }
+      }
+      // No work areas and no large radius = show all shifts (no location filter)
     }
     return true;
   });
