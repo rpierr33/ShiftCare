@@ -4,14 +4,12 @@ import {
   Briefcase,
   Users,
   CheckCircle,
-  TrendingUp,
   MapPin,
   Clock,
   ChevronRight,
   AlertTriangle,
   Zap,
   Loader2,
-  ArrowUpRight,
 } from "lucide-react";
 import { ActivityFeed } from "@/components/shared/activity-feed";
 import { StatusBadge, VerifiedBadge } from "@/components/shared/status-badge";
@@ -146,210 +144,61 @@ export default async function ProviderDashboardPage({
         </Link>
       </div>
 
-      {/* Urgency Banner — Active Matching */}
-      <div className="bg-gradient-to-r from-cyan-600 to-emerald-600 text-white rounded-xl py-3 px-4 mb-10 flex items-center gap-2">
-        <Zap className="h-4 w-4 flex-shrink-0" />
-        <span className="text-sm font-medium">
-          Your shifts are being matched with 47 available workers in your area
-        </span>
-      </div>
-
-      {/* Stats Row — Live Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-        {/* Open Shifts */}
-        <Link href="/provider/dashboard?filter=OPEN#shifts" className={`bg-white rounded-2xl shadow-sm border border-l-4 border-l-emerald-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block ${activeFilter === "OPEN" ? "border-emerald-300 ring-2 ring-emerald-200" : "border-slate-100"}`}>
-          <div className="flex items-center justify-between">
+      {/* Plan limit warning — only when at limit */}
+      {isAtLimit && (
+        <div className="rounded-xl border border-amber-200 p-4 bg-gradient-to-r from-amber-50 to-red-50 mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
             <div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-slate-500">Open Shifts</p>
-                {openShifts > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                    <ArrowUpRight className="h-2.5 w-2.5" />
-                    Active
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span
-                  className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
-                  style={{ animationDelay: "0ms" }}
-                >
-                  {openShifts}
-                </span>
-                {openShifts > 0 && (
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
-                )}
-              </div>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
-              <Briefcase className="h-5 w-5 text-emerald-600" />
+              <p className="text-sm font-semibold text-red-700">Plan limit reached ({shiftsUsed}/{shiftsLimit} shifts)</p>
+              <p className="text-xs text-red-600">Upgrade to post more shifts</p>
             </div>
           </div>
-        </Link>
+          <Link
+            href="/provider/billing"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            Upgrade
+          </Link>
+        </div>
+      )}
 
-        {/* Assigned */}
-        <Link href="/provider/dashboard?filter=ASSIGNED#shifts" className={`bg-white rounded-2xl shadow-sm border border-l-4 border-l-cyan-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block ${activeFilter === "ASSIGNED" ? "border-cyan-300 ring-2 ring-cyan-200" : "border-slate-100"}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Assigned</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span
-                  className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
-                  style={{ animationDelay: "100ms" }}
-                >
-                  {assignedShifts}
-                </span>
-                {assignedShifts > 0 && (
-                  <TrendingUp className="h-4 w-4 text-cyan-500" />
-                )}
-              </div>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center">
-              <Users className="h-5 w-5 text-cyan-600" />
-            </div>
-          </div>
-        </Link>
-
-        {/* Completed */}
-        <Link href="/provider/dashboard?filter=COMPLETED#shifts" className={`bg-white rounded-2xl shadow-sm border border-l-4 border-l-slate-400 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block ${activeFilter === "COMPLETED" ? "border-slate-300 ring-2 ring-slate-200" : "border-slate-100"}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Completed</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span
-                  className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
-                  style={{ animationDelay: "200ms" }}
-                >
-                  {completedShifts}
-                </span>
-                {completedShifts > 0 && (
-                  <TrendingUp className="h-4 w-4 text-slate-400" />
-                )}
-              </div>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-slate-500" />
-            </div>
-          </div>
-        </Link>
-
-        {/* Plan Usage */}
-        {isAtLimit ? (
-          <div className="rounded-2xl shadow-sm border border-amber-200 p-6 bg-gradient-to-r from-amber-50 to-red-50 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-sm font-semibold text-red-700">Plan Limit Reached</p>
-                <span
-                  className="text-3xl font-bold text-red-800 mt-1.5 tracking-tight block animate-count-up"
-                  style={{ animationDelay: "300ms" }}
-                >
-                  {shiftsUsed}
-                  <span className="text-lg font-normal text-red-400">
-                    /{shiftsLimit}
-                  </span>
-                </span>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-            </div>
-            <div className="mt-2 mb-4">
-              <div className="w-full bg-red-200/60 rounded-full h-2">
-                <div className="bg-red-500 h-2 rounded-full w-full" />
-              </div>
-            </div>
-            <Link
-              href="/provider/billing"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 text-white text-sm font-semibold rounded-xl hover:bg-amber-700 transition-all duration-200 shadow-md shadow-amber-600/20"
-            >
-              <Zap className="h-4 w-4" />
-              Upgrade Now
-            </Link>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-amber-500 p-6 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Plan Usage</p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span
-                    className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
-                    style={{ animationDelay: "300ms" }}
-                  >
-                    {shiftsUsed}
-                    <span className="text-lg font-normal text-slate-400">
-                      /{shiftsLimit === Infinity ? "\u221e" : shiftsLimit}
-                    </span>
-                  </span>
-                  {shiftsUsed > 0 && (
-                    <TrendingUp className="h-4 w-4 text-amber-500" />
-                  )}
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-amber-600" />
-              </div>
-            </div>
-            {shiftsLimit !== Infinity && (
-              <div className="mt-4">
-                <div className="w-full bg-slate-100 rounded-full h-2">
-                  <div
-                    className="bg-amber-500 h-2 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min((shiftsUsed / shiftsLimit) * 100, 100)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-            {planName === "FREE" && (
-              <Link
-                href="/provider/billing"
-                className="text-xs text-cyan-600 hover:text-cyan-700 font-semibold mt-3 inline-block transition-colors"
-              >
-                Upgrade plan &rarr;
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Shifts Section */}
+      {/* Shifts Section — single filter bar, no duplication */}
       <div id="shifts" className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-            {activeFilter === "ALL"
-              ? "Your Shifts"
-              : `${activeFilter.charAt(0) + activeFilter.slice(1).toLowerCase()} Shifts`}
-          </h2>
-          <span className="text-sm font-medium text-slate-400">
-            {sortedShifts.length} shift{sortedShifts.length !== 1 ? "s" : ""}
-            {activeFilter !== "ALL" && ` of ${shifts.length} total`}
-          </span>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Your Shifts</h2>
+          {!isAtLimit && (
+            <span className="text-xs text-slate-400">
+              {planName} plan &middot; {shiftsUsed}/{shiftsLimit === Infinity ? "∞" : shiftsLimit} posted this month
+            </span>
+          )}
         </div>
-        {/* Filter pills */}
         <div className="flex items-center gap-2 flex-wrap">
           {[
-            { key: "ALL", label: "All", count: shifts.length },
-            { key: "OPEN", label: "Open", count: openShifts },
-            { key: "ASSIGNED", label: "Assigned", count: assignedShifts },
-            { key: "COMPLETED", label: "Completed", count: completedShifts },
-          ].map((tab) => (
-            <Link
-              key={tab.key}
-              href={tab.key === "ALL" ? "/provider/dashboard#shifts" : `/provider/dashboard?filter=${tab.key}#shifts`}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                activeFilter === tab.key
-                  ? "bg-cyan-600 text-white shadow-sm"
-                  : "bg-white text-slate-600 border border-slate-200 hover:border-cyan-300 hover:text-cyan-700"
-              }`}
-            >
-              {tab.label}
-              <span className={`text-xs ${activeFilter === tab.key ? "text-cyan-200" : "text-slate-400"}`}>
-                {tab.count}
-              </span>
-            </Link>
-          ))}
+            { key: "ALL", label: "All", count: shifts.length, color: "slate" },
+            { key: "OPEN", label: "Open", count: openShifts, color: "emerald" },
+            { key: "ASSIGNED", label: "Assigned", count: assignedShifts, color: "cyan" },
+            { key: "COMPLETED", label: "Completed", count: completedShifts, color: "slate" },
+          ].map((tab) => {
+            const isActive = activeFilter === tab.key;
+            return (
+              <Link
+                key={tab.key}
+                href={tab.key === "ALL" ? "/provider/dashboard" : `/provider/dashboard?filter=${tab.key}`}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                {tab.label}
+                <span className={`text-xs font-bold ${isActive ? "text-slate-400" : "text-slate-400"}`}>
+                  {tab.count}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
