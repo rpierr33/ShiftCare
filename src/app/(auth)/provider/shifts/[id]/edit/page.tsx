@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { getShiftById, editShift } from "@/actions/shifts";
+import { LocationAutocomplete } from "@/components/shared/location-autocomplete";
 
 const ROLES = ["RN", "LPN", "CNA", "HHA", "MEDICAL_ASSISTANT", "COMPANION", "OTHER"];
 
@@ -131,8 +132,15 @@ export default function EditShiftPage() {
             <input id="title" name="title" value={form.title} onChange={handleChange} placeholder="e.g., Morning Patient Care" className={inputClass} />
           </div>
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-slate-700 mb-1.5">Location *</label>
-            <input id="location" name="location" value={form.location} onChange={handleChange} required className={inputClass} />
+            <LocationAutocomplete
+              id="location"
+              value={form.location}
+              onChange={(val) => setForm(prev => ({ ...prev, location: val }))}
+              onSelect={(loc) => setForm(prev => ({ ...prev, location: loc.fullAddress || loc.display }))}
+              label="Location"
+              required
+              placeholder="Search address, city, or zip code..."
+            />
           </div>
         </div>
 

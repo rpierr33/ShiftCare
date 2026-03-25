@@ -11,6 +11,7 @@ import {
   getProviderType,
 } from "@/actions/onboarding";
 import { ArrowRight, ArrowLeft, Loader2, Check } from "lucide-react";
+import { LocationAutocomplete } from "@/components/shared/location-autocomplete";
 import type { WorkerRole } from "@prisma/client";
 
 const WORKER_ROLES: { value: WorkerRole; label: string }[] = [
@@ -412,27 +413,34 @@ function AgencyOnboardingForm() {
                 <ErrorBanner message={error} />
 
                 <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Address
-                  </label>
-                  <Input
+                  <LocationAutocomplete
                     id="address"
                     value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="123 Main St"
+                    onChange={setAddress}
+                    onSelect={(loc) => {
+                      setAddress(loc.fullAddress || loc.display);
+                      if (loc.city) setCity(loc.city);
+                      if (loc.state) setState(loc.state);
+                      if (loc.zipCode) setZipCode(loc.zipCode);
+                    }}
+                    label="Address"
+                    placeholder="Search address..."
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      City
-                    </label>
-                    <Input
+                    <LocationAutocomplete
                       id="city"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="New York"
+                      onChange={setCity}
+                      onSelect={(loc) => {
+                        setCity(loc.city);
+                        if (loc.state) setState(loc.state);
+                        if (loc.zipCode) setZipCode(loc.zipCode);
+                      }}
+                      label="City"
+                      placeholder="Search city..."
                     />
                   </div>
                   <div>
@@ -692,27 +700,34 @@ function PrivateEmployerOnboardingForm() {
                 <ErrorBanner message={error} />
 
                 <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Address
-                  </label>
-                  <Input
+                  <LocationAutocomplete
                     id="address"
                     value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="123 Main St"
+                    onChange={setAddress}
+                    onSelect={(loc) => {
+                      setAddress(loc.fullAddress || loc.display);
+                      if (loc.city) setCity(loc.city);
+                      if (loc.state) setState(loc.state);
+                      if (loc.zipCode) setZipCode(loc.zipCode);
+                    }}
+                    label="Address"
+                    placeholder="Search address..."
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      City
-                    </label>
-                    <Input
+                    <LocationAutocomplete
                       id="city"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="New York"
+                      onChange={setCity}
+                      onSelect={(loc) => {
+                        setCity(loc.city);
+                        if (loc.state) setState(loc.state);
+                        if (loc.zipCode) setZipCode(loc.zipCode);
+                      }}
+                      label="City"
+                      placeholder="Search city..."
                     />
                   </div>
                   <div>
@@ -919,15 +934,18 @@ function WorkerOnboardingForm() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <Input
+                    <LocationAutocomplete
                       id="city"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="New York"
+                      onChange={setCity}
+                      onSelect={(loc) => {
+                        setCity(loc.city);
+                        if (loc.state) setState(loc.state);
+                        if (loc.zipCode) setZipCode(loc.zipCode);
+                      }}
+                      label="City"
                       required
+                      placeholder="Search your city..."
                     />
                   </div>
                   <div>

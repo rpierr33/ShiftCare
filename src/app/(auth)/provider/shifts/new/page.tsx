@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { createShift } from "@/actions/shifts";
+import { LocationAutocomplete } from "@/components/shared/location-autocomplete";
 import type { WorkerRole } from "@prisma/client";
 
 const ROLES: { value: WorkerRole; label: string }[] = [
@@ -371,23 +372,14 @@ export default function CreateShiftPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="location"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                  Location <span className="text-red-500">*</span>
-                </span>
-              </label>
-              <input
+              <LocationAutocomplete
                 id="location"
-                name="location"
-                type="text"
                 value={form.location}
-                onChange={handleChange}
-                placeholder="e.g. Sunrise Senior Living, 123 Main St, Austin TX"
-                className={inputClass}
+                onChange={(val) => setForm(prev => ({ ...prev, location: val }))}
+                onSelect={(loc) => setForm(prev => ({ ...prev, location: loc.fullAddress || loc.display }))}
+                label="Location"
+                required
+                placeholder="Search address, city, or zip code..."
               />
               <p className="mt-1.5 text-xs text-gray-400">
                 Workers search by location first -- be specific to attract nearby candidates.

@@ -16,6 +16,7 @@ import {
   Award,
   Sparkles,
 } from "lucide-react";
+import { LocationAutocomplete, WorkAreaPicker } from "@/components/shared/location-autocomplete";
 
 const WORKER_ROLE_OPTIONS = [
   { value: "RN", label: "Registered Nurse (RN)" },
@@ -68,7 +69,7 @@ export default function WorkerProfilePage() {
   const [bio, setBio] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
   const [serviceRadius, setServiceRadius] = useState("");
-  const [workAreas, setWorkAreas] = useState("");
+  const [workAreasList, setWorkAreasList] = useState<string[]>([]);
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
@@ -96,9 +97,7 @@ export default function WorkerProfilePage() {
           setCity(profile.city || "");
           setState(profile.state || "");
           setZipCode(profile.zipCode || "");
-          setWorkAreas(
-            Array.isArray(profile.workAreas) ? profile.workAreas.join(", ") : ""
-          );
+          setWorkAreasList(profile.workAreas || []);
         }
       } catch {
         setMessage({ type: "error", text: "Failed to load profile." });
@@ -195,9 +194,7 @@ export default function WorkerProfilePage() {
         city: city || undefined,
         state: state || undefined,
         zipCode: zipCode || undefined,
-        workAreas: workAreas
-          ? workAreas.split(",").map((a) => a.trim()).filter(Boolean)
-          : [],
+        workAreas: workAreasList,
       });
 
       if (result.success) {
@@ -316,12 +313,18 @@ export default function WorkerProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
+                <LocationAutocomplete
                   id="city"
-                  label="City"
-                  placeholder="Los Angeles"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={setCity}
+                  onSelect={(loc) => {
+                    setCity(loc.city);
+                    if (loc.state) setState(loc.state);
+                    if (loc.zipCode) setZipCode(loc.zipCode);
+                  }}
+                  label="City"
+                  required
+                  placeholder="Search your city..."
                 />
                 <Select
                   id="state"
@@ -351,20 +354,10 @@ export default function WorkerProfilePage() {
                 />
               </div>
               <div className="w-full mt-4">
-                <label htmlFor="workAreas" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Work Areas
-                </label>
-                <input
-                  id="workAreas"
-                  type="text"
-                  placeholder="e.g., Tampa, Orlando, Clearwater"
-                  value={workAreas}
-                  onChange={(e) => setWorkAreas(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                <WorkAreaPicker
+                  areas={workAreasList}
+                  onChange={setWorkAreasList}
                 />
-                <p className="text-xs text-gray-400 mt-1">
-                  Comma-separated list of cities where you want to work. You&apos;ll only see shifts in these areas.
-                </p>
               </div>
             </CardContent>
           </div>
