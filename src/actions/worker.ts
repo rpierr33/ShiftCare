@@ -11,7 +11,6 @@ interface UpdateWorkerProfileInput {
   licenseState?: string;
   certifications?: string[];
   bio?: string;
-  hourlyRate?: number;
   yearsExperience?: number;
   serviceRadiusMiles?: number;
   city?: string;
@@ -42,7 +41,6 @@ export async function updateWorkerProfile(input: UpdateWorkerProfileInput): Prom
       licenseState: input.licenseState,
       certifications: input.certifications || [],
       bio: input.bio,
-      hourlyRate: input.hourlyRate,
       yearsExperience: input.yearsExperience,
       serviceRadiusMiles: input.serviceRadiusMiles,
       city: input.city,

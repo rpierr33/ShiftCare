@@ -17,7 +17,6 @@ interface CreateShiftInput {
   payRate: number;
   notes?: string;
   minExperience?: number;
-  maxRate?: number;
 }
 
 export async function createShift(input: CreateShiftInput): Promise<ActionResult<{ id: string }>> {
@@ -93,7 +92,6 @@ export async function createShift(input: CreateShiftInput): Promise<ActionResult
           notes: input.notes || null,
           status: "OPEN",
           minExperience: input.minExperience || null,
-          maxRate: input.maxRate || null,
         },
       });
 
@@ -150,7 +148,7 @@ export async function getProviderShifts() {
 
 // ─── Get Available Shifts (Worker) ───────────────────────────────
 // Shows only shifts matching the worker's role.
-// Provider preferences (minExperience, maxRate) filter server-side.
+// Provider preferences (minExperience) filter server-side.
 
 export async function getAvailableShifts(filters?: {
   role?: WorkerRole;
@@ -161,7 +159,7 @@ export async function getAvailableShifts(filters?: {
   // Get worker's profile to match against provider preferences
   const workerProfile = await db.workerProfile.findUnique({
     where: { userId: user.id },
-    select: { workerRole: true, yearsExperience: true, hourlyRate: true },
+    select: { workerRole: true, yearsExperience: true },
   });
 
   const where: Record<string, unknown> = {
@@ -196,10 +194,6 @@ export async function getAvailableShifts(filters?: {
     // Check minimum experience requirement
     if (shift.minExperience != null && workerProfile?.yearsExperience != null) {
       if (workerProfile.yearsExperience < shift.minExperience) return false;
-    }
-    // Check max rate preference
-    if (shift.maxRate != null && workerProfile?.hourlyRate != null) {
-      if (workerProfile.hourlyRate > shift.maxRate) return false;
     }
     return true;
   });

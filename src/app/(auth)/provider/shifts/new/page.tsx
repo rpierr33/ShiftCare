@@ -57,7 +57,6 @@ export default function CreateShiftPage() {
     payRate: "",
     notes: "",
     minExperience: "",
-    maxRate: "",
   });
 
   // Store the submitted form values for the success modal
@@ -83,7 +82,6 @@ export default function CreateShiftPage() {
       payRate: "",
       notes: "",
       minExperience: "",
-      maxRate: "",
     });
     setError(null);
     setIsLimitError(false);
@@ -150,7 +148,6 @@ export default function CreateShiftPage() {
         payRate,
         notes: form.notes || undefined,
         minExperience: form.minExperience ? parseInt(form.minExperience) : undefined,
-        maxRate: form.maxRate ? parseFloat(form.maxRate) : undefined,
       });
 
       if (!result.success) {
@@ -553,38 +550,21 @@ export default function CreateShiftPage() {
             Control who can see and accept this shift. Leave blank for no restrictions.
           </p>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="minExperience" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Min. Experience (years)
-              </label>
-              <input
-                id="minExperience"
-                name="minExperience"
-                type="number"
-                min="0"
-                value={form.minExperience}
-                onChange={handleChange}
-                placeholder="Any"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Max. Worker Rate ($/hr)
-              </label>
-              <input
-                id="maxRate"
-                name="maxRate"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.maxRate}
-                onChange={handleChange}
-                placeholder="No limit"
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label htmlFor="minExperience" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Min. Experience (years)
+            </label>
+            <input
+              id="minExperience"
+              name="minExperience"
+              type="number"
+              min="0"
+              value={form.minExperience}
+              onChange={handleChange}
+              placeholder="Any experience level"
+              className={inputClass}
+            />
+            <p className="text-xs text-gray-400 mt-1">Leave blank to allow workers of any experience level</p>
           </div>
         </div>
 

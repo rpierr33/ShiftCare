@@ -184,7 +184,6 @@ model WorkerProfile {
   licenseExpiry      DateTime?
   certifications     String[]    @default([])
   bio                String?
-  hourlyRate         Float?
   yearsExperience    Int?
   serviceRadiusMiles Int?
   city               String?
@@ -255,7 +254,6 @@ model Shift {
   status           ShiftStatus @default(OPEN)
   // Provider preferences — who can see/accept this shift
   minExperience    Int?        // Minimum years of experience (null = no minimum)
-  maxRate          Float?      // Max hourly rate the worker should expect (null = no cap)
   minRating        Float?      // Minimum worker rating (null = no minimum) — reserved for future
   // Assignment tracking
   assignedWorkerId String?

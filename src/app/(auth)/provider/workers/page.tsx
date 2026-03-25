@@ -151,7 +151,6 @@ function WorkerCard({
     city: string | null;
     state: string | null;
     yearsExperience: number | null;
-    hourlyRate: unknown;
     credentials: { type: string; name: string }[];
   };
   isFreeTier: boolean;
@@ -217,14 +216,6 @@ function WorkerCard({
                 {worker.yearsExperience}{" "}
                 {worker.yearsExperience === 1 ? "year" : "years"}{" "}
                 experience
-              </span>
-            </div>
-          )}
-          {worker.hourlyRate != null && !isFreeTier && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <DollarSign className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-              <span className="font-medium">
-                ${parseFloat(String(worker.hourlyRate)).toFixed(2)}/hr
               </span>
             </div>
           )}

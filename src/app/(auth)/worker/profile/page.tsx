@@ -66,7 +66,6 @@ export default function WorkerProfilePage() {
   const [licenseState, setLicenseState] = useState("");
   const [certifications, setCertifications] = useState("");
   const [bio, setBio] = useState("");
-  const [hourlyRate, setHourlyRate] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
   const [serviceRadius, setServiceRadius] = useState("");
   const [city, setCity] = useState("");
@@ -87,11 +86,6 @@ export default function WorkerProfilePage() {
               : ""
           );
           setBio(profile.bio || "");
-          setHourlyRate(
-            profile.hourlyRate != null
-              ? String(parseFloat(String(profile.hourlyRate)))
-              : ""
-          );
           setYearsExperience(
             profile.yearsExperience != null ? String(profile.yearsExperience) : ""
           );
@@ -157,18 +151,12 @@ export default function WorkerProfilePage() {
       sectionId: "experience-section",
     },
     {
-      label: "Desired hourly rate",
-      hint: "Let providers know your expectations",
-      filled: hourlyRate.trim() !== "",
-      sectionId: "experience-section",
-    },
-    {
       label: "Bio written",
       hint: "Tell providers what makes you stand out",
       filled: bio.trim() !== "",
       sectionId: "bio-section",
     },
-  ], [city, state, zipCode, serviceRadius, workerRole, licenseNumber, certifications, yearsExperience, hourlyRate, bio]);
+  ], [city, state, zipCode, serviceRadius, workerRole, licenseNumber, certifications, yearsExperience, bio]);
 
   const filledCount = checklist.filter((item) => item.filled).length;
   const totalCount = checklist.length;
@@ -198,7 +186,6 @@ export default function WorkerProfilePage() {
         licenseState: licenseState || undefined,
         certifications: certsArray.length > 0 ? certsArray : undefined,
         bio: bio || undefined,
-        hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
         yearsExperience: yearsExperience ? parseInt(yearsExperience, 10) : undefined,
         serviceRadiusMiles: serviceRadius ? parseInt(serviceRadius, 10) : undefined,
         city: city || undefined,
@@ -424,16 +411,6 @@ export default function WorkerProfilePage() {
                 placeholder="3"
                 value={yearsExperience}
                 onChange={(e) => setYearsExperience(e.target.value)}
-              />
-              <Input
-                id="hourlyRate"
-                label="Desired Hourly Rate ($)"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="25.00"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(e.target.value)}
               />
             </CardContent>
           </div>

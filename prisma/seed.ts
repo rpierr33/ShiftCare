@@ -125,7 +125,6 @@ async function main() {
         city: w.city,
         state: w.state,
         zipCode: w.zip,
-        hourlyRate: w.rate,
         licenseNumber: `FL-${String(Math.floor(Math.random() * 90000) + 10000)}`,
         licenseState: "FL",
         licenseExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
