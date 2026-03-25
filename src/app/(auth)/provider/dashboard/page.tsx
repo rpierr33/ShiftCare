@@ -86,7 +86,14 @@ const STATUS_ORDER: Record<string, number> = {
   CANCELLED: 4,
 };
 
-export default async function ProviderDashboardPage() {
+export default async function ProviderDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
+  const params = await searchParams;
+  const activeFilter = params.filter ?? "ALL";
+
   const [shifts, subscription, user] = await Promise.all([
     getProviderShifts(),
     getSubscriptionStatus(),
@@ -102,8 +109,13 @@ export default async function ProviderDashboardPage() {
   const isAtLimit =
     shiftsLimit !== Infinity && shiftsUsed >= shiftsLimit;
 
-  const sortedShifts = [...shifts].sort(
-    (a, b) => (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
+  // Filter shifts based on selected tab, then sort newest first
+  const filteredShifts = activeFilter === "ALL"
+    ? shifts
+    : shifts.filter((s) => s.status === activeFilter);
+
+  const sortedShifts = [...filteredShifts].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const firstName = user.name?.split(" ")[0] ?? "there";
@@ -145,7 +157,7 @@ export default async function ProviderDashboardPage() {
       {/* Stats Row — Live Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {/* Open Shifts */}
-        <a href="#shifts" className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-emerald-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block">
+        <Link href="/provider/dashboard?filter=OPEN#shifts" className={`bg-white rounded-2xl shadow-sm border border-l-4 border-l-emerald-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block ${activeFilter === "OPEN" ? "border-emerald-300 ring-2 ring-emerald-200" : "border-slate-100"}`}>
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
@@ -173,10 +185,10 @@ export default async function ProviderDashboardPage() {
               <Briefcase className="h-5 w-5 text-emerald-600" />
             </div>
           </div>
-        </a>
+        </Link>
 
         {/* Assigned */}
-        <a href="#shifts" className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-cyan-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block">
+        <Link href="/provider/dashboard?filter=ASSIGNED#shifts" className={`bg-white rounded-2xl shadow-sm border border-l-4 border-l-cyan-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block ${activeFilter === "ASSIGNED" ? "border-cyan-300 ring-2 ring-cyan-200" : "border-slate-100"}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Assigned</p>
@@ -196,10 +208,10 @@ export default async function ProviderDashboardPage() {
               <Users className="h-5 w-5 text-cyan-600" />
             </div>
           </div>
-        </a>
+        </Link>
 
         {/* Completed */}
-        <a href="#shifts" className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-slate-400 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block">
+        <Link href="/provider/dashboard?filter=COMPLETED#shifts" className={`bg-white rounded-2xl shadow-sm border border-l-4 border-l-slate-400 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block ${activeFilter === "COMPLETED" ? "border-slate-300 ring-2 ring-slate-200" : "border-slate-100"}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Completed</p>
@@ -219,7 +231,7 @@ export default async function ProviderDashboardPage() {
               <CheckCircle className="h-5 w-5 text-slate-500" />
             </div>
           </div>
-        </a>
+        </Link>
 
         {/* Plan Usage */}
         {isAtLimit ? (
@@ -303,11 +315,42 @@ export default async function ProviderDashboardPage() {
       </div>
 
       {/* Shifts Section */}
-      <div id="shifts" className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Your Shifts</h2>
-        <span className="text-sm font-medium text-slate-400">
-          {shifts.length} total shift{shifts.length !== 1 ? "s" : ""}
-        </span>
+      <div id="shifts" className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            {activeFilter === "ALL"
+              ? "Your Shifts"
+              : `${activeFilter.charAt(0) + activeFilter.slice(1).toLowerCase()} Shifts`}
+          </h2>
+          <span className="text-sm font-medium text-slate-400">
+            {sortedShifts.length} shift{sortedShifts.length !== 1 ? "s" : ""}
+            {activeFilter !== "ALL" && ` of ${shifts.length} total`}
+          </span>
+        </div>
+        {/* Filter pills */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {[
+            { key: "ALL", label: "All", count: shifts.length },
+            { key: "OPEN", label: "Open", count: openShifts },
+            { key: "ASSIGNED", label: "Assigned", count: assignedShifts },
+            { key: "COMPLETED", label: "Completed", count: completedShifts },
+          ].map((tab) => (
+            <Link
+              key={tab.key}
+              href={tab.key === "ALL" ? "/provider/dashboard#shifts" : `/provider/dashboard?filter=${tab.key}#shifts`}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeFilter === tab.key
+                  ? "bg-cyan-600 text-white shadow-sm"
+                  : "bg-white text-slate-600 border border-slate-200 hover:border-cyan-300 hover:text-cyan-700"
+              }`}
+            >
+              {tab.label}
+              <span className={`text-xs ${activeFilter === tab.key ? "text-cyan-200" : "text-slate-400"}`}>
+                {tab.count}
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {shifts.length === 0 ? (
