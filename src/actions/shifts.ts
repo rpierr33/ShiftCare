@@ -282,41 +282,39 @@ export async function getAvailableShifts(filters?: {
       if (workerProfile.yearsExperience < shift.minExperience) return false;
     }
     // Location filter
-    // If worker has a service radius set, we can't calculate actual distance
-    // without geocoding, so we do a best-effort text match but are lenient.
-    // If service radius is large (100+ miles), show all shifts in the same state.
-    // If worker has specific work areas, match against shift location text.
-    if (workerProfile) {
-      const hasWorkAreas = workerProfile.workAreas && workerProfile.workAreas.length > 0;
-      const hasLargeRadius = (workerProfile.serviceRadiusMiles ?? 0) >= 100;
+    // TODO: When Google Maps API key is added, geocode all locations to lat/lng
+    // on save, then use Haversine distance for proper radius/county matching.
+    // For now: match on state. Workers see all shifts in their state.
+    // Work areas provide additional city-level filtering within the state.
+    if (workerProfile?.state) {
       const shiftLoc = shift.location.toLowerCase();
+      const stateAbbr = workerProfile.state.toLowerCase();
+      const stateName = getStateName(workerProfile.state).toLowerCase();
 
-      if (hasLargeRadius && workerProfile.state) {
-        // Large radius: show all shifts in the same state
-        const stateAbbr = workerProfile.state.toLowerCase();
-        const stateName = getStateName(workerProfile.state).toLowerCase();
-        const matchesState = shiftLoc.includes(stateAbbr) || shiftLoc.includes(stateName);
-        if (!matchesState) return false;
-      } else if (hasWorkAreas) {
-        // Specific work areas: match city names bidirectionally
-        const searchTerms: string[] = [];
-        // Add work area city names (extract city from "City, State" format)
+      // Must be in the same state
+      const inState = shiftLoc.includes(stateAbbr) || shiftLoc.includes(stateName);
+      if (!inState) return false;
+
+      // If worker has specific work areas AND no large radius, further filter by city
+      const hasWorkAreas = workerProfile.workAreas && workerProfile.workAreas.length > 0;
+      const hasRadius = (workerProfile.serviceRadiusMiles ?? 0) > 0;
+
+      if (hasWorkAreas && !hasRadius) {
+        // Extract city names from work areas and check against shift location
+        const cityTerms: string[] = [];
         for (const area of workerProfile.workAreas!) {
           const city = area.split(",")[0].trim().toLowerCase();
-          if (city.length >= 3) searchTerms.push(city);
+          if (city.length >= 3) cityTerms.push(city);
         }
-        // Add home city
-        if (workerProfile.city) {
-          searchTerms.push(workerProfile.city.toLowerCase());
-        }
-        // Check if shift location contains any of the worker's areas, OR
-        // if any search term appears in the shift location
-        if (searchTerms.length > 0) {
-          const matchesArea = searchTerms.some((term) => shiftLoc.includes(term));
-          if (!matchesArea) return false;
+        if (workerProfile.city) cityTerms.push(workerProfile.city.toLowerCase());
+
+        if (cityTerms.length > 0) {
+          const matchesCity = cityTerms.some((term) => shiftLoc.includes(term));
+          if (!matchesCity) return false;
         }
       }
-      // No work areas and no large radius = show all shifts (no location filter)
+      // If radius is set, skip city filtering — show all state shifts
+      // (proper distance filtering needs geocoding)
     }
     return true;
   });
