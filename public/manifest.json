@@ -1,12 +1,13 @@
 {
-  "name": "ShiftCare",
+  "name": "ShiftCare — Fill Shifts Fast",
   "short_name": "ShiftCare",
-  "description": "Fill Healthcare Shifts Fast",
+  "description": "Healthcare shift fulfillment. Post shifts, find workers, get paid.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
+  "background_color": "#f8fafc",
+  "theme_color": "#0891b2",
   "orientation": "portrait-primary",
+  "categories": ["business", "medical"],
   "icons": [
     {
       "src": "/icons/icon-192.svg",
@@ -24,5 +25,7 @@
       "type": "image/svg+xml",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }

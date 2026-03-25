@@ -105,6 +105,12 @@ export default async function AuthLayout({
                   >
                     Profile
                   </Link>
+                  <Link
+                    href="/worker/earnings"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
+                  >
+                    Earnings
+                  </Link>
                 </>
               )}
             </nav>

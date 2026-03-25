@@ -105,9 +105,14 @@ model User {
   providerProfile  ProviderProfile?
   shifts           Shift[]          @relation("ProviderShifts")
   assignedShifts   Shift[]          @relation("AssignedWorker")
-  paymentsMade     Payment[]        @relation("ProviderPayments")
-  paymentsReceived Payment[]        @relation("WorkerPayments")
-  notifications    Notification[]
+  paymentMethods       PaymentMethod[]
+  wallet               Wallet?
+  providerTransactions Transaction[]    @relation("ProviderTransactions")
+  workerTransactions   Transaction[]    @relation("WorkerTransactions")
+  providerShiftPays    ShiftPayment[]   @relation("ProviderShiftPayments")
+  workerShiftPays      ShiftPayment[]   @relation("WorkerShiftPayments")
+  payouts              Payout[]
+  notifications        Notification[]
   sessions         Session[]
   accounts         Account[]
 
@@ -281,7 +286,8 @@ model Shift {
   provider       User         @relation("ProviderShifts", fields: [providerId], references: [id], onDelete: Cascade)
   assignedWorker User?        @relation("AssignedWorker", fields: [assignedWorkerId], references: [id], onDelete: SetNull)
   assignments    Assignment[]
-  payment        Payment?
+  shiftPayment   ShiftPayment?
+  transactions   Transaction[]
 
   @@index([providerId])
   @@index([status])
@@ -353,40 +359,166 @@ model UsageTracking {
   @@map("usage_tracking")
 }
 
-// ─── Payments ────────────────────────────────────────────────────
+// ─── Marketplace Payment System ──────────────────────────────────
 
-enum PaymentStatus {
-  PENDING
-  SCHEDULED
-  PROCESSING
-  PAID
-  FAILED
+enum TransactionType {
+  SHIFT_FUNDING     // Provider funds a shift
+  PLATFORM_FEE      // Platform takes fee
+  WORKER_PAYOUT     // Worker receives payout
+  REFUND            // Refund to provider
+  WALLET_TOPUP      // Provider adds funds to wallet
 }
 
-model Payment {
-  id            String        @id @default(cuid())
-  shiftId       String
-  providerId    String
-  workerId      String
-  hoursWorked   Float
-  hourlyRate    Float
-  totalAmount   Float
-  status        PaymentStatus @default(PENDING)
-  scheduledDate DateTime?     // Provider-set payment date
-  paidAt        DateTime?
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
 
-  shift    Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  provider User  @relation("ProviderPayments", fields: [providerId], references: [id])
-  worker   User  @relation("WorkerPayments", fields: [workerId], references: [id])
+enum PayoutStatus {
+  PENDING       // Shift completed, not yet released
+  AVAILABLE     // Released, ready to withdraw
+  PROCESSING    // Withdrawal in progress
+  PAID          // Successfully paid out
+  FAILED        // Payout failed
+}
 
-  @@unique([shiftId])
+// Payment methods (cards, bank accounts)
+model PaymentMethod {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String   // "card" | "bank_account"
+  provider          String   @default("stripe") // payment processor
+  externalId        String?  // Stripe payment method ID (pm_xxx)
+  last4             String?  // Last 4 digits
+  brand             String?  // visa, mastercard, etc.
+  expiryMonth       Int?
+  expiryYear        Int?
+  bankName          String?  // For bank accounts
+  isDefault         Boolean  @default(false)
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+// Wallet balances for providers
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Float    @default(0) // Available balance in USD
+  reserved  Float    @default(0) // Funds reserved for active shifts
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+// All money movements through the platform
+model Transaction {
+  id              String            @id @default(cuid())
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  amount          Float
+  platformFee     Float             @default(0)
+  netAmount       Float             // amount - platformFee
+  currency        String            @default("USD")
+  // Relationships
+  shiftId         String?
+  providerId      String?
+  workerId        String?
+  paymentMethodId String?
+  // Stripe
+  stripePaymentId String?           // pi_xxx or tr_xxx
+  stripeChargeId  String?
+  // Metadata
+  description     String?
+  failureReason   String?
+  processedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  shift    Shift? @relation(fields: [shiftId], references: [id])
+  provider User?  @relation("ProviderTransactions", fields: [providerId], references: [id])
+  worker   User?  @relation("WorkerTransactions", fields: [workerId], references: [id])
+
+  @@index([shiftId])
   @@index([providerId])
   @@index([workerId])
+  @@index([type, status])
+  @@map("transactions")
+}
+
+// Per-shift payment tracking
+model ShiftPayment {
+  id            String            @id @default(cuid())
+  shiftId       String            @unique
+  providerId    String
+  workerId      String?
+  // Amounts
+  shiftAmount   Float             // Total shift cost (hours × rate)
+  platformFee   Float             @default(0) // Platform fee amount
+  workerPayout  Float             @default(0) // Amount worker receives
+  // Status
+  fundingStatus TransactionStatus @default(PENDING) // Provider payment status
+  payoutStatus  PayoutStatus      @default(PENDING)  // Worker payout status
+  // Timestamps
+  fundedAt      DateTime?
+  completedAt   DateTime?
+  paidOutAt     DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  shift    Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  provider User  @relation("ProviderShiftPayments", fields: [providerId], references: [id])
+  worker   User? @relation("WorkerShiftPayments", fields: [workerId], references: [id])
+
+  @@index([providerId])
+  @@index([workerId])
+  @@index([fundingStatus])
+  @@index([payoutStatus])
+  @@map("shift_payments")
+}
+
+// Worker payout records
+model Payout {
+  id              String       @id @default(cuid())
+  workerId        String
+  amount          Float
+  status          PayoutStatus @default(PENDING)
+  paymentMethodId String?      // Worker's bank account
+  stripePayoutId  String?      // po_xxx
+  failureReason   String?
+  processedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  worker User @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
   @@index([status])
-  @@map("payments")
+  @@map("payouts")
+}
+
+// Platform configuration
+model PlatformConfig {
+  id              String   @id @default(cuid())
+  platformFeeRate Float    @default(0.10) // 10% default
+  minPlatformFee  Float    @default(2.00) // $2 minimum
+  payoutDelayHours Int     @default(48)   // Hours before payout is available
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("platform_config")
 }
 
 // ─── Notifications ───────────────────────────────────────────────
