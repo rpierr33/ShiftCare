@@ -31,17 +31,24 @@ function LoginForm() {
     const formData = new FormData(e.currentTarget);
     const result = await signInAction(formData);
 
-    if (result.error) {
-      setError(result.error);
+    if (!result.success) {
+      setError(result.error || "Invalid email or password.");
       setLoading(false);
       return;
     }
 
-    // Redirect to callbackUrl if present, otherwise "/" and let middleware route by role
+    // Redirect based on role returned from server
     if (callbackUrl) {
-      router.push(callbackUrl);
+      window.location.href = callbackUrl;
     } else {
-      window.location.href = "/";
+      const role = result.data?.role;
+      if (role === "PROVIDER") {
+        window.location.href = "/provider/dashboard";
+      } else if (role === "WORKER") {
+        window.location.href = "/worker/shifts";
+      } else {
+        window.location.href = "/";
+      }
     }
   }
 

@@ -6,7 +6,7 @@ import { signIn, signOut } from "@/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { ActionResult } from "@/types";
 
-export async function signUpAction(formData: FormData): Promise<ActionResult> {
+export async function signUpAction(formData: FormData): Promise<ActionResult<{ role: string }>> {
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
   const name = (formData.get("name") as string)?.trim();
@@ -67,17 +67,25 @@ export async function signUpAction(formData: FormData): Promise<ActionResult> {
     });
   }
 
-  // Auto sign in
-  await signIn("credentials", {
-    email,
-    password,
-    redirect: false,
-  });
+  // Auto sign in after signup
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+  } catch (error) {
+    // NextAuth may throw NEXT_REDIRECT on success — that's OK
+    const message = error instanceof Error ? error.message : "";
+    if (!message.includes("NEXT_REDIRECT")) {
+      console.error("Auto sign-in after signup failed:", error);
+    }
+  }
 
-  return { success: true };
+  return { success: true, data: { role } };
 }
 
-export async function signInAction(formData: FormData): Promise<ActionResult> {
+export async function signInAction(formData: FormData): Promise<ActionResult<{ role: string }>> {
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
 
@@ -93,16 +101,37 @@ export async function signInAction(formData: FormData): Promise<ActionResult> {
     return { success: false, error: `Too many login attempts. Try again in ${rateCheck.retryAfter}s.` };
   }
 
+  // First verify credentials manually
+  const user = await db.user.findUnique({ where: { email } });
+  if (!user || !user.isActive) {
+    return { success: false, error: "Invalid email or password." };
+  }
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    return { success: false, error: "Invalid email or password." };
+  }
+
+  // Now sign in — NextAuth may throw NEXT_REDIRECT which is actually success
   try {
     await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
-    return { success: true };
-  } catch {
-    return { success: false, error: "Invalid email or password." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    // NEXT_REDIRECT means NextAuth is trying to redirect — sign-in succeeded
+    if (!message.includes("NEXT_REDIRECT")) {
+      return { success: false, error: "Sign in failed. Please try again." };
+    }
   }
+
+  return {
+    success: true,
+    data: {
+      role: user.role,
+    },
+  };
 }
 
 export async function signOutAction(): Promise<void> {

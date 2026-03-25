@@ -54,8 +54,8 @@ function SignUpForm() {
 
     const result = await signUpAction(formData);
 
-    if (result.error) {
-      setError(result.error);
+    if (!result.success) {
+      setError(result.error || "Sign up failed.");
       setLoading(false);
       return;
     }
