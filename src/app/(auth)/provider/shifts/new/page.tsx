@@ -15,6 +15,7 @@ import {
   Rocket,
   X,
   Zap,
+  Users,
 } from "lucide-react";
 import { createShift } from "@/actions/shifts";
 import type { WorkerRole } from "@prisma/client";
@@ -55,6 +56,8 @@ export default function CreateShiftPage() {
     endTime: "",
     payRate: "",
     notes: "",
+    minExperience: "",
+    maxRate: "",
   });
 
   // Store the submitted form values for the success modal
@@ -79,6 +82,8 @@ export default function CreateShiftPage() {
       endTime: "",
       payRate: "",
       notes: "",
+      minExperience: "",
+      maxRate: "",
     });
     setError(null);
     setIsLimitError(false);
@@ -144,6 +149,8 @@ export default function CreateShiftPage() {
         endTime,
         payRate,
         notes: form.notes || undefined,
+        minExperience: form.minExperience ? parseInt(form.minExperience) : undefined,
+        maxRate: form.maxRate ? parseFloat(form.maxRate) : undefined,
       });
 
       if (!result.success) {
@@ -532,6 +539,53 @@ export default function CreateShiftPage() {
             placeholder="Any special requirements, certifications needed, or instructions for workers..."
             className={`${inputClass} resize-none`}
           />
+        </div>
+
+        {/* Worker Preferences */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="h-5 w-5 text-gray-400" />
+            <h2 className="text-base font-semibold text-gray-900">
+              Worker Preferences
+            </h2>
+          </div>
+          <p className="text-xs text-gray-500 mb-5">
+            Control who can see and accept this shift. Leave blank for no restrictions.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="minExperience" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Min. Experience (years)
+              </label>
+              <input
+                id="minExperience"
+                name="minExperience"
+                type="number"
+                min="0"
+                value={form.minExperience}
+                onChange={handleChange}
+                placeholder="Any"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Max. Worker Rate ($/hr)
+              </label>
+              <input
+                id="maxRate"
+                name="maxRate"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.maxRate}
+                onChange={handleChange}
+                placeholder="No limit"
+                className={inputClass}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Submit */}

@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth-utils";
+import { db } from "@/lib/db";
 import { SignOutButton } from "./sign-out-button";
+
+const ROLE_LABELS: Record<string, string> = {
+  RN: "Registered Nurse",
+  LPN: "Licensed Practical Nurse",
+  CNA: "Certified Nursing Assistant",
+  HHA: "Home Health Aide",
+  MEDICAL_ASSISTANT: "Medical Assistant",
+  COMPANION: "Companion",
+  OTHER: "Healthcare Professional",
+};
 
 export default async function AuthLayout({
   children,
@@ -10,6 +21,18 @@ export default async function AuthLayout({
   const user = await getSessionUser();
   const isProvider = user.role === "PROVIDER";
   const initial = user.name?.charAt(0)?.toUpperCase() ?? "?";
+
+  // Get the worker's actual role for display
+  let roleBadgeText = "Provider";
+  if (!isProvider) {
+    const profile = await db.workerProfile.findUnique({
+      where: { userId: user.id },
+      select: { workerRole: true },
+    });
+    roleBadgeText = profile?.workerRole
+      ? (ROLE_LABELS[profile.workerRole] ?? profile.workerRole)
+      : "Healthcare Professional";
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -102,7 +125,7 @@ export default async function AuthLayout({
                   : "bg-emerald-100 text-emerald-700"
               }`}
             >
-              {isProvider ? "Provider" : "Worker"}
+              {roleBadgeText}
             </span>
             <SignOutButton />
           </div>

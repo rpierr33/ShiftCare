@@ -16,6 +16,8 @@ interface CreateShiftInput {
   endTime: string;
   payRate: number;
   notes?: string;
+  minExperience?: number;
+  maxRate?: number;
 }
 
 export async function createShift(input: CreateShiftInput): Promise<ActionResult<{ id: string }>> {
@@ -90,6 +92,8 @@ export async function createShift(input: CreateShiftInput): Promise<ActionResult
           payRate: input.payRate,
           notes: input.notes || null,
           status: "OPEN",
+          minExperience: input.minExperience || null,
+          maxRate: input.maxRate || null,
         },
       });
 
@@ -145,6 +149,8 @@ export async function getProviderShifts() {
 }
 
 // ─── Get Available Shifts (Worker) ───────────────────────────────
+// Shows only shifts matching the worker's role.
+// Provider preferences (minExperience, maxRate) filter server-side.
 
 export async function getAvailableShifts(filters?: {
   role?: WorkerRole;
@@ -152,16 +158,27 @@ export async function getAvailableShifts(filters?: {
   const user = await getSessionUser();
   if (user.role !== "WORKER") return [];
 
+  // Get worker's profile to match against provider preferences
+  const workerProfile = await db.workerProfile.findUnique({
+    where: { userId: user.id },
+    select: { workerRole: true, yearsExperience: true, hourlyRate: true },
+  });
+
   const where: Record<string, unknown> = {
     status: "OPEN",
     startTime: { gt: new Date() },
   };
 
+  // Only show shifts matching the worker's role
+  if (workerProfile?.workerRole) {
+    where.role = workerProfile.workerRole;
+  }
+  // Override with explicit filter if provided
   if (filters?.role) {
     where.role = filters.role;
   }
 
-  return db.shift.findMany({
+  const shifts = await db.shift.findMany({
     where,
     include: {
       provider: {
@@ -172,6 +189,19 @@ export async function getAvailableShifts(filters?: {
       },
     },
     orderBy: { startTime: "asc" },
+  });
+
+  // Apply provider preference filters (can't be done in Prisma where easily)
+  return shifts.filter((shift) => {
+    // Check minimum experience requirement
+    if (shift.minExperience != null && workerProfile?.yearsExperience != null) {
+      if (workerProfile.yearsExperience < shift.minExperience) return false;
+    }
+    // Check max rate preference
+    if (shift.maxRate != null && workerProfile?.hourlyRate != null) {
+      if (workerProfile.hourlyRate > shift.maxRate) return false;
+    }
+    return true;
   });
 }
 
