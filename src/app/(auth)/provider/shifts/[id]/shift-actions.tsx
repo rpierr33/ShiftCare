@@ -18,42 +18,7 @@ export function ShiftActions({ shiftId, status, isAssigned }: ShiftActionsProps)
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-
-  async function handleComplete() {
-    setLoading("complete");
-    setError(null);
-    const result = await completeShift(shiftId);
-    if (!result.success) {
-      setError(result.error ?? "Failed to complete shift.");
-      setLoading(null);
-      return;
-    }
-    setSuccess("complete");
-    setLoading(null);
-    setTimeout(() => {
-      router.refresh();
-      setSuccess(null);
-    }, 2000);
-  }
-
-  async function handleCancel() {
-    setLoading("cancel");
-    setError(null);
-    const result = await cancelShift(shiftId);
-    if (!result.success) {
-      setError(result.error ?? "Failed to cancel shift.");
-      setLoading(null);
-      setConfirming(false);
-      return;
-    }
-    setSuccess("cancel");
-    setLoading(null);
-    setConfirming(false);
-    setTimeout(() => {
-      router.refresh();
-      setSuccess(null);
-    }, 2000);
-  }
+  const [canRedirect, setCanRedirect] = useState(false);
 
   const Spinner = () => (
     <svg
@@ -77,6 +42,43 @@ export function ShiftActions({ shiftId, status, isAssigned }: ShiftActionsProps)
     </svg>
   );
 
+  async function handleComplete() {
+    setLoading("complete");
+    setError(null);
+    const result = await completeShift(shiftId);
+    if (!result.success) {
+      setError(result.error ?? "Failed to complete shift.");
+      setLoading(null);
+      return;
+    }
+    setSuccess("complete");
+    setLoading(null);
+    setCanRedirect(false);
+    // 3-second delay before allowing redirect
+    setTimeout(() => {
+      setCanRedirect(true);
+    }, 3000);
+  }
+
+  async function handleCancel() {
+    setLoading("cancel");
+    setError(null);
+    const result = await cancelShift(shiftId);
+    if (!result.success) {
+      setError(result.error ?? "Failed to cancel shift.");
+      setLoading(null);
+      setConfirming(false);
+      return;
+    }
+    setSuccess("cancel");
+    setLoading(null);
+    setConfirming(false);
+    setCanRedirect(false);
+    setTimeout(() => {
+      setCanRedirect(true);
+    }, 3000);
+  }
+
   return (
     <div>
       {error && (
@@ -85,46 +87,65 @@ export function ShiftActions({ shiftId, status, isAssigned }: ShiftActionsProps)
         </div>
       )}
 
-      {/* Complete success message */}
+      {/* Complete success banner */}
       {success === "complete" && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-4">
+        <div className="bg-emerald-600 rounded-xl p-5 mb-4 w-full">
           <div className="flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-emerald-800">
-                Shift completed!
+            <CheckCircle className="h-6 w-6 text-white flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-base font-semibold text-white">
+                Shift completed! Payment will be processed within 24 hours.
               </p>
-              <p className="text-sm text-emerald-700 mt-1">
-                Payment will be processed.
-              </p>
-              <Link
-                href="/provider/dashboard"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-900 mt-2 transition-colors"
-              >
-                View Dashboard
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              <div className="flex items-center gap-4 mt-3">
+                <span className="text-sm text-emerald-100 underline underline-offset-2 cursor-pointer hover:text-white transition-colors">
+                  Rate this worker
+                </span>
+                {canRedirect ? (
+                  <Link
+                    href="/provider/dashboard"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-white hover:text-emerald-100 transition-colors"
+                  >
+                    View Dashboard
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-emerald-200">
+                    <Spinner />
+                    Redirecting shortly...
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cancel success message */}
+      {/* Cancel success banner */}
       {success === "cancel" && (
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-4">
+        <div className="bg-red-600 rounded-xl p-5 mb-4 w-full">
           <div className="flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 text-slate-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-slate-800">
-                Shift cancelled successfully.
+            <XCircle className="h-6 w-6 text-white flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-base font-semibold text-white">
+                Shift cancelled.{" "}
+                {isAssigned && "The worker has been notified and released."}
               </p>
-              <Link
-                href="/provider/dashboard"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 mt-2 transition-colors"
-              >
-                View Dashboard
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              <div className="mt-3">
+                {canRedirect ? (
+                  <Link
+                    href="/provider/dashboard"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-white hover:text-red-100 transition-colors"
+                  >
+                    Return to Dashboard
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-red-200">
+                    <Spinner />
+                    Redirecting shortly...
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -176,7 +197,7 @@ export function ShiftActions({ shiftId, status, isAssigned }: ShiftActionsProps)
             <button
               onClick={handleComplete}
               disabled={loading !== null}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 text-white font-semibold rounded-xl py-3 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading === "complete" ? (
                 <>
@@ -185,7 +206,7 @@ export function ShiftActions({ shiftId, status, isAssigned }: ShiftActionsProps)
                 </>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="h-5 w-5" />
                   Complete Shift
                 </>
               )}
@@ -195,9 +216,9 @@ export function ShiftActions({ shiftId, status, isAssigned }: ShiftActionsProps)
             <button
               onClick={() => setConfirming(true)}
               disabled={loading !== null}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-white text-red-600 text-sm font-semibold rounded-lg border border-red-300 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white border-2 border-red-200 text-red-600 font-semibold rounded-xl py-3 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <XCircle className="h-4 w-4" />
+              <XCircle className="h-5 w-5" />
               Cancel Shift
             </button>
           )}

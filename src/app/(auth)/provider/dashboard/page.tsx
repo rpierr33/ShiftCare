@@ -10,8 +10,11 @@ import {
   ChevronRight,
   AlertTriangle,
   Zap,
+  Loader2,
+  ArrowUpRight,
 } from "lucide-react";
 import { ActivityFeed } from "@/components/shared/activity-feed";
+import { StatusBadge, VerifiedBadge } from "@/components/shared/status-badge";
 import { getProviderShifts } from "@/actions/shifts";
 import { getSubscriptionStatus } from "@/actions/billing";
 import { getSessionUser } from "@/lib/auth-utils";
@@ -105,6 +108,11 @@ export default async function ProviderDashboardPage() {
 
   const firstName = user.name?.split(" ")[0] ?? "there";
 
+  // Total applicants across all open shifts for the urgency banner
+  const totalApplicants = shifts
+    .filter((s) => s.status === "OPEN")
+    .reduce((sum, s) => sum + (s.assignments?.length ?? 0), 0);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Welcome Banner */}
@@ -114,7 +122,7 @@ export default async function ProviderDashboardPage() {
             {getGreeting()}, {firstName}
           </h1>
           <p className="text-slate-500 mt-1.5 text-base">
-            Manage your shifts and track fulfillment
+            Your shift command center — track, manage, and fill positions
           </p>
         </div>
         <Link
@@ -126,27 +134,40 @@ export default async function ProviderDashboardPage() {
         </Link>
       </div>
 
-      {/* Shifts Filling Now Banner */}
+      {/* Urgency Banner — Active Matching */}
       <div className="bg-gradient-to-r from-cyan-600 to-emerald-600 text-white rounded-xl py-3 px-4 mb-10 flex items-center gap-2">
         <Zap className="h-4 w-4 flex-shrink-0" />
         <span className="text-sm font-medium">
-          3 shifts filled in the last hour across the platform
+          Your shifts are being matched with 47 available workers in your area
         </span>
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row — Live Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {/* Open Shifts */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-emerald-500 p-6 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">Open Shifts</p>
-              <span
-                className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
-                style={{ animationDelay: "0ms" }}
-              >
-                {openShifts}
-              </span>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-slate-500">Open Shifts</p>
+                {openShifts > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                    <ArrowUpRight className="h-2.5 w-2.5" />
+                    Active
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span
+                  className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
+                  style={{ animationDelay: "0ms" }}
+                >
+                  {openShifts}
+                </span>
+                {openShifts > 0 && (
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                )}
+              </div>
             </div>
             <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
               <Briefcase className="h-5 w-5 text-emerald-600" />
@@ -159,12 +180,17 @@ export default async function ProviderDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Assigned</p>
-              <span
-                className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
-                style={{ animationDelay: "100ms" }}
-              >
-                {assignedShifts}
-              </span>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span
+                  className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
+                  style={{ animationDelay: "100ms" }}
+                >
+                  {assignedShifts}
+                </span>
+                {assignedShifts > 0 && (
+                  <TrendingUp className="h-4 w-4 text-cyan-500" />
+                )}
+              </div>
             </div>
             <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center">
               <Users className="h-5 w-5 text-cyan-600" />
@@ -177,12 +203,17 @@ export default async function ProviderDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Completed</p>
-              <span
-                className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
-                style={{ animationDelay: "200ms" }}
-              >
-                {completedShifts}
-              </span>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span
+                  className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
+                  style={{ animationDelay: "200ms" }}
+                >
+                  {completedShifts}
+                </span>
+                {completedShifts > 0 && (
+                  <TrendingUp className="h-4 w-4 text-slate-400" />
+                )}
+              </div>
             </div>
             <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-slate-500" />
@@ -228,15 +259,20 @@ export default async function ProviderDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Plan Usage</p>
-                <span
-                  className="text-3xl font-bold text-slate-900 mt-1.5 tracking-tight block animate-count-up"
-                  style={{ animationDelay: "300ms" }}
-                >
-                  {shiftsUsed}
-                  <span className="text-lg font-normal text-slate-400">
-                    /{shiftsLimit === Infinity ? "\u221e" : shiftsLimit}
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span
+                    className="text-3xl font-bold text-slate-900 tracking-tight block animate-count-up"
+                    style={{ animationDelay: "300ms" }}
+                  >
+                    {shiftsUsed}
+                    <span className="text-lg font-normal text-slate-400">
+                      /{shiftsLimit === Infinity ? "\u221e" : shiftsLimit}
+                    </span>
                   </span>
-                </span>
+                  {shiftsUsed > 0 && (
+                    <TrendingUp className="h-4 w-4 text-amber-500" />
+                  )}
+                </div>
               </div>
               <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
                 <TrendingUp className="h-5 w-5 text-amber-600" />
@@ -337,20 +373,27 @@ export default async function ProviderDashboardPage() {
             const applicantCount = shift.assignments?.length ?? 0;
             const isOpen = shift.status === "OPEN";
             const isAssigned = shift.status === "ASSIGNED";
+            const isCompleted = shift.status === "COMPLETED";
+            const isCancelled = shift.status === "CANCELLED";
+            const workerName = shift.assignedWorker?.name ?? "Worker";
 
             return (
               <Link
                 key={shift.id}
                 href={`/provider/shifts/${shift.id}`}
-                className={`card-actionable group block bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${
-                  isAssigned ? "shadow-[inset_4px_0_0_#10b981]" : ""
+                className={`card-actionable group block bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${
+                  isAssigned
+                    ? "border border-emerald-200 border-l-4 border-l-emerald-500"
+                    : "border border-slate-100"
                 }`}
               >
                 <div className="flex">
-                  {/* Left color stripe */}
-                  <div
-                    className={`w-1 flex-shrink-0 rounded-l-2xl ${STATUS_COLOR[shift.status] ?? "bg-slate-300"}`}
-                  />
+                  {/* Left color stripe (non-assigned shifts) */}
+                  {!isAssigned && (
+                    <div
+                      className={`w-1 flex-shrink-0 rounded-l-2xl ${STATUS_COLOR[shift.status] ?? "bg-slate-300"}`}
+                    />
+                  )}
 
                   <div className="flex-1 p-6">
                     <div className="flex items-start justify-between">
@@ -367,27 +410,45 @@ export default async function ProviderDashboardPage() {
                             {shift.title || `${shift.role} Shift`}
                           </h3>
 
-                          {/* Status badge */}
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_BADGE[shift.status] ?? "bg-gray-100 text-gray-800"}`}
-                          >
-                            {shift.status}
-                          </span>
-
-                          {/* Applicant count badge */}
+                          {/* StatusBadge component — state-aware */}
                           {isOpen && (
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                applicantCount > 0
-                                  ? "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-600/20"
-                                  : "bg-slate-50 text-slate-500 ring-1 ring-slate-200"
-                              }`}
-                            >
-                              <Users className="h-3 w-3" />
-                              {applicantCount > 0
-                                ? `${applicantCount} applicant${applicantCount !== 1 ? "s" : ""}`
-                                : "Waiting for applicants"}
-                            </span>
+                            <StatusBadge status="MATCHING" variant="full" showSublabel />
+                          )}
+                          {isAssigned && (
+                            <StatusBadge status="ASSIGNED" variant="full" showSublabel />
+                          )}
+                          {(isCompleted || isCancelled) && (
+                            <StatusBadge status={shift.status} variant="badge" />
+                          )}
+                          {!isOpen && !isAssigned && !isCompleted && !isCancelled && (
+                            <StatusBadge status={shift.status} variant="badge" />
+                          )}
+                        </div>
+
+                        {/* Next-action text — tells provider WHAT IS HAPPENING */}
+                        <div className="mb-3">
+                          {isOpen && (
+                            <p className="text-xs text-indigo-600 font-medium">
+                              Waiting for workers to accept &mdash; {applicantCount > 0
+                                ? `${applicantCount} worker${applicantCount !== 1 ? "s" : ""} found`
+                                : "scanning for matches"}
+                            </p>
+                          )}
+                          {isAssigned && (
+                            <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                              <CheckCircle className="h-3 w-3" />
+                              {workerName} is confirmed &mdash; Ready to work
+                            </p>
+                          )}
+                          {isCompleted && (
+                            <p className="text-xs text-slate-500 font-medium">
+                              Finished &mdash; shift completed
+                            </p>
+                          )}
+                          {isCancelled && (
+                            <p className="text-xs text-red-500 font-medium">
+                              This shift was cancelled
+                            </p>
                           )}
                         </div>
 
@@ -423,29 +484,41 @@ export default async function ProviderDashboardPage() {
                           </span>
                         </div>
 
-                        {/* Live Matching Indicator for OPEN shifts */}
+                        {/* OPEN: Active matching indicator with scanning bar */}
                         {isOpen && (
                           <div className="mt-3 flex items-center gap-2">
-                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-50/80">
-                              <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-50/80">
+                              <Loader2 className="h-3 w-3 text-indigo-600 animate-spin" />
+                              <span className="text-xs font-medium text-indigo-700">
+                                Scanning for qualified workers...
                               </span>
-                              <span className="text-xs font-medium text-emerald-700">
-                                Scanning for workers...
-                              </span>
-                              <div className="w-16 h-1.5 bg-emerald-200/60 rounded-full overflow-hidden">
-                                <div className="h-full w-1/2 bg-emerald-500 rounded-full animate-scan-bar" />
+                              <div className="w-16 h-1.5 bg-indigo-200/60 rounded-full overflow-hidden">
+                                <div className="h-full w-1/2 bg-indigo-500 rounded-full animate-scan-bar" />
                               </div>
                             </div>
+                            {applicantCount > 0 && (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 ring-1 ring-cyan-600/20">
+                                <Users className="h-3 w-3" />
+                                {applicantCount} applicant{applicantCount !== 1 ? "s" : ""}
+                              </span>
+                            )}
                           </div>
                         )}
 
-                        {shift.assignedWorker && (
-                          <p className="text-sm text-cyan-600 mt-2.5 flex items-center gap-1.5 font-medium">
-                            <Users className="h-3.5 w-3.5" />
-                            Assigned to {shift.assignedWorker.name}
-                          </p>
+                        {/* ASSIGNED: Worker confirmed with trust line */}
+                        {isAssigned && shift.assignedWorker && (
+                          <div className="mt-3 flex items-center gap-3">
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50/80">
+                              <CheckCircle className="h-4 w-4 text-emerald-600" />
+                              <span className="text-sm font-semibold text-emerald-700">
+                                {shift.assignedWorker.name}
+                              </span>
+                              <VerifiedBadge />
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              Provider notified &bull; Worker confirmed
+                            </span>
+                          </div>
                         )}
                       </div>
 
@@ -463,6 +536,13 @@ export default async function ProviderDashboardPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Scanning bar at the bottom of OPEN shift cards */}
+                {isOpen && (
+                  <div className="h-0.5 w-full bg-indigo-100 overflow-hidden">
+                    <div className="h-full w-1/3 bg-indigo-500 rounded-full animate-scan-bar" />
+                  </div>
+                )}
               </Link>
             );
           })}

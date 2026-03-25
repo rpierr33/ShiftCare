@@ -12,9 +12,11 @@ import {
   AlertCircle,
   Lightbulb,
   UserCheck,
+  Info,
 } from "lucide-react";
 import { getShiftById } from "@/actions/shifts";
 import { ShiftActions } from "./shift-actions";
+import { StatusBadge, VerifiedBadge } from "@/components/shared/status-badge";
 
 const STATUS_COLOR: Record<string, string> = {
   OPEN: "bg-emerald-500",
@@ -22,14 +24,6 @@ const STATUS_COLOR: Record<string, string> = {
   COMPLETED: "bg-slate-400",
   CANCELLED: "bg-red-500",
   PENDING: "bg-amber-500",
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  OPEN: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20",
-  PENDING: "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20",
-  ASSIGNED: "bg-blue-50 text-blue-700 ring-1 ring-blue-600/20",
-  COMPLETED: "bg-slate-50 text-slate-600 ring-1 ring-slate-500/20",
-  CANCELLED: "bg-red-50 text-red-700 ring-1 ring-red-600/20",
 };
 
 const ROLE_BADGE_COLOR: Record<string, string> = {
@@ -104,6 +98,8 @@ export default async function ShiftDetailPage({
   const applicantCount = shift.assignments.length;
   const isAssigned = shift.status === "ASSIGNED";
   const isOpen = shift.status === "OPEN";
+  const isCompleted = shift.status === "COMPLETED";
+  const isCancelled = shift.status === "CANCELLED";
 
   // Find the confirmed/accepted assignment for the assigned worker
   const assignedAssignment = isAssigned
@@ -114,6 +110,8 @@ export default async function ShiftDetailPage({
           a.workerProfile.user.name === shift.assignedWorker?.name
       )
     : null;
+
+  const arrivalTime = timeFormatter.format(new Date(shift.startTime));
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -137,22 +135,37 @@ export default async function ShiftDetailPage({
               </h2>
             </div>
             <div className="flex items-center gap-5">
-              <div className="h-16 w-16 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center flex-shrink-0">
-                <span className="text-xl font-bold text-blue-600">
-                  {shift.assignedWorker.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)}
-                </span>
+              {/* Green success ring around avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="h-16 w-16 rounded-full bg-white border-2 border-emerald-400 ring-4 ring-emerald-100 flex items-center justify-center">
+                  <span className="text-xl font-bold text-blue-600">
+                    {shift.assignedWorker.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </span>
+                </div>
+                {/* Green check indicator */}
+                <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 bg-emerald-500 rounded-full flex items-center justify-center ring-2 ring-white">
+                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900">
-                  {shift.assignedWorker.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {shift.assignedWorker.name}
+                  </h3>
+                  <VerifiedBadge />
+                </div>
                 <p className="text-sm text-blue-600 font-medium mt-0.5">
                   {ROLE_LABELS[shift.role] ?? shift.role}
+                </p>
+                <p className="text-sm text-emerald-700 font-medium mt-1">
+                  Confirmed &middot; Worker will arrive at {arrivalTime}
                 </p>
                 {assignedAssignment &&
                   assignedAssignment.workerProfile.credentials.length > 0 && (
@@ -172,6 +185,34 @@ export default async function ShiftDetailPage({
                   )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* OPEN/MATCHING: Active matching state card */}
+      {isOpen && (
+        <div className="bg-gradient-to-br from-cyan-50 to-indigo-50 rounded-xl shadow-sm border border-cyan-200 overflow-hidden mb-6">
+          <div className="p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0">
+                <Users className="h-5 w-5 text-cyan-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">
+                  Your shift is being matched with available workers
+                </h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Posted {getTimeSincePosted(shift.createdAt)}
+                </p>
+              </div>
+            </div>
+            {/* Animated scanning bar */}
+            <div className="w-full h-1.5 bg-cyan-100 rounded-full overflow-hidden mb-4">
+              <div className="h-full w-1/3 bg-cyan-500 rounded-full animate-pulse" />
+            </div>
+            <p className="text-sm font-medium text-cyan-800">
+              Workers who match: <span className="font-bold">{applicantCount}</span> found so far
+            </p>
           </div>
         </div>
       )}
@@ -222,11 +263,11 @@ export default async function ShiftDetailPage({
                 >
                   {shift.role}
                 </span>
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[shift.status] ?? "bg-gray-100 text-gray-800"}`}
-                >
-                  {shift.status}
-                </span>
+                <StatusBadge
+                  status={shift.status === "OPEN" ? "MATCHING" : shift.status}
+                  variant="full"
+                  showSublabel
+                />
               </div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {shift.title || `${ROLE_LABELS[shift.role] ?? shift.role} Shift`}
@@ -295,11 +336,11 @@ export default async function ShiftDetailPage({
               </div>
               <div>
                 <p className="text-sm text-gray-500">Status</p>
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-0.5 ${STATUS_BADGE[shift.status] ?? "bg-gray-100 text-gray-800"}`}
-                >
-                  {shift.status}
-                </span>
+                <StatusBadge
+                  status={shift.status === "OPEN" ? "MATCHING" : shift.status}
+                  variant="pill"
+                  className="mt-0.5"
+                />
               </div>
             </div>
 
@@ -341,7 +382,7 @@ export default async function ShiftDetailPage({
       )}
 
       {/* Assignments / Applicants */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-gray-900">
             Applicants & Assignments
@@ -402,6 +443,41 @@ export default async function ShiftDetailPage({
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* What happens next */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Info className="h-4 w-4 text-gray-400" />
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            What happens next
+          </h2>
+        </div>
+        {isOpen && (
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Workers are being notified. You&apos;ll see applicants appear here as they express interest in your shift.
+          </p>
+        )}
+        {isAssigned && (
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Your worker is confirmed. Mark the shift as complete after it has been fulfilled.
+          </p>
+        )}
+        {isCompleted && (
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Shift finished. Payment will be processed.
+          </p>
+        )}
+        {isCancelled && (
+          <p className="text-sm text-gray-600 leading-relaxed">
+            This shift has been cancelled. No further action is needed.
+          </p>
+        )}
+        {!isOpen && !isAssigned && !isCompleted && !isCancelled && (
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Your shift is being processed. Check back for updates.
+          </p>
         )}
       </div>
     </div>

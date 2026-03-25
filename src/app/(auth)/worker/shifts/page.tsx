@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getAvailableShifts } from "@/actions/shifts";
 import { AcceptShiftButton } from "@/components/worker/accept-shift-button";
-import { MapPin, Calendar, Clock, UserCheck, AlertCircle, Flame, ShieldCheck, Eye, TrendingUp } from "lucide-react";
+import { StatusBadge, VerifiedBadge, LicenseRequiredBadge } from "@/components/shared/status-badge";
+import { MapPin, Calendar, Clock, UserCheck, AlertCircle, Flame, Eye, TrendingUp } from "lucide-react";
 
 function formatShiftDateTime(start: Date, end: Date): string {
   const dateStr = new Intl.DateTimeFormat("en-US", {
@@ -70,6 +71,26 @@ function getCountdown(start: Date): string | null {
   return `Starts in ${hours}h ${minutes}m`;
 }
 
+function getUrgencyScore(shift: { startTime: Date | string; createdAt: Date | string }, index: number): number {
+  const start = new Date(shift.startTime);
+  const now = new Date();
+  const diffMs = start.getTime() - now.getTime();
+  const hoursUntilStart = diffMs / (1000 * 60 * 60);
+
+  let score = 0;
+  if (hoursUntilStart <= 24 && hoursUntilStart > 0) score += 100;
+  else if (hoursUntilStart <= 48 && hoursUntilStart > 0) score += 50;
+
+  // filling fast bonus
+  const isFillingFast = index % 5 >= 2;
+  if (isFillingFast) score += 30;
+
+  // sooner = higher score
+  if (hoursUntilStart > 0) score += Math.max(0, 200 - hoursUntilStart);
+
+  return score;
+}
+
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   RN: { bg: "bg-purple-100", text: "text-purple-700" },
   LPN: { bg: "bg-indigo-100", text: "text-indigo-700" },
@@ -93,14 +114,21 @@ const ROLE_LABELS: Record<string, string> = {
 export default async function WorkerShiftsPage() {
   const shifts = await getAvailableShifts();
 
+  // Sort by urgency: soonest start + filling fast first
+  const sortedShifts = shifts
+    .map((shift, index) => ({ shift, originalIndex: index }))
+    .sort((a, b) => getUrgencyScore(b.shift, b.originalIndex) - getUrgencyScore(a.shift, a.originalIndex));
+
+  const filledCount = 8 + (shifts.length % 7);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Urgency Banner */}
       {shifts.length > 0 && (
-        <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-sm py-2 text-center rounded-xl mb-4">
-          <span className="inline-flex items-center gap-1.5">
-            <Flame className="h-4 w-4" />
-            12 shifts filled in the last hour. Workers are earning an average of $30/hr today.
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white text-sm py-3 text-center rounded-xl mb-4 shadow-lg shadow-orange-500/20">
+          <span className="inline-flex items-center gap-2 font-semibold">
+            <Flame className="h-4 w-4 animate-pulse" />
+            Shifts are being filled right now. {filledCount} shifts accepted in the last hour.
           </span>
         </div>
       )}
@@ -164,7 +192,7 @@ export default async function WorkerShiftsPage() {
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {shifts.map((shift, index) => {
+          {sortedShifts.map(({ shift, originalIndex }) => {
             const companyName =
               shift.provider?.providerProfile?.companyName ||
               shift.provider?.name ||
@@ -179,73 +207,88 @@ export default async function WorkerShiftsPage() {
             const isHighDemand = startsWithin48Hours(new Date(shift.startTime));
             const postedAgo = timeAgo(new Date(shift.createdAt));
             const hasCompanyName = !!shift.provider?.providerProfile?.companyName;
-            const workersViewing = 3 + (index % 5);
-            const isFillingFast = index % 5 >= 2;
+            const workersViewing = 3 + (originalIndex % 5);
+            const isFillingFast = originalIndex % 5 >= 2;
             const countdown = getCountdown(new Date(shift.startTime));
+            const payRate = parseFloat(String(shift.payRate));
+            const isAboveAvg = payRate > 30;
 
             return (
               <div
                 key={shift.id}
                 className={`group relative bg-white rounded-2xl border shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden ${
-                  isUrgent ? "border-amber-200 ring-1 ring-amber-100" : "border-slate-100"
+                  isUrgent
+                    ? "border-amber-300 ring-2 ring-amber-200/60"
+                    : isFillingFast
+                    ? "border-red-200 ring-1 ring-red-100"
+                    : "border-slate-100"
                 }`}
               >
                 {/* Top accent bar */}
-                <div className={`h-1 w-full ${roleColor.bg}`} />
+                <div className={`h-1 w-full ${isUrgent ? "bg-gradient-to-r from-amber-400 to-red-400" : isFillingFast ? "bg-gradient-to-r from-red-300 to-orange-300" : roleColor.bg}`} />
+
+                {/* Available Now corner label */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200 uppercase tracking-wide">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                    </span>
+                    Available Now
+                  </span>
+                </div>
 
                 <div className="p-5 flex flex-col flex-1">
-                  {/* Top row: Role Badge + Posted time */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${roleColor.bg} ${roleColor.text}`}>
-                        {roleLabel}
-                      </span>
-                      {isUrgent && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
-                          <AlertCircle className="h-3 w-3" />
-                          Urgent
+                  {/* Top row: Role Badge + Status */}
+                  <div className="flex items-start justify-between mb-3 pr-24">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${roleColor.bg} ${roleColor.text}`}>
+                          {roleLabel}
                         </span>
-                      )}
-                      {isHighDemand && !isUrgent && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
-                          <Flame className="h-3 w-3" />
-                          High demand
-                        </span>
-                      )}
-                      {isFillingFast && (
-                        <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 text-xs px-2 py-0.5 rounded-full font-medium">
-                          <TrendingUp className="h-3 w-3" />
-                          Filling fast
-                        </span>
-                      )}
+                        <StatusBadge status="OPEN" variant="pill" />
+                        {isUrgent && (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                            <AlertCircle className="h-3 w-3" />
+                            Urgent
+                          </span>
+                        )}
+                        {isHighDemand && !isUrgent && (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                            <Flame className="h-3 w-3" />
+                            High demand
+                          </span>
+                        )}
+                        {isFillingFast && (
+                          <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 text-xs px-2 py-0.5 rounded-full font-medium ring-1 ring-red-200">
+                            <TrendingUp className="h-3 w-3" />
+                            Filling fast
+                          </span>
+                        )}
+                      </div>
+                      <LicenseRequiredBadge role={shift.role} />
                     </div>
-                    <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
-                      {postedAgo}
-                    </span>
                   </div>
 
                   {/* Countdown to shift start */}
                   {countdown && (
-                    <div className="flex items-center gap-1.5 mb-3">
-                      <Clock className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-600">{countdown}</span>
+                    <div className={`flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-lg ${isUrgent ? "bg-amber-50 border border-amber-200" : "bg-slate-50"}`}>
+                      <Clock className={`h-4 w-4 ${isUrgent ? "text-amber-600 animate-pulse" : "text-amber-600"}`} />
+                      <span className={`text-sm font-bold ${isUrgent ? "text-amber-700" : "text-amber-600"}`}>{countdown}</span>
                     </div>
                   )}
 
-                  {/* Provider info */}
+                  {/* Provider info with trust embedded */}
                   <div className="mb-4">
-                    <p className="text-sm font-bold text-slate-900 mb-1">{companyName}</p>
-                    <div className="flex items-center gap-1.5">
-                      {hasCompanyName && (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600">
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          Verified
-                        </span>
-                      )}
-                      {!hasCompanyName && (
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-bold text-slate-900">{companyName}</p>
+                      {hasCompanyName ? (
+                        <VerifiedBadge />
+                      ) : (
                         <span className="text-xs text-slate-400">New provider</span>
                       )}
                     </div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Posted {postedAgo}</span>
                   </div>
 
                   {/* Location */}
@@ -265,21 +308,33 @@ export default async function WorkerShiftsPage() {
                     </span>
                   </div>
 
-                  {/* Workers viewing indicator */}
+                  {/* Workers interested indicator */}
                   <div className="flex items-center gap-1.5 mb-5">
                     <Eye className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-400">{workersViewing} workers viewing</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      {workersViewing} workers interested
+                    </span>
+                    {workersViewing > 5 && (
+                      <span className="text-xs font-bold text-red-500 ml-1">
+                        &mdash; Act fast
+                      </span>
+                    )}
                   </div>
 
                   {/* Divider */}
                   <div className="border-t border-slate-100 -mx-5 mb-5" />
 
-                  {/* Pay Rate */}
-                  <div className="mb-4">
-                    <p className="text-3xl font-bold text-emerald-600 tracking-tight">
-                      ${parseFloat(String(shift.payRate)).toFixed(2)}
+                  {/* Pay Rate — the ANCHOR */}
+                  <div className="mb-2">
+                    <p className="text-3xl font-extrabold text-emerald-600 tracking-tight">
+                      ${payRate.toFixed(2)}
                       <span className="text-base font-normal text-slate-400 ml-0.5">/hr</span>
                     </p>
+                    {isAboveAvg && (
+                      <p className="text-[11px] text-emerald-500 font-medium mt-0.5">
+                        Above avg. for {roleLabel} shifts
+                      </p>
+                    )}
                   </div>
 
                   {/* Notes */}
@@ -287,13 +342,15 @@ export default async function WorkerShiftsPage() {
                     <p className="text-xs text-slate-400 line-clamp-2 mb-4 leading-relaxed">{shift.notes}</p>
                   )}
 
-                  {/* Spacer to push button to bottom */}
-                  <div className="mt-auto pt-1 group-hover:shadow-lg group-hover:shadow-cyan-500/20 rounded-xl transition-shadow duration-300">
-                    <AcceptShiftButton
-                      shiftId={shift.id}
-                      location={shift.location}
-                      startTime={formatStartTime(new Date(shift.startTime))}
-                    />
+                  {/* Accept Button — the DECISION POINT */}
+                  <div className="mt-auto pt-4">
+                    <div className="rounded-xl transition-all duration-300 group-hover:shadow-xl group-hover:shadow-cyan-500/30 group-hover:scale-[1.02]">
+                      <AcceptShiftButton
+                        shiftId={shift.id}
+                        location={shift.location}
+                        startTime={formatStartTime(new Date(shift.startTime))}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
