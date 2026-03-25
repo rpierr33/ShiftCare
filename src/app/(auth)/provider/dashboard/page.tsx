@@ -145,7 +145,7 @@ export default async function ProviderDashboardPage() {
       {/* Stats Row — Live Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {/* Open Shifts */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-emerald-500 p-6 hover:shadow-md transition-all duration-200">
+        <a href="#shifts" className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-emerald-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
@@ -173,10 +173,10 @@ export default async function ProviderDashboardPage() {
               <Briefcase className="h-5 w-5 text-emerald-600" />
             </div>
           </div>
-        </div>
+        </a>
 
         {/* Assigned */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-cyan-500 p-6 hover:shadow-md transition-all duration-200">
+        <a href="#shifts" className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-cyan-500 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Assigned</p>
@@ -196,10 +196,10 @@ export default async function ProviderDashboardPage() {
               <Users className="h-5 w-5 text-cyan-600" />
             </div>
           </div>
-        </div>
+        </a>
 
         {/* Completed */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-slate-400 p-6 hover:shadow-md transition-all duration-200">
+        <a href="#shifts" className="bg-white rounded-2xl shadow-sm border border-slate-100 border-l-4 border-l-slate-400 p-6 hover:shadow-md transition-all duration-200 cursor-pointer block">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Completed</p>
@@ -219,7 +219,7 @@ export default async function ProviderDashboardPage() {
               <CheckCircle className="h-5 w-5 text-slate-500" />
             </div>
           </div>
-        </div>
+        </a>
 
         {/* Plan Usage */}
         {isAtLimit ? (
@@ -302,25 +302,8 @@ export default async function ProviderDashboardPage() {
         )}
       </div>
 
-      {/* Live Activity Feed */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-            Platform Activity
-          </h2>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold ring-1 ring-emerald-600/20">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            Live
-          </span>
-        </div>
-        <ActivityFeed variant="compact" maxItems={4} />
-      </div>
-
       {/* Shifts Section */}
-      <div className="flex items-center justify-between mb-6">
+      <div id="shifts" className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-900 tracking-tight">Your Shifts</h2>
         <span className="text-sm font-medium text-slate-400">
           {shifts.length} total shift{shifts.length !== 1 ? "s" : ""}
@@ -548,6 +531,23 @@ export default async function ProviderDashboardPage() {
           })}
         </div>
       )}
+
+      {/* Live Activity Feed — below shifts */}
+      <div className="mt-10">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            Platform Activity
+          </h2>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold ring-1 ring-emerald-600/20">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            Live
+          </span>
+        </div>
+        <ActivityFeed variant="compact" maxItems={4} />
+      </div>
     </div>
   );
 }

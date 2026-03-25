@@ -413,7 +413,8 @@ export default function CreateShiftPage() {
                 type="date"
                 value={form.date}
                 onChange={handleChange}
-                className={inputClass}
+                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                className={`${inputClass} cursor-pointer`}
               />
             </div>
 
