@@ -8,7 +8,10 @@ interface PublicNavProps {
   currentPage?: "home" | "pricing" | "login" | "signup" | "for-families" | "for-workers" | "resources";
 }
 
+/* Fixed top navigation bar with desktop links and mobile hamburger menu.
+   Highlights the active page via currentPage prop. */
 export function PublicNav({ currentPage }: PublicNavProps) {
+  /* Returns conditional CSS class for active/inactive nav links */
   const linkClass = (page: string) =>
     `text-sm font-medium transition-colors ${
       currentPage === page

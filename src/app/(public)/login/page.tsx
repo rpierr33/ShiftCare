@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { signInAction } from "@/actions/auth";
 import { Mail, Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
 
+/* Wrapper page component with Suspense boundary for useSearchParams */
 export default function LoginPage() {
   return (
     <Suspense>
@@ -17,26 +18,30 @@ export default function LoginPage() {
   );
 }
 
+/* Login form component — reads redirect/callback params and handles credentials + Google login */
 function LoginForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl");
-  const redirectPath = searchParams.get("redirect");
-  const reason = searchParams.get("reason");
+  const callbackUrl = searchParams.get("callbackUrl"); // NextAuth callback URL
+  const redirectPath = searchParams.get("redirect"); // Custom redirect path
+  const reason = searchParams.get("reason"); // "auth" shows auth redirect banner
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Inline validation state
+  // Inline validation: track field values and touched state for blur-based validation
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
+  // Derive field-level errors from touched state and current values
   const fieldErrors: Record<string, string> = {};
   if (touched.email && !email.trim()) fieldErrors.email = "Email is required";
   if (touched.password && !password.trim()) fieldErrors.password = "Password is required";
 
+  // Submit button is disabled until both fields have content
   const isFormValid = email.trim() !== "" && password.trim() !== "";
 
+  /* Handle credentials-based login via server action, then redirect by role */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -52,7 +57,7 @@ function LoginForm() {
         return;
       }
 
-      // Redirect based on role returned from server
+      // Redirect priority: explicit redirect > callbackUrl > role-based default
       if (redirectPath) {
         window.location.href = redirectPath;
       } else if (callbackUrl) {

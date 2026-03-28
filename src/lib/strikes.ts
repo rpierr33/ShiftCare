@@ -4,16 +4,18 @@ import { db } from "@/lib/db";
 import { sendNotification } from "@/lib/notifications";
 import type { Strike } from "@prisma/client";
 
+// Returns all active (non-decayed) strikes for a user, newest first
 export async function getActiveStrikes(userId: string): Promise<Strike[]> {
   return db.strike.findMany({
     where: {
       userId,
-      decayedAt: null,
+      decayedAt: null, // null = still active; non-null = decayed/expired
     },
     orderBy: { createdAt: "desc" },
   });
 }
 
+// Returns the count of active strikes for a user
 export async function getActiveStrikeCount(userId: string): Promise<number> {
   return db.strike.count({
     where: {
@@ -23,14 +25,17 @@ export async function getActiveStrikeCount(userId: string): Promise<number> {
   });
 }
 
+// Calculates the visibility multiplier for shift recommendations
+// Workers with strikes see fewer shifts; 3+ strikes = fully suspended (0x visibility)
 export async function getVisibilityMultiplier(userId: string): Promise<number> {
   const count = await getActiveStrikeCount(userId);
-  if (count === 0) return 1.0;
-  if (count === 1) return 0.75;
-  if (count === 2) return 0.5;
-  return 0.0; // 3+ strikes = suspended
+  if (count === 0) return 1.0;   // Full visibility
+  if (count === 1) return 0.75;  // 75% of shifts shown
+  if (count === 2) return 0.5;   // 50% of shifts shown
+  return 0.0;                    // 3+ strikes = suspended, no shifts visible
 }
 
+// Checks if a worker is currently suspended (3+ active strikes or manual suspension)
 export async function checkSuspension(userId: string): Promise<boolean> {
   const [strikeCount, user] = await Promise.all([
     getActiveStrikeCount(userId),
@@ -39,11 +44,13 @@ export async function checkSuspension(userId: string): Promise<boolean> {
   return strikeCount >= 3 || (user?.isSuspended === true);
 }
 
+// Records a strike against a worker and handles auto-suspension at 3 strikes
 export async function recordStrike(
   userId: string,
   type: "NO_SHOW" | "LATE_CANCEL",
   shiftId: string
 ): Promise<void> {
+  // Create the strike record
   await db.strike.create({
     data: {
       userId,
@@ -54,6 +61,7 @@ export async function recordStrike(
 
   const activeCount = await getActiveStrikeCount(userId);
 
+  // Auto-suspend at 3 strikes
   if (activeCount >= 3) {
     await db.user.update({
       where: { id: userId },
@@ -63,6 +71,7 @@ export async function recordStrike(
       },
     });
 
+    // Notify worker of suspension
     await sendNotification({
       userId,
       type: "ACCOUNT_SUSPENDED",
@@ -71,6 +80,7 @@ export async function recordStrike(
       channels: ["inapp", "push"],
     });
   } else {
+    // Notify worker of the strike (below suspension threshold)
     const body =
       type === "NO_SHOW"
         ? `You received a no-show strike. You now have ${activeCount} active strike(s). At 3 strikes your account will be suspended.`
@@ -79,9 +89,13 @@ export async function recordStrike(
     await sendNotification({ userId, type: "STRIKE_RECORDED", title: "Strike Recorded", body, channels: ["inapp", "push"] });
   }
 
+  // Recalculate reliability score after strike
   await updateReliabilityScore(userId);
 }
 
+// Decays (expires) old strikes — called by a cron job
+// Logic: if a user's most recent active strike is older than 90 days, decay their oldest active strike
+// This creates a "90 days of good standing" window before strikes start falling off
 export async function decayStrikes(): Promise<number> {
   const now = new Date();
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
@@ -101,11 +115,13 @@ export async function decayStrikes(): Promise<number> {
       orderBy: { createdAt: "desc" },
     });
 
+    // Only decay if the most recent strike is older than 90 days
+    // (meaning 90 days have passed without a new strike)
     if (!mostRecent || mostRecent.createdAt > ninetyDaysAgo) {
-      continue; // Most recent strike is less than 90 days old
+      continue;
     }
 
-    // Decay the oldest active strike
+    // Decay the oldest active strike first (FIFO)
     const oldest = await db.strike.findFirst({
       where: { userId, decayedAt: null },
       orderBy: { createdAt: "asc" },
@@ -119,7 +135,7 @@ export async function decayStrikes(): Promise<number> {
       decayedCount++;
     }
 
-    // Check if all strikes are now decayed
+    // Check if user should be unsuspended (dropped below 3 active strikes)
     const remainingActive = await getActiveStrikeCount(userId);
     if (remainingActive < 3) {
       const user = await db.user.findUnique({
@@ -127,6 +143,7 @@ export async function decayStrikes(): Promise<number> {
         select: { isSuspended: true },
       });
 
+      // Lift suspension if it was active
       if (user?.isSuspended) {
         await db.user.update({
           where: { id: userId },
@@ -146,12 +163,15 @@ export async function decayStrikes(): Promise<number> {
       }
     }
 
+    // Recalculate reliability score after decay
     await updateReliabilityScore(userId);
   }
 
   return decayedCount;
 }
 
+// Determines if a cancellation qualifies as "late" (within 4 hours of shift start)
+// Late cancellations incur a strike penalty
 export function isLateCancellation(shiftStartTime: Date): boolean {
   const now = new Date();
   const hoursUntilShift =
@@ -159,6 +179,7 @@ export function isLateCancellation(shiftStartTime: Date): boolean {
   return hoursUntilShift < 4;
 }
 
+// Simple DJB2 hash function — used for deterministic bucketing (e.g., A/B tests, feature flags)
 export function simpleHash(str: string): number {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
@@ -167,6 +188,8 @@ export function simpleHash(str: string): number {
   return hash >>> 0; // Convert to unsigned 32-bit integer
 }
 
+// Recalculates a worker's reliability score based on their assignment history and active strikes
+// Score formula: (confirmed / total) * 100 - (activeStrikes * 10), clamped to [0, 100]
 export async function updateReliabilityScore(userId: string): Promise<void> {
   const workerProfile = await db.workerProfile.findUnique({
     where: { userId },
@@ -177,9 +200,11 @@ export async function updateReliabilityScore(userId: string): Promise<void> {
 
   const [totalAssignments, completedAssignments, activeStrikes] =
     await Promise.all([
+      // Total assignments ever created for this worker
       db.assignment.count({
         where: { workerProfileId: workerProfile.id },
       }),
+      // Only CONFIRMED assignments count as completed
       db.assignment.count({
         where: { workerProfileId: workerProfile.id, status: "CONFIRMED" },
       }),
@@ -188,8 +213,9 @@ export async function updateReliabilityScore(userId: string): Promise<void> {
 
   let score: number;
   if (totalAssignments === 0) {
-    score = 100; // Default score for new workers
+    score = 100; // Default score for new workers with no history
   } else {
+    // Base score from completion rate, penalized by active strikes
     score =
       (completedAssignments / totalAssignments) * 100 - activeStrikes * 10;
   }

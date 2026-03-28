@@ -74,7 +74,7 @@ const STEPS = [
 export default function ForWorkersPage() {
   return (
     <>
-      <PublicNav />
+      <PublicNav currentPage="for-workers" />
 
       {/* Hero */}
       <section className="pt-28 pb-20 sm:pt-36 sm:pb-28 px-4 bg-gradient-to-b from-emerald-50 via-white to-white">

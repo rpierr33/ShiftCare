@@ -10,11 +10,12 @@ interface GeoResult {
 
 /**
  * Geocode an address string to lat/lng using Nominatim.
- * Returns null if geocoding fails (non-blocking — shift still saves).
+ * Returns null if geocoding fails — non-blocking so shift creation always succeeds.
  */
 export async function geocodeAddress(address: string): Promise<GeoResult | null> {
   try {
     const encoded = encodeURIComponent(address);
+    // Nominatim requires a User-Agent header per their usage policy
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1&countrycodes=us`,
       {
@@ -27,11 +28,14 @@ export async function geocodeAddress(address: string): Promise<GeoResult | null>
     if (!res.ok) return null;
 
     const data = await res.json();
+    // No results found for the address
     if (!data || data.length === 0) return null;
 
+    // Nominatim returns lat/lon as strings — must parseFloat
     const lat = parseFloat(data[0].lat);
     const lng = parseFloat(data[0].lon);
 
+    // Guard against invalid parse results
     if (isNaN(lat) || isNaN(lng)) return null;
 
     return { latitude: lat, longitude: lng };
@@ -44,6 +48,9 @@ export async function geocodeAddress(address: string): Promise<GeoResult | null>
 /**
  * Calculate distance between two points using the Haversine formula.
  * Returns distance in miles.
+ * Formula: a = sin²(dlat/2) + cos(lat1) * cos(lat2) * sin²(dlng/2)
+ *          c = 2 * atan2(sqrt(a), sqrt(1-a))
+ *          distance = R * c
  */
 export function haversineDistanceMiles(
   lat1: number,
@@ -62,12 +69,14 @@ export function haversineDistanceMiles(
   return R * c;
 }
 
+// Converts degrees to radians for trigonometric calculations
 function toRad(deg: number): number {
   return deg * (Math.PI / 180);
 }
 
 /**
- * Check if a point is within a geofence radius of a target.
+ * Check if a worker's location is within a geofence radius of a shift location.
+ * Returns both the boolean result and the actual distance for display purposes.
  */
 export function isWithinGeofence(
   workerLat: number,
@@ -79,6 +88,7 @@ export function isWithinGeofence(
   const distance = haversineDistanceMiles(workerLat, workerLng, shiftLat, shiftLng);
   return {
     withinFence: distance <= radiusMiles,
+    // Round to 2 decimal places for clean display
     distanceMiles: Math.round(distance * 100) / 100,
   };
 }

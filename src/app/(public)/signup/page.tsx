@@ -26,6 +26,7 @@ import {
   Clock,
 } from "lucide-react";
 
+/* Wrapper with Suspense boundary for useSearchParams SSR compatibility */
 export default function SignUpPage() {
   return (
     <Suspense>
@@ -37,6 +38,7 @@ export default function SignUpPage() {
 type Role = "PROVIDER" | "WORKER";
 type ProvType = "AGENCY" | "PRIVATE";
 
+/* Evaluate password strength based on character diversity and length */
 function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
   if (pw.length < 8) return { level: 1, label: "Weak", color: "bg-red-500" };
   const hasLetters = /[a-zA-Z]/.test(pw);
@@ -47,6 +49,7 @@ function getPasswordStrength(pw: string): { level: number; label: string; color:
   return { level: 2, label: "Fair", color: "bg-orange-500" };
 }
 
+/* Visual 4-bar strength meter that shows current password quality */
 function PasswordStrengthMeter({ password }: { password: string }) {
   if (!password) return null;
   const { level, label, color } = getPasswordStrength(password);
@@ -71,6 +74,8 @@ function PasswordStrengthMeter({ password }: { password: string }) {
   );
 }
 
+/* Multi-step signup form: role selection -> provider type (if applicable) -> registration
+   Supports query params: ?role=PROVIDER|WORKER, ?type=AGENCY|PRIVATE, ?plan=starter|professional */
 function SignUpForm() {
   const searchParams = useSearchParams();
   const urlRole = searchParams.get("role") as Role | null;
@@ -110,7 +115,7 @@ function SignUpForm() {
   const [providerType, setProviderType] = useState<ProvType>(hasPresetType ? urlType! : "AGENCY");
 
   // Store plan in sessionStorage for post-signup use
-  useState(() => {
+  useEffect(() => {
     if (urlPlan && typeof window !== "undefined") {
       try {
         sessionStorage.setItem("shiftcare_signup_plan", urlPlan);
@@ -118,7 +123,7 @@ function SignUpForm() {
         // sessionStorage may be unavailable
       }
     }
-  });
+  }, [urlPlan]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -157,6 +162,7 @@ function SignUpForm() {
     }
   }
 
+  /* Navigate to next step based on selected role */
   function handleRoleSelect(selectedRole: Role) {
     setRole(selectedRole);
     if (selectedRole === "WORKER") {
@@ -181,6 +187,7 @@ function SignUpForm() {
     }
   }
 
+  /* Submit registration form — validates password match, calls server action, shows success screen */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -199,17 +206,23 @@ function SignUpForm() {
     formData.set("providerType", providerType);
     if (urlPlan) formData.set("plan", urlPlan);
 
-    const result = await signUpAction(formData);
+    try {
+      const result = await signUpAction(formData);
 
-    if (!result.success) {
-      setError(result.error || "Sign up failed.");
+      if (!result.success) {
+        setError(result.error || "Sign up failed.");
+        setLoading(false);
+        return;
+      }
+
+      setSignupName(fieldValues.name.split(" ")[0] || "");
+      setSignupSuccess(true);
       setLoading(false);
-      return;
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
     }
-
-    setSignupName(fieldValues.name.split(" ")[0] || "");
-    setSignupSuccess(true);
-    setLoading(false);
   }
 
   const [showNextSteps, setShowNextSteps] = useState(false);
@@ -766,6 +779,7 @@ function SignUpForm() {
             </>
           )}
 
+          {!signupSuccess && (
           <div className="mt-8 pt-6 border-t border-slate-100 text-center">
             <p className="text-sm text-slate-500">
               Already have an account?{" "}
@@ -777,6 +791,7 @@ function SignUpForm() {
               </Link>
             </p>
           </div>
+          )}
           </>)}
         </div>
 

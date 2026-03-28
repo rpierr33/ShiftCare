@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+/* Site-wide footer with brand, platform links, company links, and legal links */
 export function PublicFooter() {
   return (
     <footer className="bg-slate-900 border-t border-slate-800 py-12 px-4">

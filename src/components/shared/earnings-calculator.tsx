@@ -17,6 +17,8 @@ const HOURS_OPTIONS = [4, 8, 12];
 
 const PLATFORM_FEE = 0.10;
 
+/* Interactive earnings calculator for workers — computes weekly/monthly take-home
+   based on role, city, shifts per week, and hours per shift minus platform fee */
 export function EarningsCalculator() {
   const [roleIndex, setRoleIndex] = useState(2); // CNA default
   const [city, setCity] = useState("Tampa");

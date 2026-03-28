@@ -2,9 +2,14 @@
 
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-utils";
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 import type { WorkerRole } from "@prisma/client";
 
+/**
+ * Provider onboarding input. Collects company info, agency-specific fields,
+ * and contact details.
+ */
 interface ProviderOnboardingInput {
   companyName: string;
   phone?: string;
@@ -24,6 +29,11 @@ interface ProviderOnboardingInput {
   contactPersonPhone?: string;
 }
 
+/**
+ * Complete the provider onboarding flow. Provider-only.
+ * Upserts the provider profile with company info, ensures a subscription exists,
+ * and marks the user's onboarding as completed.
+ */
 export async function completeProviderOnboarding(
   input: ProviderOnboardingInput
 ): Promise<ActionResult> {
@@ -100,9 +110,16 @@ export async function completeProviderOnboarding(
     });
   });
 
+  // BUG FIX: Added missing revalidatePath after onboarding completion
+  revalidatePath("/agency/dashboard");
+  revalidatePath("/agency/shifts");
+
   return { success: true };
 }
 
+/**
+ * Worker onboarding input. Collects role, location, credentials, and work preferences.
+ */
 interface WorkerOnboardingInput {
   workerRole: WorkerRole;
   city: string;
@@ -116,6 +133,11 @@ interface WorkerOnboardingInput {
   certifications?: string[];
 }
 
+/**
+ * Complete the worker onboarding flow. Worker-only.
+ * Upserts the worker profile with role, location, and credentials.
+ * Sets a 30-day verification deadline and marks onboarding as completed.
+ */
 export async function completeWorkerOnboarding(
   input: WorkerOnboardingInput
 ): Promise<ActionResult> {
@@ -175,11 +197,20 @@ export async function completeWorkerOnboarding(
     });
   });
 
+  // BUG FIX: Added missing revalidatePath after onboarding completion
+  revalidatePath("/worker/shifts");
+  revalidatePath("/worker/profile");
+
   return { success: true };
 }
 
-// ─── Set user role (for Google OAuth users who signed up without a role) ─────
+// ---- Set user role (for Google OAuth users who signed up without a role) ----
 
+/**
+ * Set the role for a Google OAuth user who signed up without one.
+ * Only allowed if the user's role is not already set.
+ * Creates a provider profile if the role is PROVIDER.
+ */
 export async function setUserRole(
   role: "PROVIDER" | "WORKER",
   providerType?: "AGENCY" | "PRIVATE"
@@ -216,8 +247,12 @@ export async function setUserRole(
   return { success: true };
 }
 
-// ─── Get provider type for current user ──────────────────────────
+// ---- Get provider type for current user ----
 
+/**
+ * Returns the provider type (AGENCY or PRIVATE) for the current user.
+ * Returns null for non-providers.
+ */
 export async function getProviderType(): Promise<string | null> {
   const user = await getSessionUser();
   if (user.role !== "PROVIDER") return null;

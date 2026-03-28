@@ -5,6 +5,11 @@ import { getSessionUser } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 
+/**
+ * Input for rating a completed shift.
+ * Workers rate providers on: communication, workEnvironment, paymentReliability, fairness.
+ * Providers rate workers on: punctuality, professionalism, skillCompetence.
+ */
 interface RatingInput {
   shiftId: string;
   score: number;
@@ -20,6 +25,7 @@ interface RatingInput {
   fairness?: number;
 }
 
+/** Validate a sub-metric value is an integer between 1 and 5, or undefined (not provided). */
 function validateSubMetric(val: number | undefined): boolean {
   if (val === undefined) return true;
   return Number.isInteger(val) && val >= 1 && val <= 5;
@@ -132,7 +138,7 @@ export async function submitRating(
   return { success: true };
 }
 
-// Get average rating for a user (backwards compatible)
+/** Get the simple average rating and count for a user (backwards compatible). */
 export async function getUserAverageRating(
   userId: string
 ): Promise<{ average: number; count: number }> {
@@ -147,7 +153,7 @@ export async function getUserAverageRating(
   };
 }
 
-// Get detailed rating breakdown with sub-metrics
+/** Get detailed rating breakdown with sub-metrics (worker and provider metrics). */
 export async function getUserDetailedRatings(userId: string): Promise<{
   overall: { average: number; count: number };
   // Worker metrics
@@ -223,7 +229,7 @@ export async function getUserDetailedRatings(userId: string): Promise<{
   return detailed;
 }
 
-// Get average ratings for multiple users (batch)
+/** Get average ratings for multiple users in a single query (batch). */
 export async function getBatchAverageRatings(
   userIds: string[]
 ): Promise<Map<string, { average: number; count: number }>> {
@@ -246,7 +252,7 @@ export async function getBatchAverageRatings(
   return map;
 }
 
-// Check if current user has rated a specific shift
+/** Check if the current user has already rated a specific shift. */
 export async function hasRatedShift(shiftId: string): Promise<boolean> {
   const user = await getSessionUser();
   const existing = await db.rating.findUnique({

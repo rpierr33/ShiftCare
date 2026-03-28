@@ -26,7 +26,10 @@ function getStateName(abbr: string): string {
   return STATE_NAMES[abbr.toUpperCase()] || abbr;
 }
 
-// ─── Create Shift (Provider only) ───────────────────────────────
+// ---- Create Shift (Provider only) ----
+// Creates a new open shift. Provider-only. Validates inputs, checks suspension,
+// license expiry, provider profile completeness, plan limits, geocodes location,
+// and atomically increments usage within a transaction.
 
 interface CreateShiftInput {
   role: WorkerRole;
@@ -202,7 +205,9 @@ export async function createShift(input: CreateShiftInput): Promise<ActionResult
   }
 }
 
-// ─── Create Recurring Shifts (Provider only) ─────────────────────
+// ---- Create Recurring Shifts (Provider only) ----
+// Creates multiple shifts across different dates with the same time/location/rate.
+// Validates all dates, checks plan quota for the entire batch, geocodes once.
 
 interface CreateRecurringShiftsInput {
   role: WorkerRole;
@@ -351,7 +356,9 @@ export async function createRecurringShifts(
   }
 }
 
-// ─── Edit Shift (Provider) ───────────────────────────────────────
+// ---- Edit Shift (Provider) ----
+// Update fields on an existing shift. Cannot edit completed/cancelled shifts.
+// Re-geocodes if location changes. Uses optimistic locking via version increment.
 
 interface EditShiftInput {
   role?: WorkerRole;
@@ -416,6 +423,7 @@ export async function editShift(shiftId: string, input: EditShiftInput): Promise
     return { success: false, error: "End time must be after start time." };
   }
 
+  // Increment version for optimistic locking
   data.version = { increment: 1 };
 
   await db.shift.update({
@@ -423,10 +431,16 @@ export async function editShift(shiftId: string, input: EditShiftInput): Promise
     data,
   });
 
+  // BUG FIX: Added missing revalidatePath calls after shift mutation
+  revalidatePath("/agency/shifts");
+  revalidatePath(`/agency/shifts/${shiftId}`);
+  revalidatePath("/worker/shifts");
+
   return { success: true };
 }
 
-// ─── Get Provider's Shifts ───────────────────────────────────────
+// ---- Get Provider's Shifts ----
+// Returns all shifts owned by the current provider with assignment and time entry details.
 
 export async function getProviderShifts() {
   const user = await getSessionUser();
@@ -457,9 +471,13 @@ export async function getProviderShifts() {
   });
 }
 
-// ─── Get Available Shifts (Worker) ───────────────────────────────
-// Shows only shifts matching the worker's role.
-// Provider preferences (minExperience) filter server-side.
+// ---- Get Available Shifts (Worker) ----
+// Returns OPEN shifts matching the worker's role, filtered by:
+// - Availability (weekly slots + blocked dates)
+// - Location (state + work areas)
+// - Experience requirements
+// - Strike visibility reduction (both worker and provider)
+// Also attaches provider ratings and distance from worker.
 
 export async function getAvailableShifts(filters?: {
   role?: WorkerRole;
@@ -738,9 +756,11 @@ export async function getWorkerRecommendationContext() {
   };
 }
 
-// ─── Accept Shift (Worker) — OPTION A: Hard Assignment ───────────
-// Transaction-safe. Only one worker can secure a shift.
-// Uses optimistic locking via version field.
+// ---- Accept Shift (Worker) -- Hard Assignment ----
+// Transaction-safe shift acceptance. Only one worker can secure a shift.
+// Uses optimistic locking via version field to prevent double-booking.
+// Checks: suspension, profile completion, credential status, time overlap,
+// duplicate assignment. Captures payment after successful assignment.
 
 export async function acceptShift(shiftId: string): Promise<ActionResult> {
   const user = await getSessionUser();
@@ -863,7 +883,9 @@ export async function acceptShift(shiftId: string): Promise<ActionResult> {
 
 const PROVIDER_LATE_CANCEL_FEE = 15.0; // $15 flat fee for late cancellations
 
-// ─── Cancel Shift (Provider) ─────────────────────────────────────
+// ---- Cancel Shift (Provider) ----
+// Cancel a shift and process refund. Records a late-cancel strike if within
+// 4 hours of start and a worker was assigned. Suspends provider after 3 strikes.
 
 export async function cancelShift(shiftId: string): Promise<ActionResult> {
   const user = await getSessionUser();
@@ -948,7 +970,8 @@ export async function cancelShift(shiftId: string): Promise<ActionResult> {
   }
 }
 
-// ─── Complete Shift (Provider) ───────────────────────────────────
+// ---- Complete Shift (Provider) ----
+// Mark a shift as completed. Delegates to Stripe completion handler for payment processing.
 
 export async function completeShift(shiftId: string): Promise<ActionResult> {
   const user = await getSessionUser();
@@ -980,10 +1003,18 @@ export async function completeShift(shiftId: string): Promise<ActionResult> {
   }
 }
 
-// ─── Get Shift Details ───────────────────────────────────────────
+// ---- Get Shift Details ----
 
+/**
+ * Get full shift details by ID.
+ * BUG FIX: Added authentication check -- previously any unauthenticated user
+ * could fetch shift details by guessing the ID.
+ * Authorization: provider who owns the shift OR the assigned worker can view.
+ */
 export async function getShiftById(shiftId: string) {
-  return db.shift.findUnique({
+  const user = await getSessionUser();
+
+  const shift = await db.shift.findUnique({
     where: { id: shiftId },
     include: {
       provider: {
@@ -1023,9 +1054,20 @@ export async function getShiftById(shiftId: string) {
       },
     },
   });
+
+  // Authorization: only the provider who owns the shift or the assigned worker can view details
+  if (shift && shift.providerId !== user.id && shift.assignedWorkerId !== user.id) {
+    // Workers can also view OPEN shifts (for the marketplace detail page)
+    if (user.role !== "WORKER" || shift.status !== "OPEN") {
+      return null;
+    }
+  }
+
+  return shift;
 }
 
-// ─── Worker's Accepted Shifts ────────────────────────────────────
+// ---- Worker's Accepted Shifts ----
+// Returns all shifts assigned to the current worker with provider and time entry details.
 
 export async function getWorkerShifts() {
   const user = await getSessionUser();
@@ -1056,7 +1098,9 @@ export async function getWorkerShifts() {
   });
 }
 
-// ─── Cancel Shift (Worker) ───────────────────────────────────────
+// ---- Cancel Shift (Worker) ----
+// Worker cancels their assigned shift. Records a late-cancel strike if within
+// 4 hours of start. Suspends worker after 3 strikes.
 
 export async function workerCancelShift(shiftId: string): Promise<ActionResult> {
   const user = await getSessionUser();

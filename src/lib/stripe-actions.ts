@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { calculateShiftPayments } from "@/lib/fees";
 
 // ─── Create Stripe Customer (Agency/Provider) ────────────────────
+// Creates a Stripe customer for the provider if one doesn't exist already
 
 export async function createStripeCustomer(agencyId: string) {
   const user = await db.user.findUnique({
@@ -16,10 +17,12 @@ export async function createStripeCustomer(agencyId: string) {
     throw new Error("Provider profile not found.");
   }
 
+  // Return existing customer ID if already created (idempotent)
   if (user.providerProfile.stripeCustomerId) {
     return user.providerProfile.stripeCustomerId;
   }
 
+  // Create Stripe customer with agency metadata for tracking
   const customer = await stripe.customers.create({
     email: user.email,
     name: user.providerProfile.companyName || user.name,
@@ -29,6 +32,7 @@ export async function createStripeCustomer(agencyId: string) {
     },
   });
 
+  // Persist the Stripe customer ID in our database
   await db.providerProfile.update({
     where: { userId: agencyId },
     data: { stripeCustomerId: customer.id },
@@ -38,6 +42,7 @@ export async function createStripeCustomer(agencyId: string) {
 }
 
 // ─── Create Setup Intent (Collect Payment Method) ────────────────
+// Creates a Stripe SetupIntent to securely collect a payment method for future charges
 
 export async function createSetupIntent(agencyId: string) {
   const profile = await db.providerProfile.findUnique({
@@ -48,7 +53,7 @@ export async function createSetupIntent(agencyId: string) {
     throw new Error("Provider profile not found.");
   }
 
-  // Ensure Stripe customer exists
+  // Ensure Stripe customer exists before creating setup intent
   let customerId = profile.stripeCustomerId;
   if (!customerId) {
     customerId = await createStripeCustomer(agencyId);
@@ -67,6 +72,7 @@ export async function createSetupIntent(agencyId: string) {
 }
 
 // ─── Save Payment Method ─────────────────────────────────────────
+// Attaches a payment method to the Stripe customer and sets it as default
 
 export async function savePaymentMethod(agencyId: string, paymentMethodId: string) {
   const profile = await db.providerProfile.findUnique({
@@ -81,19 +87,19 @@ export async function savePaymentMethod(agencyId: string, paymentMethodId: strin
     throw new Error("Stripe customer not created. Complete onboarding first.");
   }
 
-  // Attach payment method to customer
+  // Attach the payment method to the Stripe customer
   await stripe.paymentMethods.attach(paymentMethodId, {
     customer: profile.stripeCustomerId,
   });
 
-  // Set as default payment method
+  // Set as default payment method for future invoices/charges
   await stripe.customers.update(profile.stripeCustomerId, {
     invoice_settings: {
       default_payment_method: paymentMethodId,
     },
   });
 
-  // Save to database
+  // Persist the default payment method ID in our database
   await db.providerProfile.update({
     where: { userId: agencyId },
     data: { defaultPaymentMethodId: paymentMethodId },
@@ -101,6 +107,7 @@ export async function savePaymentMethod(agencyId: string, paymentMethodId: strin
 }
 
 // ─── Create Worker Connect Account ───────────────────────────────
+// Creates a Stripe Express Connect account for the worker to receive payouts
 
 export async function createWorkerConnectAccount(workerId: string) {
   const user = await db.user.findUnique({
@@ -112,8 +119,8 @@ export async function createWorkerConnectAccount(workerId: string) {
     throw new Error("Worker profile not found.");
   }
 
+  // If account already exists, generate a new onboarding link (for re-entry)
   if (user.workerProfile.stripeAccountId) {
-    // Account already exists — generate a new onboarding link
     const accountLink = await stripe.accountLinks.create({
       account: user.workerProfile.stripeAccountId,
       refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/worker/profile?stripe=refresh`,
@@ -123,6 +130,7 @@ export async function createWorkerConnectAccount(workerId: string) {
     return accountLink.url;
   }
 
+  // Create new Express account with card_payments and transfers capabilities
   const account = await stripe.accounts.create({
     type: "express",
     country: "US",
@@ -137,6 +145,7 @@ export async function createWorkerConnectAccount(workerId: string) {
     },
   });
 
+  // Save account ID with PENDING status — will be updated via webhook when onboarding completes
   await db.workerProfile.update({
     where: { userId: workerId },
     data: {
@@ -145,6 +154,7 @@ export async function createWorkerConnectAccount(workerId: string) {
     },
   });
 
+  // Generate onboarding link for the worker to complete Stripe's identity verification
   const accountLink = await stripe.accountLinks.create({
     account: account.id,
     refresh_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/worker/profile?stripe=refresh`,
@@ -156,6 +166,8 @@ export async function createWorkerConnectAccount(workerId: string) {
 }
 
 // ─── Capture Shift Payment ───────────────────────────────────────
+// Charges the employer and sets up a transfer to the worker's Connect account
+// Called when a worker accepts a shift — payment is held until completion
 
 export async function captureShiftPayment(shiftId: string) {
   const shift = await db.shift.findUnique({
@@ -173,6 +185,7 @@ export async function captureShiftPayment(shiftId: string) {
   if (!shift) throw new Error("Shift not found.");
   if (!shift.assignedWorker?.workerProfile) throw new Error("No assigned worker.");
 
+  // Validate employer has payment setup
   const agencyProfile = shift.provider.providerProfile;
   if (!agencyProfile?.stripeCustomerId) {
     throw new Error("Employer has no Stripe customer. Payment method required.");
@@ -181,17 +194,19 @@ export async function captureShiftPayment(shiftId: string) {
     throw new Error("Employer has no payment method on file.");
   }
 
+  // Validate worker has payout setup
   const workerProfile = shift.assignedWorker.workerProfile;
   if (!workerProfile.stripeAccountId) {
     throw new Error("Worker has not set up their Stripe account for payouts.");
   }
 
-  // Calculate hours and payment amounts
-  // Subscribers pay gross only. Non-subscribers pay gross + 15% surcharge.
+  // Calculate shift duration in hours from timestamps
   const hours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
+  // BUG FIX: Prisma Decimal columns return strings/objects — must parseFloat before math
   const payRate = parseFloat(String(shift.payRate));
 
-  // Check if employer has an active paid subscription
+  // Check if employer has an active paid subscription to determine fee structure
+  // Subscribers pay gross only; non-subscribers pay gross + 15% surcharge
   const subscription = await db.subscription.findFirst({
     where: {
       providerProfileId: agencyProfile.id,
@@ -201,20 +216,22 @@ export async function captureShiftPayment(shiftId: string) {
   });
   const isSubscribed = !!subscription;
 
+  // Calculate all payment amounts using the fee calculator
   const { totalCharge, platformFee, workerPayout } = calculateShiftPayments(payRate, hours, isSubscribed);
 
+  // Convert to cents for Stripe (Stripe uses smallest currency unit)
   const totalChargeCents = Math.round(totalCharge * 100);
   const platformFeeCents = Math.round(platformFee * 100);
 
-  // Create PaymentIntent — charge employer the totalCharge
-  // application_fee_amount = ShiftCare's total cut (deducted before worker transfer)
+  // Create PaymentIntent — charges employer, transfers to worker minus platform fee
+  // application_fee_amount = ShiftCare's total cut (worker fee + employer surcharge)
   const paymentIntent = await stripe.paymentIntents.create({
     amount: totalChargeCents,
     currency: "usd",
     customer: agencyProfile.stripeCustomerId,
     payment_method: agencyProfile.defaultPaymentMethodId,
     confirm: true,
-    off_session: true,
+    off_session: true,        // Charge without user present (saved card)
     capture_method: "automatic",
     transfer_data: {
       destination: workerProfile.stripeAccountId,
@@ -228,7 +245,7 @@ export async function captureShiftPayment(shiftId: string) {
     },
   });
 
-  // Update shift with payment details
+  // Persist payment details on the shift record
   await db.shift.update({
     where: { id: shiftId },
     data: {
@@ -244,6 +261,8 @@ export async function captureShiftPayment(shiftId: string) {
 }
 
 // ─── Confirm Shift Completion ────────────────────────────────────
+// Releases held payment to the worker after shift completion is confirmed
+// Recalculates payout based on actual hours worked (from TimeEntry clock in/out)
 
 export async function confirmShiftCompletion(shiftId: string, confirmedByUserId: string) {
   const shift = await db.shift.findUnique({
@@ -257,9 +276,11 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
   });
 
   if (!shift) throw new Error("Shift not found.");
+  // Only HELD payments can be released — prevents double-release
   if (shift.paymentStatus !== "HELD") {
     throw new Error("Payment is not in HELD status. Cannot confirm completion.");
   }
+  // Only active shifts can be completed
   if (shift.status !== "ASSIGNED" && shift.status !== "IN_PROGRESS") {
     throw new Error("Shift must be ASSIGNED or IN_PROGRESS to complete.");
   }
@@ -269,21 +290,22 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
     throw new Error("Worker Stripe account not found.");
   }
 
-  // Calculate actual hours from TimeEntry if available
+  // Find the TimeEntry for the assigned worker to get actual hours
   const timeEntry = shift.timeEntries?.find((te) => te.workerId === shift.assignedWorkerId);
   const scheduledHours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
 
   let actualHours = scheduledHours;
   if (timeEntry?.clockOutTime && timeEntry.clockInTime) {
+    // Worker clocked in and out — use actual time worked, capped at scheduled
     const rawActual = (new Date(timeEntry.clockOutTime).getTime() - new Date(timeEntry.clockInTime).getTime()) / (1000 * 60 * 60);
-    actualHours = Math.min(rawActual, scheduledHours); // Cap at scheduled
+    actualHours = Math.min(rawActual, scheduledHours);
   } else if (timeEntry?.clockInTime && !timeEntry.clockOutTime) {
     // Worker clocked in but never clocked out — use shift endTime as fallback
     const fallbackClockOut = shift.endTime;
     const rawActual = (fallbackClockOut.getTime() - new Date(timeEntry.clockInTime).getTime()) / (1000 * 60 * 60);
     actualHours = Math.min(rawActual, scheduledHours);
 
-    // Auto-fill the clock-out
+    // Auto-fill the missing clock-out time
     await db.timeEntry.update({
       where: { id: timeEntry.id },
       data: {
@@ -293,13 +315,17 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
     });
   }
 
-  // Recalculate payout based on actual hours
-  const payRate = shift.payRate;
+  // BUG FIX: parseFloat on Prisma Decimal fields before doing arithmetic
+  // shift.payRate and shift.workerPayoutAmount are Prisma Decimal types (return strings)
+  const payRate = parseFloat(String(shift.payRate));
   const originalPayout = parseFloat(String(shift.workerPayoutAmount ?? 0));
-  const actualPayout = actualHours * payRate * 0.9; // 10% platform fee
+  // Recalculate based on actual hours with 10% platform fee
+  const actualPayout = actualHours * payRate * 0.9;
+  // Cap at original payout — worker should never receive more than the held amount
   const workerPayoutAmount = Math.min(originalPayout, Math.round(actualPayout * 100) / 100);
   const workerPayoutCents = Math.round(workerPayoutAmount * 100);
 
+  // Create Stripe transfer to worker's Connect account
   const transfer = await stripe.transfers.create({
     amount: workerPayoutCents,
     currency: "usd",
@@ -310,8 +336,9 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
     },
   });
 
-  // Update shift and worker stats in a transaction
+  // Update shift, assignment, worker stats, and payout status atomically
   await db.$transaction(async (tx) => {
+    // Mark shift as completed with payment released
     await tx.shift.update({
       where: { id: shiftId },
       data: {
@@ -324,12 +351,14 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
       },
     });
 
+    // Move assignment from ACCEPTED to CONFIRMED (final state)
     await tx.assignment.updateMany({
       where: { shiftId, status: "ACCEPTED" },
       data: { status: "CONFIRMED" },
     });
 
-    // Increment worker stats
+    // Increment worker's lifetime earnings and completed shift count
+    // BUG FIX: parseFloat on Decimal field before addition
     const currentEarnings = parseFloat(String(workerProfile.totalEarnings));
     await tx.workerProfile.update({
       where: { id: workerProfile.id },
@@ -339,9 +368,9 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
       },
     });
 
-    // Set payout status based on pay cadence
+    // Set payout timing based on pay cadence preference
     // Same Day Pay: immediately AVAILABLE after confirmation
-    // Standard: stays PENDING for 4 hours (cron releases it)
+    // Standard: stays PENDING for 4 hours (cron job releases it)
     const isSameDay = shift.payCadence === "SAME_DAY";
     await tx.shiftPayment.updateMany({
       where: { shiftId },
@@ -356,6 +385,7 @@ export async function confirmShiftCompletion(shiftId: string, confirmedByUserId:
 }
 
 // ─── Cancel Shift with Refund ────────────────────────────────────
+// Cancels a shift, refunds any held payment, and applies reliability penalty if worker cancelled late
 
 export async function cancelShiftWithRefund(shiftId: string, cancelledBy: "WORKER" | "AGENCY") {
   const shift = await db.shift.findUnique({
@@ -371,7 +401,7 @@ export async function cancelShiftWithRefund(shiftId: string, cancelledBy: "WORKE
 
   let newPaymentStatus: "REFUNDED" | "UNPAID" = "UNPAID";
 
-  // If payment was held, issue a refund
+  // If payment was held (charge already captured), issue a full refund via Stripe
   if (shift.paymentStatus === "HELD" && shift.stripePaymentIntentId) {
     await stripe.refunds.create({
       payment_intent: shift.stripePaymentIntentId,
@@ -379,6 +409,7 @@ export async function cancelShiftWithRefund(shiftId: string, cancelledBy: "WORKE
     newPaymentStatus = "REFUNDED";
   }
 
+  // Cancel shift and all active assignments in a single transaction
   await db.$transaction(async (tx) => {
     await tx.shift.update({
       where: { id: shiftId },
@@ -389,6 +420,7 @@ export async function cancelShiftWithRefund(shiftId: string, cancelledBy: "WORKE
       },
     });
 
+    // Cancel all non-terminal assignments (any that haven't already been rejected/cancelled)
     await tx.assignment.updateMany({
       where: {
         shiftId,
@@ -398,7 +430,8 @@ export async function cancelShiftWithRefund(shiftId: string, cancelledBy: "WORKE
     });
   });
 
-  // If worker cancelled within 4 hours of shift start, apply reliability penalty
+  // If worker cancelled within 4 hours of shift start, apply a reliability penalty
+  // This discourages last-minute cancellations that leave providers without coverage
   if (cancelledBy === "WORKER" && shift.assignedWorkerId) {
     const hoursUntilStart = (shift.startTime.getTime() - Date.now()) / (1000 * 60 * 60);
     if (hoursUntilStart <= 4) {
@@ -408,12 +441,13 @@ export async function cancelShiftWithRefund(shiftId: string, cancelledBy: "WORKE
 }
 
 // ─── Dispute Shift ───────────────────────────────────────────────
+// Marks a shift as disputed — payment remains HELD pending admin resolution
 
 export async function disputeShift(shiftId: string, disputeReason: string) {
   const shift = await db.shift.findUnique({ where: { id: shiftId } });
   if (!shift) throw new Error("Shift not found.");
 
-  // Payment remains HELD — not released, not refunded until admin resolves
+  // Payment stays HELD — not released or refunded until admin resolves the dispute
   await db.shift.update({
     where: { id: shiftId },
     data: {
@@ -425,6 +459,7 @@ export async function disputeShift(shiftId: string, disputeReason: string) {
 }
 
 // ─── Create Subscription Checkout ────────────────────────────────
+// Creates a Stripe Checkout Session for the provider to subscribe to a paid plan
 
 export async function createSubscriptionCheckout(agencyId: string, planName: string) {
   const profile = await db.providerProfile.findUnique({
@@ -433,13 +468,13 @@ export async function createSubscriptionCheckout(agencyId: string, planName: str
 
   if (!profile) throw new Error("Provider profile not found.");
 
-  // Ensure Stripe customer exists
+  // Ensure Stripe customer exists before creating checkout session
   let customerId = profile.stripeCustomerId;
   if (!customerId) {
     customerId = await createStripeCustomer(agencyId);
   }
 
-  // Map plan name to Stripe price ID
+  // Map internal plan names to Stripe Price IDs from environment variables
   const priceMap: Record<string, string | undefined> = {
     STARTER: process.env.STRIPE_STARTER_PRICE_ID,
     PROFESSIONAL: process.env.STRIPE_PROFESSIONAL_PRICE_ID,
@@ -452,6 +487,7 @@ export async function createSubscriptionCheckout(agencyId: string, planName: str
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+  // Create Stripe Checkout Session for subscription billing
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
@@ -462,6 +498,7 @@ export async function createSubscriptionCheckout(agencyId: string, planName: str
         quantity: 1,
       },
     ],
+    // Redirect URLs after checkout completion or cancellation
     success_url: `${appUrl}/provider/dashboard?subscription=success`,
     cancel_url: `${appUrl}/provider/dashboard?subscription=cancelled`,
     metadata: {
@@ -475,6 +512,7 @@ export async function createSubscriptionCheckout(agencyId: string, planName: str
 }
 
 // ─── Create Billing Portal Session ───────────────────────────────
+// Creates a Stripe Billing Portal session for the provider to manage their subscription
 
 export async function createBillingPortalSession(agencyId: string) {
   const profile = await db.providerProfile.findUnique({
@@ -487,6 +525,7 @@ export async function createBillingPortalSession(agencyId: string) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+  // Stripe Billing Portal lets users update payment methods, cancel, etc.
   const session = await stripe.billingPortal.sessions.create({
     customer: profile.stripeCustomerId,
     return_url: `${appUrl}/provider/dashboard`,
@@ -496,6 +535,8 @@ export async function createBillingPortalSession(agencyId: string) {
 }
 
 // ─── Apply Reliability Penalty ───────────────────────────────────
+// Recalculates a worker's reliability score after a late cancellation
+// Score = (completed / total accepted) * 100
 
 export async function applyReliabilityPenalty(workerId: string) {
   const workerProfile = await db.workerProfile.findUnique({
@@ -504,7 +545,7 @@ export async function applyReliabilityPenalty(workerId: string) {
 
   if (!workerProfile) return;
 
-  // Count total accepted assignments (completed + cancelled by worker)
+  // Count total assignments that reached accepted state (includes completed and cancelled-by-worker)
   const totalAccepted = await db.assignment.count({
     where: {
       workerProfileId: workerProfile.id,
@@ -515,7 +556,7 @@ export async function applyReliabilityPenalty(workerId: string) {
   const completed = workerProfile.shiftsCompleted;
 
   // Reliability = (completed / total accepted) * 100
-  // If no history, default to 100
+  // Default to 100 for workers with no history
   const reliabilityScore = totalAccepted > 0
     ? Math.round((completed / totalAccepted) * 10000) / 100
     : 100;

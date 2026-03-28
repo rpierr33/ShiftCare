@@ -3,9 +3,13 @@
 import { db } from "@/lib/db";
 import { sendNotification } from "@/lib/notifications";
 
+// Alert thresholds in days before expiry — notifications are sent at each threshold
 const ALERT_THRESHOLDS = [60, 30, 14, 7, 0];
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// Checks all worker credentials for upcoming expiry and sends alerts
+// Also automatically marks expired credentials and updates worker profile status
+// Called by a cron job on a daily schedule
 export async function checkWorkerCredentialExpiry(): Promise<{
   alertsSent: number;
   expired: number;
@@ -14,6 +18,7 @@ export async function checkWorkerCredentialExpiry(): Promise<{
   let expired = 0;
   const now = new Date();
 
+  // Fetch all non-expired, non-rejected credentials that have an expiry date
   const credentials = await db.credential.findMany({
     where: {
       expiryDate: { not: null },
@@ -27,19 +32,22 @@ export async function checkWorkerCredentialExpiry(): Promise<{
   });
 
   for (const credential of credentials) {
+    // Skip credentials without expiry date or orphaned records
     if (!credential.expiryDate || !credential.workerProfile) continue;
 
+    // Calculate days remaining until expiry (negative = already expired)
     const daysUntilExpiry = Math.ceil(
       (credential.expiryDate.getTime() - now.getTime()) / MS_PER_DAY
     );
 
-    // Handle expired credentials
+    // Handle already-expired credentials — mark as EXPIRED and block worker from accepting shifts
     if (daysUntilExpiry <= 0 && credential.status !== "EXPIRED") {
       await db.credential.update({
         where: { id: credential.id },
         data: { status: "EXPIRED" },
       });
 
+      // Update worker profile to reflect expired credential status
       await db.workerProfile.update({
         where: { id: credential.workerProfile.id },
         data: { credentialStatus: "EXPIRED" },
@@ -56,11 +64,13 @@ export async function checkWorkerCredentialExpiry(): Promise<{
       expired++;
     }
 
-    // Check each alert threshold
+    // Check each alert threshold and send notification if not already sent
     for (const threshold of ALERT_THRESHOLDS) {
+      // Skip thresholds that haven't been reached yet
       if (daysUntilExpiry > threshold) continue;
 
       try {
+        // Upsert deduplicates alerts — if the unique constraint already exists, the update is a no-op
         const alert = await db.credentialAlert.upsert({
           where: {
             userId_credentialId_daysBeforeExpiry: {
@@ -75,11 +85,14 @@ export async function checkWorkerCredentialExpiry(): Promise<{
             daysBeforeExpiry: threshold,
             sentAt: now,
           },
-          update: {},
+          update: {}, // No-op if already exists
         });
 
-        // If sentAt matches now, this was newly created
+        // Check if this was a newly created alert (not a duplicate)
+        // Compares sentAt timestamp to detect new vs existing records
+        // NOTE: This comparison is fragile if DB round-trips lose millisecond precision
         if (alert.sentAt.getTime() === now.getTime()) {
+          // Only send notification for future thresholds (not the 0-day one, which is handled above)
           if (threshold > 0) {
             await sendNotification({
               userId: credential.workerProfile.userId,
@@ -92,7 +105,7 @@ export async function checkWorkerCredentialExpiry(): Promise<{
           alertsSent++;
         }
       } catch {
-        // Unique constraint violation means alert already exists — skip
+        // Unique constraint violation means alert already exists — safe to skip
       }
     }
   }
@@ -100,6 +113,8 @@ export async function checkWorkerCredentialExpiry(): Promise<{
   return { alertsSent, expired };
 }
 
+// Checks provider (agency) license expiry dates and sends alerts
+// Similar to worker credential expiry but uses a sentinel credential ID pattern
 export async function checkProviderLicenseExpiry(): Promise<{
   alertsSent: number;
   expired: number;
@@ -108,10 +123,11 @@ export async function checkProviderLicenseExpiry(): Promise<{
   let expired = 0;
   const now = new Date();
 
+  // Fetch all non-private providers that have a license expiry date
   const providerProfiles = await db.providerProfile.findMany({
     where: {
       licenseExpiryDate: { not: null },
-      providerType: { not: "PRIVATE" },
+      providerType: { not: "PRIVATE" }, // Private payers don't have agency licenses
     },
     include: {
       user: { select: { id: true } },
@@ -125,6 +141,7 @@ export async function checkProviderLicenseExpiry(): Promise<{
       (profile.licenseExpiryDate.getTime() - now.getTime()) / MS_PER_DAY
     );
 
+    // Use a synthetic credential ID for the alert dedup table since providers don't have credential records
     const sentinelCredentialId = `provider-license-${profile.id}`;
 
     // Check each alert threshold
@@ -132,6 +149,7 @@ export async function checkProviderLicenseExpiry(): Promise<{
       if (daysUntilExpiry > threshold) continue;
 
       try {
+        // Same upsert dedup pattern as worker credentials
         const alert = await db.credentialAlert.upsert({
           where: {
             userId_credentialId_daysBeforeExpiry: {
@@ -149,7 +167,7 @@ export async function checkProviderLicenseExpiry(): Promise<{
           update: {},
         });
 
-        // If sentAt matches now, this was newly created
+        // If newly created, send the appropriate notification
         if (alert.sentAt.getTime() === now.getTime()) {
           const msg = threshold === 0
             ? "Your agency license has expired. You cannot post new shifts until renewed."
@@ -165,7 +183,7 @@ export async function checkProviderLicenseExpiry(): Promise<{
           alertsSent++;
         }
       } catch {
-        // Unique constraint violation means alert already exists — skip
+        // Unique constraint violation means alert already exists — safe to skip
       }
     }
 

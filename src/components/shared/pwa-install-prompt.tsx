@@ -14,6 +14,9 @@ const PAGE_VISIT_KEY = "pwa-page-visits";
 const MIN_PAGE_VISITS = 2;
 const MIN_TIME_ON_SITE_MS = 30_000; // 30 seconds
 
+/* Progressive Web App install prompt — only shown on mobile after minimum page visits
+   or time on site. Captures the beforeinstallprompt event and offers native-like install.
+   Dismissed state persists for 7 days via localStorage. */
 export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);

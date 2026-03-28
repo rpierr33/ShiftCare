@@ -1324,6 +1324,7 @@ function WorkerOnboardingForm() {
   }
 
   if (showCelebration) return <CelebrationScreen />;
+  if (!profileLoaded) return <LoadingScreen />;
 
   const roleLabel = WORKER_ROLES.find((r) => r.value === workerRole)?.label;
 
@@ -1356,9 +1357,6 @@ function WorkerOnboardingForm() {
                 </h1>
                 <p className="text-sm text-gray-500">
                   This determines which shifts you&apos;ll see
-                </p>
-                <p className="text-xs text-cyan-600 font-medium mt-1">
-                  Your role determines which shifts you&apos;ll see.
                 </p>
               </div>
 

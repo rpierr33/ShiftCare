@@ -4,9 +4,15 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-utils";
 import { getProviderPlan, getUsageThisPeriod } from "@/lib/subscription";
 import { PLAN_LIMITS, PLAN_PRICES } from "@/types";
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 import type { SubscriptionPlan } from "@prisma/client";
 
+/**
+ * Get comprehensive subscription status for the current provider.
+ * Includes plan, usage, limits, pricing, and cancellation info.
+ * Returns null for non-providers.
+ */
 export async function getSubscriptionStatus() {
   const user = await getSessionUser();
   if (user.role !== "PROVIDER") return null;
@@ -33,6 +39,10 @@ export async function getSubscriptionStatus() {
   };
 }
 
+/**
+ * Upgrade the provider's subscription plan. Provider-only.
+ * NOTE: Stripe integration deferred. For MVP, plan updates directly in the database.
+ */
 export async function upgradePlan(newPlan: SubscriptionPlan): Promise<ActionResult> {
   const user = await getSessionUser();
   if (user.role !== "PROVIDER") {
@@ -52,7 +62,7 @@ export async function upgradePlan(newPlan: SubscriptionPlan): Promise<ActionResu
     return { success: false, error: "Provider profile not found." };
   }
 
-  // NOTE: Stripe integration deferred. For MVP, plan updates directly.
+  // NOTE: Stripe integration deferred. For MVP, plan updates directly in DB.
   if (profile.subscription) {
     await db.subscription.update({
       where: { id: profile.subscription.id },
@@ -63,6 +73,7 @@ export async function upgradePlan(newPlan: SubscriptionPlan): Promise<ActionResu
       },
     });
   } else {
+    // Create subscription if none exists (edge case)
     await db.subscription.create({
       data: {
         providerProfileId: profile.id,
@@ -72,9 +83,16 @@ export async function upgradePlan(newPlan: SubscriptionPlan): Promise<ActionResu
     });
   }
 
+  // BUG FIX: Added missing revalidatePath after plan change
+  revalidatePath("/agency/billing");
+  revalidatePath("/agency/dashboard");
+
   return { success: true };
 }
 
+/**
+ * Cancel the provider's subscription at end of current period. Provider-only.
+ */
 export async function cancelSubscription(): Promise<ActionResult> {
   const user = await getSessionUser();
   if (user.role !== "PROVIDER") {
@@ -90,10 +108,14 @@ export async function cancelSubscription(): Promise<ActionResult> {
     return { success: false, error: "No active subscription." };
   }
 
+  // Mark subscription for cancellation at period end (not immediate)
   await db.subscription.update({
     where: { id: profile.subscription.id },
     data: { cancelAtPeriodEnd: true },
   });
+
+  // BUG FIX: Added missing revalidatePath after subscription cancellation
+  revalidatePath("/agency/billing");
 
   return { success: true };
 }

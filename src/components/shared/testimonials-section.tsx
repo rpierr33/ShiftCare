@@ -45,12 +45,14 @@ const TESTIMONIALS = [
   },
 ];
 
+/* Returns the appropriate icon based on testimonial author type */
 function RoleIcon({ type }: { type: "agency" | "homecare" | "worker" }) {
   if (type === "agency") return <Building2 size={12} className="text-white" />;
   if (type === "homecare") return <Heart size={12} className="text-white" />;
   return <Stethoscope size={12} className="text-white" />;
 }
 
+/* Renders a row of filled star icons for the given rating count */
 function Stars({ count }: { count: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -68,6 +70,7 @@ function Stars({ count }: { count: number }) {
   );
 }
 
+/* 3-column testimonial grid showing quotes from agency, worker, and homecare users */
 export function TestimonialsSection() {
   return (
     <section className="py-20 sm:py-28 px-4 bg-slate-50">

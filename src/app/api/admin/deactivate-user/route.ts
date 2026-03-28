@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+// Admin emails from env — parsed once at module load
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+
+/**
+ * POST /api/admin/deactivate-user
+ * Deactivates or reactivates a user account. Admin-only.
+ * BUG FIX: Replaced requireAdmin() (which uses redirect()) with direct auth check.
+ * redirect() throws a special Next.js error that gets caught by the outer try/catch,
+ * causing a 500 response instead of a proper 403 in API route context.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const admin = await requireAdmin();
+    // Authenticate and verify admin role via session (not requireAdmin which uses redirect)
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
+    }
+    const admin = session.user as { id: string; email: string; role: string };
+    if (!ADMIN_EMAILS.includes(admin.email.toLowerCase())) {
+      return NextResponse.json({ success: false, error: "Forbidden: admin access required." }, { status: 403 });
+    }
 
+    // Parse and validate the request body
     const { userId, action } = await req.json();
 
     if (!userId || !action) {
@@ -15,6 +34,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Only allow known actions
     if (!["deactivate", "reactivate"].includes(action)) {
       return NextResponse.json(
         { success: false, error: "Invalid action." },
@@ -30,6 +50,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify the target user exists before updating
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, isActive: true },
@@ -42,6 +63,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Set isActive based on the requested action
     await db.user.update({
       where: { id: userId },
       data: { isActive: action === "reactivate" },

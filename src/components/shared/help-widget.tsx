@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Mail, Phone, HelpCircle, Send, CheckCircle, Copy } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+/* Floating help button (bottom-right) with expandable panel: FAQ link, email/phone
+   contact, and a question input form. Closes on outside click. */
 export function HelpWidget() {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");

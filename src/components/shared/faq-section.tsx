@@ -63,6 +63,8 @@ const FAQ_ITEMS = [
   },
 ];
 
+/* Waitlist signup form — stores entries in localStorage as placeholder for future API.
+   Supports inline (inside FAQ answer) and standalone (full section) variants. */
 function WaitlistForm({ variant = "inline" }: { variant?: "inline" | "standalone" }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState("");
@@ -175,6 +177,8 @@ function WaitlistForm({ variant = "inline" }: { variant?: "inline" | "standalone
   );
 }
 
+/* Accordion-style FAQ section using native <details> elements. The expansion FAQ
+   item includes an inline WaitlistForm for state expansion notifications. */
 export function FAQSection() {
   return (
     <section id="faq" className="py-20 sm:py-28 px-4 bg-white scroll-mt-20">
@@ -224,6 +228,7 @@ export function FAQSection() {
   );
 }
 
+/* Standalone waitlist section shown below FAQ for out-of-state users */
 export function WaitlistSection() {
   return (
     <section className="py-16 sm:py-20 px-4 bg-slate-50 border-t border-slate-200">
