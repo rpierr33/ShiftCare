@@ -48,6 +48,8 @@ const ARTICLES: {
   },
 ];
 
+/* Resources hub page — static article previews categorized by Employers/Workers/Industry.
+   Full articles are coming soon; currently serves as SEO-friendly content placeholder. */
 export default function ResourcesPage() {
   return (
     <>

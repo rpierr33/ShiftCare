@@ -71,6 +71,8 @@ const STEPS = [
   },
 ];
 
+/* For Workers landing page — features, how-it-works steps, testimonial, trust badges,
+   sample shift previews, earnings calculator, and signup CTAs */
 export default function ForWorkersPage() {
   return (
     <>

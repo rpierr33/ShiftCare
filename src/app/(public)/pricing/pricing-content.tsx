@@ -72,6 +72,7 @@ const COMPARISON_ROWS: {
   { feature: "Custom branding", free: "x", starter: "x", professional: "check" },
 ];
 
+/* Renders a feature comparison table cell: checkmark, X, or text value */
 function ComparisonCell({ value }: { value: string }) {
   if (value === "check") {
     return (
@@ -90,6 +91,8 @@ function ComparisonCell({ value }: { value: string }) {
   return <span className="text-sm font-medium text-slate-700">{value}</span>;
 }
 
+/* Interactive calculator comparing per-shift fees (15%) vs. flat Starter plan ($49/mo).
+   Helps employers determine when upgrading to a paid plan saves money. */
 function BreakEvenCalculator() {
   const [shifts, setShifts] = useState(10);
   const [avgValue, setAvgValue] = useState(200);
@@ -206,6 +209,8 @@ function BreakEvenCalculator() {
   );
 }
 
+/* Main pricing page content: annual/monthly toggle, 3-tier pricing cards, comparison table,
+   "Workers Always Free" callout, pay-as-you-go option, and break-even calculator */
 export function PricingContent() {
   const [annual, setAnnual] = useState(false);
   const prices = annual ? ANNUAL_PRICES : MONTHLY_PRICES;

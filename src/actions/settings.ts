@@ -6,6 +6,10 @@ import { getSessionUser } from "@/lib/auth-utils";
 import { signOut } from "@/auth";
 import type { ActionResult } from "@/types";
 
+/**
+ * Update the current user's email address. Requires current password for verification.
+ * Checks for duplicate emails before updating.
+ */
 export async function updateEmail(
   newEmail: string,
   currentPassword: string
@@ -41,6 +45,7 @@ export async function updateEmail(
   }
 }
 
+/** Update the current user's password. Requires current password for verification. */
 export async function updatePassword(
   currentPassword: string,
   newPassword: string
@@ -71,6 +76,7 @@ export async function updatePassword(
   }
 }
 
+/** Update notification toggle preferences. Merges with existing prefs to preserve frequency. */
 export async function updateNotificationPrefs(
   prefs: Record<string, boolean>
 ): Promise<ActionResult> {
@@ -118,6 +124,7 @@ const VALID_TIMEZONES = [
   "Pacific/Honolulu",
 ];
 
+/** Update the user's timezone. Validates against a whitelist of US timezones. */
 export async function updateTimezone(timezone: string): Promise<ActionResult> {
   try {
     if (!VALID_TIMEZONES.includes(timezone)) {
@@ -135,6 +142,7 @@ export async function updateTimezone(timezone: string): Promise<ActionResult> {
   }
 }
 
+/** Get the current user's timezone setting. Returns null if not set. */
 export async function getUserTimezone(): Promise<string | null> {
   try {
     const sessionUser = await getSessionUser();
@@ -150,6 +158,7 @@ export async function getUserTimezone(): Promise<string | null> {
 
 const VALID_FREQUENCIES = ["realtime", "daily_digest", "urgent_only"];
 
+/** Update notification frequency (realtime, daily_digest, or urgent_only). */
 export async function updateNotificationFrequency(
   frequency: string
 ): Promise<ActionResult> {
@@ -189,6 +198,7 @@ export async function updateNotificationFrequency(
   }
 }
 
+/** Get the current notification frequency setting. Defaults to "realtime". */
 export async function getNotificationFrequency(): Promise<string> {
   try {
     const sessionUser = await getSessionUser();
@@ -213,6 +223,7 @@ export async function getNotificationFrequency(): Promise<string> {
   }
 }
 
+/** Soft-delete the user's account by setting isActive=false. Requires typing "DELETE" to confirm. */
 export async function deleteAccount(
   confirmation: string
 ): Promise<ActionResult> {

@@ -21,6 +21,8 @@ interface ShiftMessagesProps {
   initialMessages: Message[];
 }
 
+/* Real-time shift messaging panel with optimistic updates.
+   Messages auto-scroll to bottom on new entries. Supports Enter-to-send. */
 export function ShiftMessages({ shiftId, currentUserId, initialMessages }: ShiftMessagesProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = useState("");

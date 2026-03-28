@@ -47,6 +47,7 @@ const selectClass =
 const textareaClass =
   "flex w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-colors resize-none";
 
+/* Visual progress indicator: horizontal bar + dot indicators for multi-step forms */
 function ProgressDots({ current, total }: { current: number; total: number }) {
   const progressPercent = (current / total) * 100;
   return (
@@ -73,6 +74,7 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
   );
 }
 
+/* Brief success screen shown after completing onboarding before redirect */
 function CelebrationScreen() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -103,6 +105,9 @@ function LoadingScreen() {
   );
 }
 
+/* Main onboarding router — determines user role and provider type, then renders
+   the appropriate onboarding form (Agency, Private, or Worker).
+   Redirects completed users to their dashboard. Shows role selection for OAuth users. */
 export default function OnboardingPage() {
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
@@ -166,8 +171,10 @@ export default function OnboardingPage() {
   return <LoadingScreen />;
 }
 
-/* ─── Role Selection for OAuth users without a role ───────────────── */
+/* ─── Role Selection for OAuth users without a role ────────────────�� */
 
+/* Shown to Google OAuth users who don't have a role yet. Lets them pick
+   employer (agency/private) or worker before proceeding to onboarding. */
 function RoleSelectionStep({
   onRoleSelected,
 }: {
@@ -286,6 +293,8 @@ function RoleSelectionStep({
 
 /* ─── Agency Onboarding (3 steps) ──────────────────────────────────── */
 
+/* 3-step agency onboarding: Business Info -> License & Compliance -> Contact & Location.
+   Creates a Stripe customer after completion (non-blocking) and redirects to shift creation. */
 function AgencyOnboardingForm() {
   const { data: session, update: updateSession } = useSession();
   const [step, setStep] = useState(1);
@@ -713,7 +722,9 @@ function AgencyOnboardingForm() {
   );
 }
 
-/* ─── Private Payer Onboarding (3 steps) ───────────────────────────── */
+/* ─── Private Payer Onboarding (3 steps) ───────────────────────────��─ */
+/* 3-step private employer onboarding: About You -> Care Location -> Review.
+   Collects patient info, care location, and creates provider profile for families. */
 
 const RELATIONSHIPS = [
   "Parent",
@@ -1198,6 +1209,8 @@ function PrivateEmployerOnboardingForm() {
 
 /* ─── Worker Onboarding (5 steps) ──────────────────────────────────── */
 
+/* 5-step worker onboarding: Role -> Location & Work Area -> Credentials -> Contact -> Review.
+   Pre-loads existing profile data for returning users. Creates worker profile on completion. */
 function WorkerOnboardingForm() {
   const { update: updateSession } = useSession();
   const [step, setStep] = useState(1);

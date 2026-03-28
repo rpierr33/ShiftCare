@@ -5,8 +5,9 @@ import { getSessionUser } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 
-// ─── Mark Notifications as Read ──────────────────────────────────
+// ---- Mark Notifications as Read ----
 
+/** Mark all unread notifications as read for the current provider. */
 export async function markAllNotificationsRead(): Promise<ActionResult> {
   const user = await getSessionUser();
 
@@ -19,6 +20,7 @@ export async function markAllNotificationsRead(): Promise<ActionResult> {
   return { success: true };
 }
 
+/** Mark a single notification as read. Verifies ownership before updating. */
 export async function markNotificationRead(notificationId: string): Promise<ActionResult> {
   const user = await getSessionUser();
 
@@ -39,8 +41,13 @@ export async function markNotificationRead(notificationId: string): Promise<Acti
   return { success: true };
 }
 
-// ─── Confirm Shift Completion ────────────────────────────────────
+// ---- Confirm Shift Completion ----
 
+/**
+ * Confirm a shift is completed after the end time has passed. Provider-only.
+ * Calculates payment amounts, updates shift/assignment status, creates payment
+ * and transaction records, and updates worker stats.
+ */
 export async function confirmShiftCompletion(shiftId: string): Promise<ActionResult> {
   const user = await getSessionUser();
   if (user.role !== "PROVIDER") {
@@ -155,6 +162,7 @@ export async function confirmShiftCompletion(shiftId: string): Promise<ActionRes
 
 // ─── Dispute Shift ───────────────────────────────────────────────
 
+/** Provider reports an issue with an assigned shift, placing payment on hold. */
 export async function disputeShift(
   shiftId: string,
   issueType: string,
@@ -197,6 +205,7 @@ export async function disputeShift(
 
 // ─── Update Agency Profile ───────────────────────────────────────
 
+/** Update the provider's agency profile with company, contact, and compliance details. */
 export async function updateAgencyProfile(data: {
   companyName?: string;
   description?: string;
@@ -246,6 +255,7 @@ export async function updateAgencyProfile(data: {
 
 // ─── Invite Worker to Shift ──────────────────────────────────────
 
+/** Send a shift invitation notification to a specific worker. Provider-only. */
 export async function inviteWorkerToShift(
   workerId: string,
   shiftId: string
@@ -269,7 +279,8 @@ export async function inviteWorkerToShift(
       userId: workerId,
       type: "shift_invitation",
       title: "You have been invited to a shift",
-      body: `You have been invited to a ${shift.role} shift on ${shift.startTime.toLocaleDateString()} at ${shift.location}. Pay: $${shift.payRate}/hr.`,
+      // BUG FIX: Format payRate to 2 decimal places to avoid floating-point display issues
+      body: `You have been invited to a ${shift.role} shift on ${shift.startTime.toLocaleDateString()} at ${shift.location}. Pay: $${shift.payRate.toFixed(2)}/hr.`,
       data: { shiftId: shift.id },
     },
   });

@@ -5,6 +5,10 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { sendNotification } from "@/lib/notifications";
 
+/**
+ * Get all messages for a shift. Only accessible by the shift's provider or assigned worker.
+ * Uses auth() directly instead of getSessionUser() for null-safe auth check.
+ */
 export async function getMessages(shiftId: string) {
   const session = await auth();
   if (!session?.user?.id) return [];
@@ -32,6 +36,11 @@ export async function getMessages(shiftId: string) {
   return messages;
 }
 
+/**
+ * Send a message on a shift thread. Only the provider or assigned worker can send.
+ * Messages are only allowed on ASSIGNED, IN_PROGRESS, or COMPLETED shifts.
+ * Sends a notification to the other party.
+ */
 export async function sendMessage(
   shiftId: string,
   content: string

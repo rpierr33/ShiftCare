@@ -96,6 +96,8 @@ const SAMPLE_CAREGIVERS = [
   },
 ];
 
+/* For Families landing page — features, how-it-works, sample caregivers,
+   hourly rate transparency, trust badges, and signup CTA for private employers */
 export default function ForFamiliesPage() {
   return (
     <>

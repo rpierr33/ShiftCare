@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Home, Building2, Heart, Stethoscope } from "lucide-react";
 
+/* Custom 404 page with journey cards directing users to signup flows
+   based on their intent (employer, family, or healthcare worker) */
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">

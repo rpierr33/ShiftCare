@@ -3,6 +3,12 @@
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-utils";
 
+/**
+ * Get shift receipts for the current worker. Worker-only.
+ * Returns completed shifts with employer info, time entries, payment details.
+ * Handles Decimal fields (grossAmount, platformFeeAmount, workerPayoutAmount)
+ * by converting with parseFloat(String(...)).
+ */
 export async function getShiftReceipts() {
   const user = await getSessionUser();
   if (user.role !== "WORKER") return [];
@@ -74,6 +80,7 @@ export async function getShiftReceipts() {
   }));
 }
 
+/** Generate a CSV string from all shift receipts for download. Worker-only. */
 export async function getReceiptCSV() {
   const receipts = await getShiftReceipts();
   const header =

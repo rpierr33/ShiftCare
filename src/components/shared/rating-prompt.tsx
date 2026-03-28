@@ -71,6 +71,8 @@ function StarRow({
   );
 }
 
+/* Multi-metric rating form — workers rate employers on 4 categories, employers rate
+   workers on 3 categories. Computes weighted overall score and submits via server action. */
 export function RatingPrompt({ shiftId, rateeName, rateeRole }: RatingPromptProps) {
   const [metrics, setMetrics] = useState<Record<string, number>>({});
   const [comment, setComment] = useState("");

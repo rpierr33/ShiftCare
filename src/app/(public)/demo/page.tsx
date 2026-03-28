@@ -7,6 +7,8 @@ import { ArrowRight, CheckCircle } from "lucide-react";
 
 const WORKER_RANGES = ["1-10", "10-50", "50-100", "100+"];
 
+/* Demo request page — form collects name, email, company, phone, worker count, and message.
+   Stores submissions in localStorage as a placeholder for future API integration. */
 export default function DemoPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);

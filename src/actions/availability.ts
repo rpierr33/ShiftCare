@@ -5,8 +5,13 @@ import { getSessionUser } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 
-// ─── Set Weekly Availability Slots (replace all existing) ─────────
+// ---- Set Weekly Availability Slots (replace all existing) ----
 
+/**
+ * Replace all weekly availability slots with the provided set. Worker-only.
+ * Validates day names, time formats, and checks for duplicate days.
+ * Atomically deletes all existing slots and creates new ones in a transaction.
+ */
 export async function setWeeklyAvailability(
   slots: {
     dayOfWeek: string; // MONDAY, TUESDAY, etc.
@@ -108,6 +113,10 @@ export async function setWeeklyAvailability(
 
 // ─── Block Specific Dates ─────────────────────────────────────────
 
+/**
+ * Block specific dates so the worker won't see shifts on those days. Worker-only.
+ * Uses upsert to handle duplicates gracefully. Max 365 dates per call.
+ */
 export async function blockDates(
   dates: { date: string; reason?: string }[]
 ): Promise<ActionResult> {
@@ -173,6 +182,7 @@ export async function blockDates(
 
 // ─── Unblock a Date ───────────────────────────────────────────────
 
+/** Remove a blocked date by ID. Verifies ownership before deleting. Worker-only. */
 export async function unblockDate(dateId: string): Promise<ActionResult> {
   const user = await getSessionUser();
   if (user.role !== "WORKER") {
@@ -210,6 +220,7 @@ export async function unblockDate(dateId: string): Promise<ActionResult> {
 
 // ─── Get Worker's Blocked Dates ───────────────────────────────────
 
+/** Get all blocked dates for the current worker, sorted ascending. Worker-only. */
 export async function getBlockedDates(): Promise<
   { id: string; date: string; reason: string | null }[]
 > {
@@ -236,6 +247,7 @@ export async function getBlockedDates(): Promise<
 
 // ─── Get Worker's Weekly Availability ─────────────────────────────
 
+/** Get the current worker's weekly availability slots. Worker-only. */
 export async function getWeeklyAvailability(): Promise<
   { dayOfWeek: string; startTime: string; endTime: string }[]
 > {
@@ -262,6 +274,10 @@ export async function getWeeklyAvailability(): Promise<
 
 // ─── Get Worker's Shifts for Calendar ─────────────────────────────
 
+/**
+ * Get assigned/in-progress/completed shifts for a given month for the calendar view.
+ * Worker-only. Returns serialized dates for client components.
+ */
 export async function getWorkerShiftsForCalendar(
   year: number,
   month: number

@@ -7,7 +7,10 @@ import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 import { getRequiredCredentials } from "@/lib/credential-requirements";
 
-// Approve individual credential item
+/**
+ * Approve an individual credential item. Admin-only.
+ * Optionally sets an expiry date. Checks if worker is now fully verified.
+ */
 export async function approveCredentialItem(
   credentialId: string,
   expiryDate?: string
@@ -53,7 +56,10 @@ export async function approveCredentialItem(
   }
 }
 
-// Reject individual credential item
+/**
+ * Reject an individual credential item with a reason. Admin-only.
+ * Resets the worker's overall credential status to PENDING and notifies them.
+ */
 export async function rejectCredentialItem(
   credentialId: string,
   reason: string
@@ -108,7 +114,10 @@ export async function rejectCredentialItem(
   }
 }
 
-// Check if all required credentials are verified for a worker
+/**
+ * Check if all required credentials are verified for a worker.
+ * If all required types are verified, updates the worker's status and notifies them.
+ */
 export async function checkWorkerFullyVerified(
   workerProfileId: string
 ): Promise<boolean> {
@@ -157,7 +166,7 @@ export async function checkWorkerFullyVerified(
   return false;
 }
 
-// Verify provider
+/** Verify a provider's account by setting compliance status to COMPLETE. Admin-only. */
 export async function verifyProvider(providerId: string): Promise<ActionResult> {
   try {
     await requireAdmin();
@@ -190,7 +199,7 @@ export async function verifyProvider(providerId: string): Promise<ActionResult> 
   }
 }
 
-// Block provider
+/** Block/suspend a provider account. Deactivates the user and sends notification. Admin-only. */
 export async function blockProvider(
   providerId: string,
   reason: string
@@ -229,7 +238,7 @@ export async function blockProvider(
   }
 }
 
-// Send warning to provider
+/** Send a verification warning to a provider via notification. Admin-only. */
 export async function sendProviderWarning(
   providerId: string,
   message: string

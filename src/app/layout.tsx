@@ -46,6 +46,8 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+/* Root layout — wraps all pages with session provider, help widget, PWA prompt,
+   and service worker registration (production) / unregistration (dev) */
 export default function RootLayout({
   children,
 }: {

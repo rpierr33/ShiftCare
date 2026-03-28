@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-utils";
 import { sendNotification } from "@/lib/notifications";
 
+/**
+ * Toggle a worker's preferred status for the current provider.
+ * Requires at least 1 completed shift with the worker. Provider-only.
+ */
 export async function togglePreferredWorker(
   workerId: string
 ): Promise<{ success: boolean; isPreferred: boolean; error?: string }> {
@@ -49,6 +53,7 @@ export async function togglePreferredWorker(
   return { success: true, isPreferred: true };
 }
 
+/** Get all preferred workers for the current provider with name and role. */
 export async function getPreferredWorkers() {
   const user = await getSessionUser();
   if (user.role !== "PROVIDER") return [];
@@ -67,6 +72,10 @@ export async function getPreferredWorkers() {
   });
 }
 
+/**
+ * Send private shift invitations to all preferred workers of the shift's provider.
+ * Called from createShift or directly. Does not require auth -- validates shift ownership.
+ */
 export async function sendPreferredInvites(
   shiftId: string
 ): Promise<{ success: boolean; invitesSent: number; error?: string }> {
@@ -118,6 +127,10 @@ export async function sendPreferredInvites(
   return { success: true, invitesSent: preferred.length };
 }
 
+/**
+ * Publish all shifts whose private invite window has expired.
+ * Makes them visible to all workers. Called by cron/scheduled task.
+ */
 export async function publishExpiredInvites(): Promise<number> {
   const result = await db.shift.updateMany({
     where: {

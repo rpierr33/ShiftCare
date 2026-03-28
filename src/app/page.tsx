@@ -81,6 +81,8 @@ const TICKER_ITEMS = [
 ];
 
 /* ─── Shift Fulfillment Machine ─── */
+/* Animated demo widget showing the shift lifecycle: posted -> matching -> accepted -> confirmed.
+   Cycles through SHIFT_DATA entries. Respects prefers-reduced-motion. */
 function ShiftFulfillmentEngine() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [phase, setPhase] = useState(0); // 0=posted, 1=matching, 2=accepted, 3=confirmed
@@ -361,6 +363,8 @@ function ShiftFulfillmentEngine() {
 }
 
 /* ─── Animated Counter Hook ─── */
+/* Animates a number from 0 to target with ease-out cubic easing.
+   Stores "already played" in sessionStorage to avoid replaying on navigation. */
 function useCountUp(target: number, duration: number = 1000, start: boolean = true) {
   const [count, setCount] = useState(0);
   const frameRef = useRef<number | null>(null);
@@ -420,6 +424,7 @@ function useCountUp(target: number, duration: number = 1000, start: boolean = tr
 }
 
 /* ─── Live Counter (ticks up slowly) ─── */
+/* Simulates a live counter incrementing every 3 seconds for social proof */
 function LiveShiftCounter() {
   const [count, setCount] = useState(2847);
 
@@ -445,6 +450,8 @@ function LiveShiftCounter() {
 }
 
 /* ─── Scrolling Ticker ─── */
+/* Infinitely scrolling horizontal ticker showing recent activity items.
+   Doubles the array to create seamless CSS loop animation. */
 function ActivityTicker() {
   const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
@@ -463,6 +470,8 @@ function ActivityTicker() {
 }
 
 /* ─── Animated Stat ─── */
+/* Counter stat card that triggers count-up animation when scrolled into view.
+   Uses IntersectionObserver to detect visibility. */
 function AnimatedStat({
   value,
   suffix,
@@ -594,6 +603,9 @@ function MobileNavMenu() {
 }
 
 /* ─── Main Page ─── */
+/* Homepage — hero with 3-sided value prop, fulfillment engine demo, activity ticker,
+   stats bar, how-it-works tabs, earnings calculator, trust section, service area,
+   pricing teaser, testimonials, FAQ, waitlist, and final CTA */
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">

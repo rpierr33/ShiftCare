@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     "Simple pricing for healthcare shift fulfillment. Workers always free.",
 };
 
+/* Server-rendered pricing page wrapper with nav, interactive pricing content, FAQ, and footer */
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">

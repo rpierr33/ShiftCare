@@ -12,6 +12,8 @@ export type MonthlyEarning = {
 
 /**
  * Get completed shifts for the current worker grouped by month (last 6 months).
+ * Handles Decimal fields (workerPayoutAmount) via parseFloat conversion.
+ * Falls back to estimated payout (payRate * hours * 0.9) when no payment record exists.
  */
 export async function getMonthlyEarnings(): Promise<MonthlyEarning[]> {
   const user = await getSessionUser();
@@ -86,7 +88,9 @@ export async function getMonthlyEarnings(): Promise<MonthlyEarning[]> {
 }
 
 /**
- * Generate a CSV string of all completed shifts for the current worker.
+ * Generate a CSV export of all completed shifts for the current worker.
+ * Includes date, employer, role, location, hours, gross pay, fee, and net pay.
+ * Handles Decimal fields (workerPayoutAmount) via parseFloat conversion.
  */
 export async function getEarningsCSV(): Promise<string> {
   const user = await getSessionUser();
