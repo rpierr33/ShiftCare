@@ -1,3 +1,17 @@
+# RULE ZERO — READ THIS FIRST
+
+Every rule in this file and in the global CLAUDE.md is MANDATORY. Not optional. Not "best effort."
+
+**Before writing ANY code:** Read the rules. Follow them.
+**Before claiming ANYTHING works:** Test it. Verify it. Prove it.
+**Before pushing ANYTHING:** Start the dev server. Log in. Click through the flow you changed. Check server logs for errors.
+
+If a feature isn't tested at the moment it's written, it is NOT done. Do not batch verification into audits. Verify immediately.
+
+If you violate a rule, you will ship broken code to production. This has happened repeatedly. Stop it.
+
+---
+
 # Project Prompts
 
 ## Prompt 1: MVP Refactor — Shift Fulfillment System
