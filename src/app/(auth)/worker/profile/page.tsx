@@ -279,6 +279,10 @@ export default function WorkerProfilePage() {
 
       if (result.success) {
         setMessage({ type: "success", text: "Profile updated successfully." });
+        // Auto-dismiss success message after 3 seconds
+        setTimeout(() => setMessage((prev) => prev?.type === "success" ? null : prev), 3000);
+        // Scroll to top so the user sees the success banner
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setMessage({ type: "error", text: result.error || "Failed to update profile." });
       }
@@ -596,7 +600,7 @@ export default function WorkerProfilePage() {
                     </span>
                   </div>
                   <p className="text-xs text-emerald-600 ml-7">
-                    Provisional access for 14 days while we verify your credentials. Full verification takes 7–10 business days.
+                    Provisional access while we verify your credentials. Full verification typically takes 7-14 business days.
                   </p>
                 </div>
               ) : credentialStatus === "PENDING" && credLicenseNumber ? (
@@ -604,7 +608,7 @@ export default function WorkerProfilePage() {
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-amber-600" />
                     <span className="text-sm font-semibold text-amber-700">
-                      Under review — verification takes 7–10 business days. You&apos;ll be notified once complete.
+                      Under review — verification typically takes 7-14 business days. You&apos;ll be notified once complete.
                     </span>
                   </div>
                 </div>

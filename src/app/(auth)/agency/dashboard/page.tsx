@@ -70,7 +70,12 @@ const NOTIFICATION_ICONS: Record<string, typeof Bell> = {
   shift_invitation: Users,
 };
 
-export default async function AgencyDashboardPage() {
+export default async function AgencyDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const params = await searchParams;
   const user = await getSessionUser();
 
   const providerProfile = await db.providerProfile.findUnique({
@@ -398,6 +403,14 @@ export default async function AgencyDashboardPage() {
   // ─── Agency Dashboard (default) ────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Already signed in notice */}
+      {params.notice === "already_signed_in" && (
+        <div className="rounded-xl bg-cyan-50 border border-cyan-200 p-3 mb-6 flex items-center justify-between">
+          <p className="text-sm text-cyan-800">You&apos;re already signed in. To switch accounts, sign out first from Settings.</p>
+          <a href="/agency/dashboard" className="text-xs text-cyan-600 hover:text-cyan-700 font-medium">Dismiss</a>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>

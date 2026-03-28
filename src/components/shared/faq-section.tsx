@@ -28,7 +28,7 @@ const FAQ_ITEMS = [
   {
     question: "How does worker credentialing work?",
     answer:
-      "Workers submit their license and certifications during signup. We verify credentials within 14 days, granting provisional shift access immediately. Expired credentials are automatically flagged and workers are notified 60, 30, 14, and 7 days before expiry.",
+      "Workers submit their license and certifications during signup. We verify credentials typically within 7-14 business days, granting provisional shift access immediately. Expired credentials are automatically flagged and workers are notified 60, 30, 14, and 7 days before expiry.",
     key: "credentialing",
   },
   {

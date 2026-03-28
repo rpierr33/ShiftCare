@@ -63,7 +63,7 @@ const COMPARISON_ROWS: {
 }[] = [
   { feature: "Shift postings per month", free: "3", starter: "25", professional: "Unlimited" },
   { feature: "Worker profile unlocks", free: "2", starter: "15", professional: "Unlimited" },
-  { feature: "Same-day pay option", free: "check", starter: "check", professional: "check" },
+  { feature: "Same-day pay (employer toggle per shift)", free: "check", starter: "check", professional: "check" },
   { feature: "Preferred worker invites", free: "x", starter: "check", professional: "check" },
   { feature: "Priority email support", free: "x", starter: "check", professional: "check" },
   { feature: "Analytics dashboard", free: "x", starter: "Basic", professional: "Advanced" },
@@ -158,7 +158,7 @@ function BreakEvenCalculator() {
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-              Per-Shift Fees (15%)
+              Employer Per-Shift Fees (15%)
             </p>
             <p className="text-2xl font-extrabold text-slate-900">
               ${Math.round(perShiftCost).toLocaleString()}
@@ -387,7 +387,7 @@ export function PricingContent() {
           </h3>
           <p className="text-slate-500 text-sm leading-relaxed mb-2">
             Any employer can post shifts without subscribing.
-            A 15% platform fee applies per shift when you don&apos;t have an active plan.
+            A 15% employer fee is charged per shift when you don&apos;t have an active plan. This fee is charged to employers, not workers.
           </p>
           <p className="text-slate-400 text-xs leading-relaxed mb-6">
             Subscribe to any paid plan to remove the per-shift fee entirely.

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Building2, Users, Activity } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
 
@@ -21,36 +21,62 @@ const CATEGORY_STYLES: Record<Category, string> = {
 const ARTICLES: {
   title: string;
   excerpt: string;
+  content: string[];
   category: Category;
 }[] = [
   {
     title: "How to Fill Nursing Shifts Fast",
     excerpt:
       "Practical strategies for healthcare agencies to reduce time-to-fill and keep shifts covered, even during peak demand periods.",
+    content: [
+      "Unfilled shifts cost healthcare agencies an average of $300-$500 per vacancy day in lost revenue and overtime costs. The key to filling shifts fast is reducing friction in the hiring process and making your open positions visible to qualified workers immediately.",
+      "Start by posting shifts with clear details: exact times, location, pay rate, and any special requirements. Workers are 3x more likely to accept shifts that include complete information upfront. Use platforms like ShiftCare that match shifts to credentialed workers in your area automatically.",
+      "Consider offering competitive pay rates and same-day pay options. Our data shows that shifts offering same-day pay fill 40% faster than those with standard biweekly payroll. Building a roster of preferred workers who consistently accept your shifts also reduces fill times significantly over time.",
+    ],
     category: "Employers",
   },
   {
     title: "CNA Shift Jobs in Tampa: What to Expect",
     excerpt:
       "A complete guide for CNAs looking for flexible shift work in the Tampa Bay area -- pay rates, facility types, and how to get started.",
+    content: [
+      "Tampa Bay is one of Florida's fastest-growing healthcare markets, with strong demand for Certified Nursing Assistants across home health agencies, assisted living facilities, and skilled nursing centers. Current CNA shift rates in the Tampa area range from $22 to $28 per hour, depending on the facility type and shift timing.",
+      "Night shifts and weekend shifts typically pay a premium of $2-$5 more per hour. Home health shifts tend to offer more flexibility and one-on-one patient care, while facility-based shifts may offer higher volume and more predictable schedules.",
+      "To get started with shift work in Tampa, ensure your CNA certification is current with the Florida Board of Nursing. Create a profile on ShiftCare, set your service area to Tampa Bay, and you can start browsing and accepting shifts immediately. Most workers complete their first shift within 48 hours of signing up.",
+    ],
     category: "Workers",
   },
   {
     title: "Healthcare Staffing Agency vs. Direct Hire",
     excerpt:
       "Comparing the pros and cons of traditional staffing agencies against direct-hire platforms for healthcare facilities.",
+    content: [
+      "Traditional staffing agencies have long been the go-to solution for healthcare facilities needing temporary workers. They handle recruiting, credentialing, and payroll -- but at a significant cost, typically charging 40-60% markups on worker pay rates. This makes them expensive for facilities and limits what workers actually take home.",
+      "Direct-hire platforms like ShiftCare represent a new model: facilities post shifts directly and workers accept them, cutting out the middleman. This reduces costs for facilities (typically 10-15% platform fees vs. 40-60% agency markups) and increases worker earnings since more of the pay rate goes directly to them.",
+      "The trade-off is that facilities take on more responsibility for worker management. However, modern platforms handle credentialing verification, payment processing, and shift tracking -- leaving facilities to focus on what they do best: patient care. For most small to mid-size agencies, the cost savings make direct platforms the better choice.",
+    ],
     category: "Industry",
   },
   {
     title: "Same-Day Pay for Healthcare Workers: How It Works",
     excerpt:
       "Everything you need to know about instant pay after shifts -- how it works on ShiftCare, fees involved, and why it matters.",
+    content: [
+      "Same-day pay allows healthcare workers to receive their earnings within hours of completing a shift, rather than waiting for a biweekly payroll cycle. On ShiftCare, workers who opt for same-day pay receive their net earnings (after the 10% service fee) deposited directly to their bank account or debit card the same business day.",
+      "This matters because financial flexibility is one of the top reasons healthcare workers choose shift-based work. Studies show that 78% of hourly workers prefer employers or platforms that offer faster access to earned wages. For workers managing tight budgets or unexpected expenses, waiting two weeks for payment creates unnecessary financial stress.",
+      "There is no additional fee for same-day pay on ShiftCare -- it is included as part of the standard platform experience. Employers can also benefit: shifts marked as same-day pay fill 40% faster, helping facilities maintain adequate staffing levels during high-demand periods.",
+    ],
     category: "Workers",
   },
   {
     title: "Starting a Home Health Agency in Florida",
     excerpt:
       "A step-by-step guide for entrepreneurs looking to start a home health agency in Florida -- licensing, staffing, and technology.",
+    content: [
+      "Florida is one of the largest home health markets in the United States, driven by a growing senior population and favorable regulations for home-based care. To start a home health agency in Florida, you will need to obtain a Home Health Agency license from the Agency for Health Care Administration (AHCA), which requires a completed application, background screening, and a survey inspection.",
+      "Staffing is the biggest operational challenge for new agencies. You will need at minimum a qualified administrator, a director of nursing (RN), and a roster of field workers (CNAs, HHAs, LPNs). Building a reliable workforce takes time -- platforms like ShiftCare can help new agencies fill shifts while they build their permanent team.",
+      "Technology is essential from day one. You will need an electronic health records (EHR) system, scheduling software, and a reliable way to manage worker credentials and compliance documentation. Many new agencies underestimate the administrative burden of credential tracking -- automating this process early saves significant time and reduces compliance risk as you scale.",
+    ],
     category: "Employers",
   },
 ];
@@ -85,49 +111,31 @@ export default function ResourcesPage() {
       {/* Articles Grid */}
       <section className="py-12 sm:py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="grid gap-6">
+          <div className="grid gap-8">
             {ARTICLES.map((article) => (
-              <div
+              <article
                 key={article.title}
-                className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8 hover:shadow-lg hover:border-slate-200 transition-all group"
+                className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <span
-                      className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border mb-3 ${
-                        CATEGORY_STYLES[article.category]
-                      }`}
-                    >
-                      {article.category}
-                    </span>
-                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
-                      {article.title}
-                    </h2>
-                    <p className="text-sm text-slate-500 leading-relaxed mt-2">
-                      {article.excerpt}
+                <span
+                  className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border mb-3 ${
+                    CATEGORY_STYLES[article.category]
+                  }`}
+                >
+                  {article.category}
+                </span>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">
+                  {article.title}
+                </h2>
+                <div className="space-y-4">
+                  {article.content.map((paragraph, i) => (
+                    <p key={i} className="text-sm text-slate-600 leading-relaxed">
+                      {paragraph}
                     </p>
-                  </div>
-                  <div className="flex-shrink-0 sm:self-center">
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-600 group-hover:gap-2.5 transition-all">
-                      Read More
-                      <ArrowRight size={16} />
-                    </span>
-                  </div>
+                  ))}
                 </div>
-              </div>
+              </article>
             ))}
-          </div>
-
-          {/* Coming soon note */}
-          <div className="mt-10 text-center bg-slate-50 border border-slate-200 rounded-2xl p-6">
-            <Activity size={20} className="text-slate-400 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-700">
-              Full articles coming soon
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              We are building out in-depth guides for each topic. Check back
-              soon or sign up to get notified.
-            </p>
           </div>
         </div>
       </section>

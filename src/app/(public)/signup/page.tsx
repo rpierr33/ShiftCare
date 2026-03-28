@@ -529,7 +529,7 @@ function SignUpForm() {
                     Licensed employer, nurse registry, or staffing organization
                   </p>
                   <p className="text-xs text-slate-400 mt-2">
-                    Requires: NPI, EIN, license info
+                    Business details collected during onboarding
                   </p>
                 </button>
 
@@ -731,50 +731,68 @@ function SignUpForm() {
                         Start accepting shifts immediately
                       </p>
                       <p className="text-xs text-cyan-700 mt-0.5 leading-relaxed">
-                        Get provisional access right away while your credentials are verified (typically 7-14 days).
+                        Get provisional access right away while your credentials are verified (typically 7-14 business days).
                       </p>
                     </div>
                   </div>
                 )}
 
                 {/* Terms Checkbox (#12) */}
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-                  />
-                  <label htmlFor="terms" className="text-sm text-slate-500 leading-snug">
-                    I agree to the{" "}
-                    <Link
-                      href="/terms"
-                      target="_blank"
-                      className="text-cyan-600 hover:text-cyan-700 font-medium underline"
-                    >
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      href="/privacy"
-                      target="_blank"
-                      className="text-cyan-600 hover:text-cyan-700 font-medium underline"
-                    >
-                      Privacy Policy
-                    </Link>
-                  </label>
+                <div>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className={`mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 ${
+                        touched.confirmPassword && !agreedToTerms ? "ring-2 ring-red-300" : ""
+                      }`}
+                    />
+                    <label htmlFor="terms" className="text-sm text-slate-500 leading-snug">
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        className="text-cyan-600 hover:text-cyan-700 font-medium underline"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        className="text-cyan-600 hover:text-cyan-700 font-medium underline"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </label>
+                  </div>
+                  {touched.confirmPassword && !agreedToTerms && (
+                    <p className="text-red-500 text-xs mt-1 ml-7">You must agree to the terms to continue</p>
+                  )}
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  loading={loading}
-                  disabled={!isFormValid || loading}
+                <div
+                  onClick={() => {
+                    if (!isFormValid && !loading) {
+                      setTouched({ name: true, email: true, password: true, confirmPassword: true });
+                      if (confirmPassword && confirmPassword !== fieldValues.password) {
+                        setConfirmPasswordError("Passwords do not match");
+                      }
+                    }
+                  }}
                 >
-                  Create Account
-                  <ArrowRight size={16} />
-                </Button>
+                  <Button
+                    type="submit"
+                    className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    loading={loading}
+                    disabled={!isFormValid || loading}
+                  >
+                    Create Account
+                    <ArrowRight size={16} />
+                  </Button>
+                </div>
               </form>
             </>
           )}

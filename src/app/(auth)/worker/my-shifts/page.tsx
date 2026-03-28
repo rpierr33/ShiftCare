@@ -132,17 +132,25 @@ export default async function MyShiftsPage() {
   );
 
   const now = new Date();
-  // "In Progress" — started but not ended (regardless of status — a COMPLETED shift mid-window is still visible here)
-  const inProgress = shifts.filter(
-    (s) => new Date(s.startTime) <= now && new Date(s.endTime) > now && s.status !== "CANCELLED"
-  );
+  // Categorize by STATUS first, then by time
+  // COMPLETED and CANCELLED always go to Past regardless of time
+  // IN_PROGRESS always goes to In Progress
+  // ASSIGNED: check time to determine Upcoming vs In Progress
+  const inProgress = shifts.filter((s) => {
+    if (s.status === "COMPLETED" || s.status === "CANCELLED") return false;
+    if (s.status === "IN_PROGRESS") return true;
+    // ASSIGNED: started but not ended
+    return new Date(s.startTime) <= now && new Date(s.endTime) > now;
+  });
   const inProgressIds = new Set(inProgress.map((s) => s.id));
-  // "Upcoming" — hasn't started yet, not cancelled
-  const upcoming = shifts.filter(
-    (s) => new Date(s.startTime) > now && s.status !== "CANCELLED"
-  );
+  const upcoming = shifts.filter((s) => {
+    if (s.status === "COMPLETED" || s.status === "CANCELLED") return false;
+    if (s.status === "IN_PROGRESS") return false;
+    if (inProgressIds.has(s.id)) return false;
+    return new Date(s.startTime) > now;
+  });
   const upcomingIds = new Set(upcoming.map((s) => s.id));
-  // "Past" — everything else (ended, or cancelled)
+  // Past: COMPLETED, CANCELLED, or anything not in the above categories
   const past = shifts.filter(
     (s) => !inProgressIds.has(s.id) && !upcomingIds.has(s.id)
   );

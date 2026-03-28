@@ -172,7 +172,7 @@ export function EarningsCalculator() {
           <div className="mt-4 flex items-center gap-2 pt-3 border-t border-white/5">
             <TrendingUp size={14} className="text-cyan-400" />
             <p className="text-xs text-slate-400">
-              After 10% platform fee. Based on {city}, FL market rates for{" "}
+              After 10% service fee (deducted from your earnings). Based on {city}, FL market rates for{" "}
               {role.label.split(" — ")[0]} at ${role.min}-${role.max}/hr.
             </p>
           </div>

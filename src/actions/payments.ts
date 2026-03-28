@@ -408,11 +408,39 @@ export async function getWorkerEarnings() {
   ]);
 
   // Build summary with null-safe aggregate sums
+  const pendingAmt = pending._sum.workerPayout ?? 0;
+  const availableAmt = available._sum.workerPayout ?? 0;
+  const paidAmt = paid._sum.workerPayout ?? 0;
+  const totalFromPayments = pendingAmt + availableAmt + paidAmt;
+  const totalPaymentCount = pending._count + available._count + paid._count;
+
+  // Fallback: if no ShiftPayment records exist, calculate earnings from completed shifts directly.
+  // This handles the common case where Stripe is stubbed and no payment records are created.
+  let fallbackEarnings = 0;
+  let fallbackShiftCount = 0;
+  if (totalPaymentCount === 0) {
+    const completedShifts = await db.shift.findMany({
+      where: { assignedWorkerId: user.id, status: "COMPLETED" },
+      select: { payRate: true, startTime: true, endTime: true, workerPayoutAmount: true },
+    });
+    for (const shift of completedShifts) {
+      const hours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
+      const rate = parseFloat(String(shift.payRate));
+      const payout = shift.workerPayoutAmount
+        ? parseFloat(String(shift.workerPayoutAmount))
+        : rate * hours * 0.9; // 10% platform fee estimate
+      fallbackEarnings += payout;
+      fallbackShiftCount++;
+    }
+  }
+
+  const useFallback = totalPaymentCount === 0 && fallbackShiftCount > 0;
+
   return {
-    pending: { amount: pending._sum.workerPayout ?? 0, count: pending._count },
-    available: { amount: available._sum.workerPayout ?? 0, count: available._count },
-    paid: { amount: paid._sum.workerPayout ?? 0, count: paid._count },
-    totalEarned: (pending._sum.workerPayout ?? 0) + (available._sum.workerPayout ?? 0) + (paid._sum.workerPayout ?? 0),
+    pending: { amount: useFallback ? 0 : pendingAmt, count: useFallback ? 0 : pending._count },
+    available: { amount: useFallback ? fallbackEarnings : availableAmt, count: useFallback ? fallbackShiftCount : available._count },
+    paid: { amount: useFallback ? 0 : paidAmt, count: useFallback ? 0 : paid._count },
+    totalEarned: useFallback ? fallbackEarnings : totalFromPayments,
     payouts,
   };
 }

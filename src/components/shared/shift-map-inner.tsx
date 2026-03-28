@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
+import { MapPin } from "lucide-react";
 import { ROLE_COLORS } from "./shift-map";
 import type { ShiftPin } from "./shift-map";
 
@@ -44,6 +45,20 @@ interface ShiftMapInnerProps {
 }
 
 export function ShiftMapInner({ shifts, workerLat, workerLng }: ShiftMapInnerProps) {
+  // If no shifts have coordinates and no worker location, show empty state
+  const shiftsWithCoords = shifts.filter((s) => s.latitude && s.longitude);
+  if (shiftsWithCoords.length === 0 && !workerLat && !workerLng) {
+    return (
+      <div className="flex h-[500px] items-center justify-center rounded-2xl bg-gray-50 border border-gray-200">
+        <div className="flex flex-col items-center gap-2 text-gray-400">
+          <MapPin className="h-8 w-8" />
+          <p className="text-sm font-medium">No shift locations available</p>
+          <p className="text-xs text-gray-400">Shifts with mapped locations will appear here</p>
+        </div>
+      </div>
+    );
+  }
+
   // Determine center
   let centerLat = 39.8283; // US center
   let centerLng = -98.5795;

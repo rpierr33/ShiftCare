@@ -66,15 +66,27 @@ export async function getShiftReceipts() {
     actualHours: s.timeEntries?.[0]?.actualHours || null,
     clockIn: s.timeEntries?.[0]?.clockInTime || null,
     clockOut: s.timeEntries?.[0]?.clockOutTime || null,
-    grossPay:
-      s.shiftPayment?.shiftAmount ||
-      parseFloat(String(s.grossAmount || 0)),
-    platformFee:
-      s.shiftPayment?.platformFee ||
-      parseFloat(String(s.platformFeeAmount || 0)),
-    netPay:
-      s.shiftPayment?.workerPayout ||
-      parseFloat(String(s.workerPayoutAmount || 0)),
+    grossPay: (() => {
+      if (s.shiftPayment?.shiftAmount) return s.shiftPayment.shiftAmount;
+      const ga = parseFloat(String(s.grossAmount || 0));
+      if (ga > 0) return ga;
+      const hrs = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
+      return parseFloat(String(s.payRate)) * hrs;
+    })(),
+    platformFee: (() => {
+      if (s.shiftPayment?.platformFee) return s.shiftPayment.platformFee;
+      const pf = parseFloat(String(s.platformFeeAmount || 0));
+      if (pf > 0) return pf;
+      const hrs = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
+      return parseFloat(String(s.payRate)) * hrs * 0.1;
+    })(),
+    netPay: (() => {
+      if (s.shiftPayment?.workerPayout) return s.shiftPayment.workerPayout;
+      const wp = parseFloat(String(s.workerPayoutAmount || 0));
+      if (wp > 0) return wp;
+      const hrs = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
+      return parseFloat(String(s.payRate)) * hrs * 0.9;
+    })(),
     payRate: s.payRate,
     payoutStatus: s.shiftPayment?.payoutStatus || "PENDING",
   }));

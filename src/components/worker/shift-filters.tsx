@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function ShiftFilters() {
   const router = useRouter();
@@ -16,6 +16,18 @@ export function ShiftFilters() {
   const maxDistance = searchParams.get("maxDistance") || "";
 
   const hasFilters = minPay || maxPay || minHours || maxHours || maxDistance;
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.filter-panel-wrapper')) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
 
   const applyFilters = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -40,7 +52,7 @@ export function ShiftFilters() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative filter-panel-wrapper">
       <button
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${

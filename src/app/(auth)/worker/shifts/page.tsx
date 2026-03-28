@@ -110,7 +110,7 @@ const VALID_ROLES = ["RN", "LPN", "CNA", "HHA", "MEDICAL_ASSISTANT", "COMPANION"
 export default async function WorkerShiftsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ role?: string; view?: string; minPay?: string; maxPay?: string; minHours?: string; maxHours?: string; maxDistance?: string; q?: string }>;
+  searchParams: Promise<{ role?: string; view?: string; minPay?: string; maxPay?: string; minHours?: string; maxHours?: string; maxDistance?: string; q?: string; notice?: string }>;
 }) {
   const params = await searchParams;
   const view = params.view;
@@ -245,6 +245,14 @@ export default async function WorkerShiftsPage({
                 "Employer",
             }))}
         />
+      )}
+
+      {/* Already signed in notice — shown when user tried to access signup/login while authenticated */}
+      {params.notice === "already_signed_in" && (
+        <div className="rounded-xl bg-cyan-50 border border-cyan-200 p-3 flex items-center justify-between">
+          <p className="text-sm text-cyan-800">You&apos;re already signed in. To switch accounts, sign out first from Settings.</p>
+          <Link href="/worker/shifts" className="text-xs text-cyan-600 hover:text-cyan-700 font-medium">Dismiss</Link>
+        </div>
       )}
 
       {/* Top Picks for You */}
@@ -479,7 +487,7 @@ export default async function WorkerShiftsPage({
                       <span>${(payRate * hours).toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>Service fee (10%)</span>
+                      <span>Service fee (10%, deducted from your earnings)</span>
                       <span>-${(payRate * hours * 0.1).toFixed(2)}</span>
                     </div>
                     <div className="border-t border-slate-200 pt-1.5 flex items-center justify-between text-sm font-semibold text-emerald-700">

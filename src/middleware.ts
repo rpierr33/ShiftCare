@@ -15,10 +15,12 @@ export default auth((req) => {
 
   // Auth pages — redirect already-authenticated users to their dashboard
   // Prevents logged-in users from seeing login/signup pages
-  if (pathname === "/login" || pathname === "/signup") {
+  if (pathname === "/login" || pathname.startsWith("/signup")) {
     if (user && user.onboardingCompleted) {
       const dest = user.role === "PROVIDER" ? "/agency/dashboard" : "/worker/shifts";
-      return NextResponse.redirect(new URL(dest, req.nextUrl));
+      const url = new URL(dest, req.nextUrl);
+      url.searchParams.set("notice", "already_signed_in");
+      return NextResponse.redirect(url);
     }
     return NextResponse.next();
   }
