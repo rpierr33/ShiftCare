@@ -156,15 +156,27 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!session?.user;
       const pathname = nextUrl.pathname;
 
-      // Public routes
-      const publicPaths = ["/", "/login", "/signup", "/pricing", "/forgot-password", "/reset-password", "/terms", "/privacy"];
+      // Public routes — must match middleware.ts publicPaths
+      const publicPaths = [
+        "/", "/login", "/signup", "/pricing", "/for-workers", "/for-families",
+        "/resources", "/demo", "/forgot-password", "/reset-password",
+        "/terms", "/privacy", "/how-it-works",
+      ];
       const isPublic = publicPaths.some(
-        (p) => pathname === p || pathname.startsWith("/api/auth") || pathname.startsWith("/api/webhooks")
-      );
+        (p) => pathname === p || pathname.startsWith(p + "/")
+      ) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/webhooks") || pathname.startsWith("/api/cron");
 
       if (isPublic) return true;
-      if (!isLoggedIn) return Response.redirect(new URL("/login", nextUrl));
 
+      // Only require auth for known protected routes
+      const protectedPrefixes = ["/worker", "/agency", "/admin", "/provider", "/onboarding"];
+      const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p));
+
+      if (!isLoggedIn && isProtected) {
+        return Response.redirect(new URL(`/login?redirect=${pathname}&reason=auth`, nextUrl));
+      }
+
+      // Unknown routes: let through (Next.js will show 404)
       return true;
     },
   },

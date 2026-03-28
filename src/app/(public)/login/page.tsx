@@ -42,29 +42,35 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const formData = new FormData(e.currentTarget);
-    const result = await signInAction(formData);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const result = await signInAction(formData);
 
-    if (!result.success) {
-      setError(result.error || "Invalid email or password.");
-      setLoading(false);
-      return;
-    }
-
-    // Redirect based on role returned from server
-    if (redirectPath) {
-      window.location.href = redirectPath;
-    } else if (callbackUrl) {
-      window.location.href = callbackUrl;
-    } else {
-      const role = result.data?.role;
-      if (role === "PROVIDER") {
-        window.location.href = "/agency/dashboard";
-      } else if (role === "WORKER") {
-        window.location.href = "/worker/shifts";
-      } else {
-        window.location.href = "/";
+      if (!result.success) {
+        setError(result.error || "Invalid email or password.");
+        setLoading(false);
+        return;
       }
+
+      // Redirect based on role returned from server
+      if (redirectPath) {
+        window.location.href = redirectPath;
+      } else if (callbackUrl) {
+        window.location.href = callbackUrl;
+      } else {
+        const role = result.data?.role;
+        if (role === "PROVIDER") {
+          window.location.href = "/agency/dashboard";
+        } else if (role === "WORKER") {
+          window.location.href = "/worker/shifts";
+        } else {
+          window.location.href = "/onboarding";
+        }
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
     }
   }
 
