@@ -464,11 +464,13 @@ function ActivityTicker() {
 function AnimatedStat({
   value,
   suffix,
+  prefix,
   label,
   showDivider,
 }: {
   value: number;
   suffix: string;
+  prefix?: string;
   label: string;
   showDivider: boolean;
 }) {
@@ -498,6 +500,7 @@ function AnimatedStat({
   return (
     <div ref={ref} className={`text-center ${showDivider ? "stat-divider" : ""}`}>
       <div className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight font-mono">
+        {prefix}
         {visible
           ? String(animated).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
           : "0"}
@@ -665,9 +668,9 @@ export default function LandingPage() {
               <div className="bg-teal-50 border-l-4 border-teal-600 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Building2 className="h-5 w-5 text-teal-600" />
-                  <h3 className="text-sm font-bold text-teal-800 uppercase tracking-wide">
+                  <h2 className="text-sm font-bold text-teal-800 uppercase tracking-wide">
                     For Employers
-                  </h3>
+                  </h2>
                 </div>
                 <p className="text-slate-700 text-sm leading-relaxed mb-4">
                   Post a shift in 2 minutes.
@@ -675,7 +678,7 @@ export default function LandingPage() {
                   Get matched instantly.
                 </p>
                 <Link
-                  href="/signup?role=PROVIDER"
+                  href="/signup?role=PROVIDER&type=AGENCY"
                   className="inline-flex items-center gap-2 bg-teal-600 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-all text-sm shadow-lg shadow-teal-600/20 hover:shadow-teal-600/30 hover:-translate-y-0.5"
                 >
                   Post a Shift
@@ -687,9 +690,9 @@ export default function LandingPage() {
               <div className="bg-violet-50 border-l-4 border-violet-500 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="h-5 w-5 text-violet-600" />
-                  <h3 className="text-sm font-bold text-violet-800 uppercase tracking-wide">
+                  <h2 className="text-sm font-bold text-violet-800 uppercase tracking-wide">
                     For Families
-                  </h3>
+                  </h2>
                 </div>
                 <p className="text-slate-700 text-sm leading-relaxed mb-4">
                   Find trusted care for a loved one.
@@ -697,7 +700,7 @@ export default function LandingPage() {
                   No subscription needed.
                 </p>
                 <Link
-                  href="/signup?role=PROVIDER"
+                  href="/signup?role=PROVIDER&type=PRIVATE"
                   className="inline-flex items-center gap-2 bg-violet-600 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-violet-700 transition-all text-sm shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 hover:-translate-y-0.5"
                 >
                   Hire a Caregiver
@@ -709,9 +712,9 @@ export default function LandingPage() {
               <div className="bg-slate-50 border-l-4 border-slate-400 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <UserCheck className="h-5 w-5 text-slate-600" />
-                  <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                  <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
                     For Workers
-                  </h3>
+                  </h2>
                 </div>
                 <p className="text-slate-600 text-sm leading-relaxed mb-4">
                   Employer and private shifts.
@@ -800,7 +803,7 @@ export default function LandingPage() {
             <AnimatedStat value={2400} suffix="+" label="Shifts Filled" showDivider={true} />
             <AnimatedStat value={500} suffix="+" label="Healthcare Workers" showDivider={true} />
             <AnimatedStat value={120} suffix="+" label="Employers" showDivider={true} />
-            <AnimatedStat value={4} suffix="hr" label="Avg Fill Time" showDivider={false} />
+            <AnimatedStat value={30} suffix=" min" label="Avg Fill Time" prefix="<" showDivider={false} />
           </div>
         </div>
       </section>
@@ -808,7 +811,7 @@ export default function LandingPage() {
       {/* ─── How It Works ─── */}
       <section
         id="how-it-works"
-        className="py-20 sm:py-28 px-4 bg-white"
+        className="py-20 sm:py-28 px-4 bg-white scroll-mt-20"
       >
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -853,7 +856,7 @@ export default function LandingPage() {
               icon={<Clock size={24} className="text-emerald-400" />}
               iconBg="bg-emerald-400/10"
               title="Shifts Filled Fast"
-              description="Average fill time under 4 hours. Most shifts get matched in under 30 minutes."
+              description="Average fill time under 30 minutes. Urgent shifts often get matched in under 10 minutes."
             />
             <TrustCard
               icon={<Lock size={24} className="text-amber-400" />}
@@ -868,6 +871,55 @@ export default function LandingPage() {
               description="Workers are matched and notified the moment you post. No waiting, no phone tag."
             />
           </div>
+
+          {/* Trust / Compliance Badges */}
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-3">
+            {[
+              { icon: <Shield size={14} className="text-cyan-400" />, label: "HIPAA Compliant" },
+              { icon: <Lock size={14} className="text-cyan-400" />, label: "Secure Payments via Stripe" },
+              { icon: <UserCheck size={14} className="text-cyan-400" />, label: "Background Checked Workers" },
+              { icon: <CheckCircle size={14} className="text-cyan-400" />, label: "Licensed & Insured" },
+            ].map((badge) => (
+              <span
+                key={badge.label}
+                className="inline-flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium px-3.5 py-2 rounded-full"
+              >
+                {badge.icon}
+                {badge.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Service Area ─── */}
+      <section className="py-20 sm:py-28 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="inline-block text-sm font-semibold text-cyan-600 uppercase tracking-wider mb-3">
+              Service Area
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight">
+              Currently Available In
+            </h2>
+            <p className="text-slate-500 text-lg mt-4 max-w-xl mx-auto leading-relaxed">
+              Serving healthcare agencies and workers across Florida.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {["Tampa", "Orlando", "Miami", "Jacksonville", "St. Petersburg", "Fort Lauderdale", "Clearwater", "Gainesville"].map((city) => (
+              <div
+                key={city}
+                className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3"
+              >
+                <MapPin size={16} className="text-cyan-600 shrink-0" />
+                <span className="text-sm font-medium text-slate-700">{city}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-slate-400 text-sm mt-8 font-medium">
+            Expanding to Georgia, Texas, and California in 2026
+          </p>
         </div>
       </section>
 
@@ -1095,9 +1147,9 @@ function HowItWorksTabs() {
             </div>
             <div className="flex items-center justify-center gap-2 mb-3">
               {step.icon}
-              <h4 className="font-bold text-lg text-slate-900">
+              <h3 className="font-bold text-lg text-slate-900">
                 {step.title}
-              </h4>
+              </h3>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed">
               {step.description}

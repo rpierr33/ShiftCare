@@ -193,6 +193,16 @@ export function PricingContent() {
                 <ArrowRight size={16} />
               </Link>
 
+              {tier.name === "Professional" && (
+                <Link
+                  href="/demo"
+                  className="mt-3 inline-flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-lg transition-all text-sm border border-cyan-200 text-cyan-700 hover:bg-cyan-50"
+                >
+                  Book a Demo
+                  <ArrowRight size={16} />
+                </Link>
+              )}
+
               {/* Trust signals */}
               <div className="mt-4 space-y-1.5">
                 <div className="flex items-center gap-1.5">
@@ -264,54 +274,62 @@ export function PricingContent() {
             See exactly what you get with each plan.
           </p>
         </div>
-        <div className="overflow-x-auto -mx-4 px-4">
-          <table className="w-full min-w-[600px] border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200">
-                <th className="text-left text-sm font-semibold text-slate-500 py-4 pr-4 w-[40%]">
-                  Feature
-                </th>
-                <th className="text-center text-sm font-semibold text-slate-900 py-4 px-4 w-[20%]">
-                  Free
-                </th>
-                <th className="text-center text-sm font-semibold text-cyan-600 py-4 px-4 w-[20%]">
-                  Starter
-                </th>
-                <th className="text-center text-sm font-semibold text-slate-900 py-4 pl-4 w-[20%]">
-                  Professional
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPARISON_ROWS.map((row, i) => (
-                <tr
-                  key={row.feature}
-                  className={`border-b border-slate-100 ${
-                    i % 2 === 0 ? "bg-slate-50/50" : ""
-                  }`}
-                >
-                  <td className="text-left text-sm text-slate-700 py-3.5 pr-4 font-medium">
-                    {row.feature}
-                  </td>
-                  <td className="text-center py-3.5 px-4">
-                    <div className="flex justify-center">
-                      <ComparisonCell value={row.free} />
-                    </div>
-                  </td>
-                  <td className="text-center py-3.5 px-4">
-                    <div className="flex justify-center">
-                      <ComparisonCell value={row.starter} />
-                    </div>
-                  </td>
-                  <td className="text-center py-3.5 pl-4">
-                    <div className="flex justify-center">
-                      <ComparisonCell value={row.professional} />
-                    </div>
-                  </td>
+        {/* Scroll hint for mobile */}
+        <p className="text-center text-xs text-slate-400 mb-2 sm:hidden">
+          &larr; Scroll to compare &rarr;
+        </p>
+        <div className="relative">
+          {/* Right fade indicator on mobile */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 sm:hidden" />
+          <div className="overflow-x-auto -mx-4 px-4">
+            <table className="w-full min-w-[600px] border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="sticky left-0 bg-white z-10 text-left text-sm font-semibold text-slate-500 py-4 pr-4 w-[40%]">
+                    Feature
+                  </th>
+                  <th className="text-center text-sm font-semibold text-slate-900 py-4 px-4 w-[20%]">
+                    Free
+                  </th>
+                  <th className="text-center text-sm font-semibold text-cyan-600 py-4 px-4 w-[20%]">
+                    Starter
+                  </th>
+                  <th className="text-center text-sm font-semibold text-slate-900 py-4 pl-4 w-[20%]">
+                    Professional
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {COMPARISON_ROWS.map((row, i) => (
+                  <tr
+                    key={row.feature}
+                    className={`border-b border-slate-100 ${
+                      i % 2 === 0 ? "bg-slate-50/50" : ""
+                    }`}
+                  >
+                    <td className={`sticky left-0 z-10 text-left text-sm text-slate-700 py-3.5 pr-4 font-medium ${i % 2 === 0 ? "bg-slate-50/50" : "bg-white"}`}>
+                      {row.feature}
+                    </td>
+                    <td className="text-center py-3.5 px-4">
+                      <div className="flex justify-center">
+                        <ComparisonCell value={row.free} />
+                      </div>
+                    </td>
+                    <td className="text-center py-3.5 px-4">
+                      <div className="flex justify-center">
+                        <ComparisonCell value={row.starter} />
+                      </div>
+                    </td>
+                    <td className="text-center py-3.5 pl-4">
+                      <div className="flex justify-center">
+                        <ComparisonCell value={row.professional} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </>

@@ -59,6 +59,9 @@ export function PublicNav({ currentPage }: PublicNavProps) {
           >
             How It Works
           </Link>
+          <Link href="/for-workers" className={linkClass("for-workers")}>
+            For Workers
+          </Link>
           <Link href="/pricing" className={linkClass("pricing")}>
             Pricing
           </Link>
@@ -92,6 +95,13 @@ export function PublicNav({ currentPage }: PublicNavProps) {
                 className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 How It Works
+              </Link>
+              <Link
+                href="/for-workers"
+                onClick={close}
+                className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                For Workers
               </Link>
               <Link
                 href="/pricing"

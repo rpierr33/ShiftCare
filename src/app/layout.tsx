@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/providers/session-provider";
+import { PWAInstallPrompt } from "@/components/shared/pwa-install-prompt";
+import { HelpWidget } from "@/components/shared/help-widget";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -59,6 +61,8 @@ export default function RootLayout({
         className={`${dmSans.className} antialiased bg-slate-50 text-slate-900`}
       >
         <SessionProvider>{children}</SessionProvider>
+        <HelpWidget />
+        <PWAInstallPrompt />
         <script
           dangerouslySetInnerHTML={{
             __html: process.env.NODE_ENV === "production"

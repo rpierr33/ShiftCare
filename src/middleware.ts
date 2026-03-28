@@ -6,7 +6,7 @@ export default auth((req) => {
   const user = req.auth?.user as { role?: string; onboardingCompleted?: boolean } | undefined;
 
   // Let public routes through
-  const publicPaths = ["/", "/pricing", "/forgot-password", "/reset-password", "/terms", "/privacy", "/api/auth", "/api/webhooks"];
+  const publicPaths = ["/", "/pricing", "/for-workers", "/demo", "/forgot-password", "/reset-password", "/terms", "/privacy", "/api/auth", "/api/webhooks", "/how-it-works"];
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
   }
@@ -20,32 +20,30 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Admin routes — allow authenticated users (admin check done in page)
-  if (pathname.startsWith("/admin")) {
-    if (!user) {
-      const loginUrl = new URL("/login", req.nextUrl);
-      loginUrl.searchParams.set("redirect", pathname);
-      loginUrl.searchParams.set("reason", "auth");
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
-  }
+  // Known protected route prefixes — only these require auth
+  const protectedPrefixes = ["/worker", "/agency", "/admin", "/provider", "/onboarding"];
+  const isProtectedRoute = protectedPrefixes.some((p) => pathname.startsWith(p));
 
-  // Not logged in — redirect to login with context
-  if (!user) {
+  // Not logged in on a protected route — redirect to login with context
+  if (!user && isProtectedRoute) {
     const loginUrl = new URL("/login", req.nextUrl);
     loginUrl.searchParams.set("redirect", pathname);
     loginUrl.searchParams.set("reason", "auth");
     return NextResponse.redirect(loginUrl);
   }
 
+  // Unknown routes (not public, not protected) — let Next.js handle (shows 404)
+  if (!user && !isProtectedRoute) {
+    return NextResponse.next();
+  }
+
   // Onboarding not completed — redirect to onboarding
-  if (!user.onboardingCompleted && pathname !== "/onboarding") {
+  if (user && !user.onboardingCompleted && pathname !== "/onboarding") {
     return NextResponse.redirect(new URL("/onboarding", req.nextUrl));
   }
 
   // Role-based route protection
-  const role = user.role;
+  const role = user?.role;
   if (role) {
     // Workers can't access /agency/* or /provider/*
     if (role === "WORKER" && (pathname.startsWith("/agency") || pathname.startsWith("/provider"))) {

@@ -1,11 +1,17 @@
+import { Building2, Heart, Stethoscope, BadgeCheck } from "lucide-react";
+
 const TESTIMONIALS = [
   {
     name: "Sarah M.",
     role: "Director of Nursing",
     company: "Sunrise Health Agency",
+    facility: "Home Health Agency, Tampa FL",
     initials: "SM",
     color: "bg-rose-400",
+    ring: "ring-rose-200",
     rating: 5,
+    type: "agency" as const,
+    verified: true,
     quote:
       "ShiftCare cut our shift vacancy time from 3 days to under 30 minutes. The credential verification gives us peace of mind, and the same-day pay option means we always have workers available.",
   },
@@ -13,9 +19,13 @@ const TESTIMONIALS = [
     name: "Marcus T.",
     role: "CNA",
     company: "4 years experience",
+    facility: "Certified Nursing Assistant",
     initials: "MT",
     color: "bg-blue-400",
+    ring: "ring-blue-200",
     rating: 5,
+    type: "worker" as const,
+    verified: false,
     quote:
       "I love seeing exactly what I\u2019ll earn before accepting a shift. The same-day pay is a game-changer \u2014 no more waiting two weeks. I\u2019ve picked up 15 extra shifts this month.",
   },
@@ -23,13 +33,23 @@ const TESTIMONIALS = [
     name: "Dr. Jennifer K.",
     role: "Home Health Agency Owner",
     company: "",
+    facility: "Private Home Care, Orlando FL",
     initials: "JK",
     color: "bg-emerald-400",
+    ring: "ring-emerald-200",
     rating: 5,
+    type: "homecare" as const,
+    verified: true,
     quote:
       "The preferred worker system lets me build a reliable team. When I post a shift, my top workers get first access. Fill rate went from 60% to 95% in the first month.",
   },
 ];
+
+function RoleIcon({ type }: { type: "agency" | "homecare" | "worker" }) {
+  if (type === "agency") return <Building2 size={12} className="text-white" />;
+  if (type === "homecare") return <Heart size={12} className="text-white" />;
+  return <Stethoscope size={12} className="text-white" />;
+}
 
 function Stars({ count }: { count: number }) {
   return (
@@ -71,18 +91,32 @@ export function TestimonialsSection() {
                 &ldquo;{t.quote}&rdquo;
               </p>
               <div className="mt-6 flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full ${t.color} flex items-center justify-center text-xs font-bold text-white`}
-                >
-                  {t.initials}
+                <div className="relative">
+                  <div
+                    className={`w-12 h-12 rounded-full ${t.color} ring-2 ${t.ring} flex items-center justify-center text-sm font-bold text-white`}
+                  >
+                    {t.initials}
+                  </div>
+                  <div
+                    className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${t.color} border-2 border-white flex items-center justify-center`}
+                  >
+                    <RoleIcon type={t.type} />
+                  </div>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {t.name}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {t.name}
+                    </p>
+                    {t.verified && (
+                      <BadgeCheck size={14} className="text-cyan-500" />
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">
                     {t.role}
-                    {t.company ? `, ${t.company}` : ""}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {t.facility}
                   </p>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import {
   Home,
   Eye,
   EyeOff,
+  CheckCircle,
+  Loader2,
 } from "lucide-react";
 
 export default function SignUpPage() {
@@ -32,18 +34,78 @@ export default function SignUpPage() {
 type Role = "PROVIDER" | "WORKER";
 type ProvType = "AGENCY" | "PRIVATE";
 
+function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
+  if (pw.length < 8) return { level: 1, label: "Weak", color: "bg-red-500" };
+  const hasLetters = /[a-zA-Z]/.test(pw);
+  const hasNumbers = /[0-9]/.test(pw);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(pw);
+  if (hasLetters && hasNumbers && hasSpecial) return { level: 4, label: "Strong", color: "bg-emerald-500" };
+  if (hasLetters && hasNumbers) return { level: 3, label: "Good", color: "bg-yellow-500" };
+  return { level: 2, label: "Fair", color: "bg-orange-500" };
+}
+
+function PasswordStrengthMeter({ password }: { password: string }) {
+  if (!password) return null;
+  const { level, label, color } = getPasswordStrength(password);
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              i <= level ? color : "bg-slate-200"
+            }`}
+          />
+        ))}
+      </div>
+      <p className={`text-xs mt-1 ${
+        level <= 1 ? "text-red-500" : level === 2 ? "text-orange-500" : level === 3 ? "text-yellow-600" : "text-emerald-600"
+      }`}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
 function SignUpForm() {
   const searchParams = useSearchParams();
   const urlRole = searchParams.get("role") as Role | null;
+  const urlType = searchParams.get("type") as ProvType | null;
   const urlPlan = searchParams.get("plan"); // e.g. "starter", "professional"
   const hasPresetRole =
     urlRole !== null && ["PROVIDER", "WORKER"].includes(urlRole);
+  const hasPresetType =
+    urlType !== null && ["AGENCY", "PRIVATE"].includes(urlType);
+
+  // Determine initial step based on query params:
+  // - role=WORKER -> skip to register
+  // - role=PROVIDER&type=PRIVATE or type=AGENCY -> skip role + providerType, go to register
+  // - role=PROVIDER (no type) -> skip role, go to providerType
+  // - no params -> start at role
+  const getInitialStep = (): "role" | "providerType" | "register" => {
+    if (!hasPresetRole) return "role";
+    if (urlRole === "WORKER") return "register";
+    if (hasPresetType) return "register";
+    return "providerType";
+  };
 
   const [step, setStep] = useState<"role" | "providerType" | "register">(
-    hasPresetRole ? (urlRole === "WORKER" ? "register" : "providerType") : "role"
+    getInitialStep()
   );
   const [role, setRole] = useState<Role>(hasPresetRole ? urlRole! : "PROVIDER");
-  const [providerType, setProviderType] = useState<ProvType>("AGENCY");
+  const [providerType, setProviderType] = useState<ProvType>(hasPresetType ? urlType! : "AGENCY");
+
+  // Store plan in sessionStorage for post-signup use
+  useState(() => {
+    if (urlPlan && typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("shiftcare_signup_plan", urlPlan);
+      } catch {
+        // sessionStorage may be unavailable
+      }
+    }
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -51,6 +113,36 @@ function SignUpForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupName, setSignupName] = useState("");
+
+  // Inline validation state
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({ name: "", email: "", password: "" });
+
+  const fieldErrors: Record<string, string> = {};
+  if (touched.name && !fieldValues.name.trim()) fieldErrors.name = "Full name is required";
+  if (touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValues.email)) fieldErrors.email = "Valid email is required";
+  if (touched.password && fieldValues.password.length < 8) fieldErrors.password = "Password must be at least 8 characters";
+
+  const isFormValid =
+    fieldValues.name.trim() !== "" &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValues.email) &&
+    fieldValues.password.length >= 8 &&
+    confirmPassword === fieldValues.password &&
+    agreedToTerms;
+
+  function handleFieldBlur(field: string) {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }
+
+  function handleFieldChange(field: string, value: string) {
+    setFieldValues((prev) => ({ ...prev, [field]: value }));
+    // Clear confirm password error when password changes
+    if (field === "password" && confirmPasswordError && confirmPassword === value) {
+      setConfirmPasswordError("");
+    }
+  }
 
   function handleRoleSelect(selectedRole: Role) {
     setRole(selectedRole);
@@ -102,8 +194,19 @@ function SignUpForm() {
       return;
     }
 
-    window.location.href = "/onboarding";
+    setSignupName(fieldValues.name.split(" ")[0] || "");
+    setSignupSuccess(true);
+    setLoading(false);
   }
+
+  // Auto-redirect after signup success
+  useEffect(() => {
+    if (!signupSuccess) return;
+    const timer = setTimeout(() => {
+      window.location.href = "/onboarding";
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [signupSuccess]);
 
   const getStepTitle = () => {
     if (role === "WORKER") return "Sign up as a Healthcare Professional";
@@ -139,6 +242,26 @@ function SignUpForm() {
         {/* Card */}
         <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
 
+          {/* Post-Signup Confirmation */}
+          {signupSuccess && (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-5 animate-bounce">
+                <CheckCircle size={32} className="text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                Account Created!
+              </h2>
+              <p className="text-slate-600 mb-6">
+                Welcome to ShiftCare{signupName ? `, ${signupName}` : ""}!
+              </p>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <Loader2 size={16} className="animate-spin" />
+                Setting up your account...
+              </div>
+            </div>
+          )}
+
+          {!signupSuccess && (<>
           {/* Step Indicator (#8) */}
           <div className="mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -303,6 +426,7 @@ function SignUpForm() {
                 type="button"
                 onClick={() => {
                   if (role === "WORKER") setStep("role");
+                  else if (hasPresetType) setStep("role");
                   else setStep("providerType");
                   setError("");
                 }}
@@ -333,9 +457,17 @@ function SignUpForm() {
                       placeholder="John Doe"
                       required
                       autoComplete="name"
-                      className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      value={fieldValues.name}
+                      onChange={(e) => handleFieldChange("name", e.target.value)}
+                      onBlur={() => handleFieldBlur("name")}
+                      className={`pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                        fieldErrors.name ? "border-red-300 focus:ring-red-500 focus:border-red-500" : ""
+                      }`}
                     />
                   </div>
+                  {fieldErrors.name && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -353,9 +485,17 @@ function SignUpForm() {
                       placeholder="you@example.com"
                       required
                       autoComplete="email"
-                      className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      value={fieldValues.email}
+                      onChange={(e) => handleFieldChange("email", e.target.value)}
+                      onBlur={() => handleFieldBlur("email")}
+                      className={`pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                        fieldErrors.email ? "border-red-300 focus:ring-red-500 focus:border-red-500" : ""
+                      }`}
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -374,7 +514,12 @@ function SignUpForm() {
                       required
                       minLength={8}
                       autoComplete="new-password"
-                      className="pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      value={fieldValues.password}
+                      onChange={(e) => handleFieldChange("password", e.target.value)}
+                      onBlur={() => handleFieldBlur("password")}
+                      className={`pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                        fieldErrors.password ? "border-red-300 focus:ring-red-500 focus:border-red-500" : ""
+                      }`}
                     />
                     <button
                       type="button"
@@ -385,6 +530,10 @@ function SignUpForm() {
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                  {fieldErrors.password && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+                  )}
+                  <PasswordStrengthMeter password={fieldValues.password} />
                 </div>
 
                 {/* Confirm Password (#9) */}
@@ -461,7 +610,7 @@ function SignUpForm() {
                   type="submit"
                   className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   loading={loading}
-                  disabled={!agreedToTerms || loading}
+                  disabled={!isFormValid || loading}
                 >
                   Create Account
                   <ArrowRight size={16} />
@@ -481,6 +630,7 @@ function SignUpForm() {
               </Link>
             </p>
           </div>
+          </>)}
         </div>
       </div>
     </div>
