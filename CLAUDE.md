@@ -12,6 +12,8 @@ If you violate a rule, you will ship broken code to production. This has happene
 
 **ANY feature built — even a single button — MUST be tested in every way possible before being called complete.** Does it render? Does it respond to clicks? Does it submit data? Does it show loading/error/success states? Does it work on mobile? Does it work logged out? Does it work with empty data? Does it break adjacent features? If you cannot answer YES to every applicable question, it is NOT complete.
 
+**EXECUTE EVERY ITEM. NO EXCEPTIONS.** When given a list of tasks, execute ALL of them. You do NOT have the authority to skip, defer, or cherry-pick. If an item is in the prompt, it gets done. If you think an item should not be done, ASK — do not silently skip it. Partial execution is a failure. The user's list is your complete task list, not a menu.
+
 ---
 
 # Project Prompts
