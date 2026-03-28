@@ -10,6 +10,8 @@ If a feature isn't tested at the moment it's written, it is NOT done. Do not bat
 
 If you violate a rule, you will ship broken code to production. This has happened repeatedly. Stop it.
 
+**ANY feature built — even a single button — MUST be tested in every way possible before being called complete.** Does it render? Does it respond to clicks? Does it submit data? Does it show loading/error/success states? Does it work on mobile? Does it work logged out? Does it work with empty data? Does it break adjacent features? If you cannot answer YES to every applicable question, it is NOT complete.
+
 ---
 
 # Project Prompts
