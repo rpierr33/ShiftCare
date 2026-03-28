@@ -231,8 +231,55 @@ export default function ForWorkersPage() {
         </div>
       </section>
 
-      {/* Earnings Calculator */}
+      {/* Preview Available Shifts */}
       <section className="py-20 sm:py-28 px-4 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-3">
+              Preview
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              Available Shifts Near You
+            </h2>
+            <p className="text-slate-500 text-base mt-3">
+              Here is a sample of the types of shifts posted on ShiftCare.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {[
+              { role: "RN", location: "Tampa, FL", rate: "$38/hr", time: "7AM - 3PM", bg: "bg-cyan-50", border: "border-cyan-200", badge: "bg-cyan-100 text-cyan-700" },
+              { role: "CNA", location: "Orlando, FL", rate: "$26/hr", time: "3PM - 11PM", bg: "bg-emerald-50", border: "border-emerald-200", badge: "bg-emerald-100 text-emerald-700" },
+              { role: "LPN", location: "St. Petersburg, FL", rate: "$32/hr", time: "11PM - 7AM", bg: "bg-violet-50", border: "border-violet-200", badge: "bg-violet-100 text-violet-700" },
+            ].map((s) => (
+              <div key={s.role} className={`${s.bg} border ${s.border} rounded-2xl p-5`}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${s.badge}`}>
+                    {s.role}
+                  </span>
+                  <span className="text-lg font-extrabold text-slate-900">{s.rate}</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-800">{s.location}</p>
+                <p className="text-xs text-slate-500 mt-1">{s.time}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-slate-400 mt-5">
+            Sample shifts -- sign up to see live postings
+          </p>
+          <div className="text-center mt-6">
+            <Link
+              href="/signup?role=WORKER"
+              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-xl text-sm shadow-lg shadow-emerald-600/20 transition-all"
+            >
+              View Live Shifts
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Earnings Calculator */}
+      <section className="py-20 sm:py-28 px-4 bg-slate-50">
         <div className="max-w-2xl mx-auto">
           <EarningsCalculator />
         </div>

@@ -40,7 +40,7 @@ const SHIFT_DATA = [
       { initials: "JW", color: "bg-blue-400" },
       { initials: "AP", color: "bg-amber-400" },
     ],
-    accepted: { name: "Maria G.", title: "CNA", exp: "4yr exp", rating: "4.9" },
+    accepted: { name: "Maria G.", title: "CNA", exp: "4yr exp", rating: "4.9", reviews: 47 },
     fillTime: "8 minutes",
   },
   {
@@ -53,7 +53,7 @@ const SHIFT_DATA = [
       { initials: "KR", color: "bg-emerald-400" },
       { initials: "TN", color: "bg-cyan-400" },
     ],
-    accepted: { name: "Derek L.", title: "CNA", exp: "6yr exp", rating: "4.8" },
+    accepted: { name: "Derek L.", title: "CNA", exp: "6yr exp", rating: "4.8", reviews: 32 },
     fillTime: "5 minutes",
   },
   {
@@ -66,7 +66,7 @@ const SHIFT_DATA = [
       { initials: "BM", color: "bg-teal-400" },
       { initials: "CJ", color: "bg-orange-400" },
     ],
-    accepted: { name: "Sandra R.", title: "LPN", exp: "3yr exp", rating: "4.7" },
+    accepted: { name: "Sandra R.", title: "LPN", exp: "3yr exp", rating: "4.7", reviews: 23 },
     fillTime: "11 minutes",
   },
 ];
@@ -295,7 +295,8 @@ function ShiftFulfillmentEngine() {
                 accepted · {shift.accepted.title} ·{" "}
                 {shift.accepted.exp} ·{" "}
                 <span className="text-amber-300">&#9733;</span>{" "}
-                {shift.accepted.rating}
+                {shift.accepted.rating}{" "}
+                <span className="text-slate-500">({shift.accepted.reviews})</span>
               </p>
               <p
                 className="text-xs text-emerald-400 font-semibold absolute inset-0 transition-opacity duration-500"
@@ -449,11 +450,11 @@ function ActivityTicker() {
 
   return (
     <div className="w-full overflow-hidden bg-slate-950/60 backdrop-blur border-t border-b border-white/5 py-3">
-      <div className="ticker-track flex items-center gap-8 whitespace-nowrap">
+      <div className="ticker-track flex items-center gap-8 whitespace-nowrap flex-nowrap">
         {doubled.map((item, i) => (
-          <span key={i} className="flex items-center gap-2 text-sm">
+          <span key={i} className="inline-flex items-center gap-2 text-sm flex-shrink-0">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
-            <span className="text-slate-400">{item}</span>
+            <span className="text-slate-400 whitespace-nowrap">{item}</span>
           </span>
         ))}
       </div>
@@ -496,15 +497,18 @@ function AnimatedStat({
     return () => observer.disconnect();
   }, []);
 
-  const animated = useCountUp(value, 1200, visible);
+  const skipAnimation = prefix?.includes("<");
+  const animated = useCountUp(value, 1200, skipAnimation ? false : visible);
 
   return (
     <div ref={ref} className={`text-center ${showDivider ? "stat-divider" : ""}`}>
       <div className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight font-mono">
         {prefix}
-        {visible
-          ? String(animated).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-          : "0"}
+        {skipAnimation
+          ? String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          : visible
+            ? String(animated).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            : "0"}
         {suffix}
       </div>
       <div className="text-sm text-slate-500 mt-1 font-medium">{label}</div>
@@ -1019,10 +1023,17 @@ export default function LandingPage() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/signup?role=PROVIDER"
+              href="/signup?role=PROVIDER&type=AGENCY"
               className="inline-flex items-center gap-2.5 bg-cyan-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-cyan-700 transition-all text-base shadow-lg shadow-cyan-600/25 hover:shadow-xl hover:shadow-cyan-600/30 hover:-translate-y-0.5"
             >
               I Need to Hire
+              <ArrowRight size={18} />
+            </Link>
+            <Link
+              href="/signup?role=PROVIDER&type=PRIVATE"
+              className="inline-flex items-center gap-2.5 bg-violet-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-violet-700 transition-all text-base shadow-lg shadow-violet-600/25 hover:shadow-xl hover:shadow-violet-600/30 hover:-translate-y-0.5"
+            >
+              I Need Home Care
               <ArrowRight size={18} />
             </Link>
             <Link

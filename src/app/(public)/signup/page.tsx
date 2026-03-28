@@ -17,10 +17,13 @@ import {
   Lock,
   Building2,
   Home,
+  Heart,
   Eye,
   EyeOff,
   CheckCircle,
   Loader2,
+  Shield,
+  Clock,
 } from "lucide-react";
 
 export default function SignUpPage() {
@@ -83,17 +86,27 @@ function SignUpForm() {
   // - role=PROVIDER&type=PRIVATE or type=AGENCY -> skip role + providerType, go to register
   // - role=PROVIDER (no type) -> skip role, go to providerType
   // - no params -> start at role
+  // If a plan is specified, this is a provider signup — auto-select PROVIDER role
+  const effectiveRole = urlPlan && !hasPresetRole ? "PROVIDER" : urlRole;
+  const hasEffectiveRole = effectiveRole !== null && ["PROVIDER", "WORKER"].includes(effectiveRole);
+
   const getInitialStep = (): "role" | "providerType" | "register" => {
-    if (!hasPresetRole) return "role";
-    if (urlRole === "WORKER") return "register";
+    if (!hasPresetRole && !urlPlan) return "role";
+    if (effectiveRole === "WORKER") return "register";
     if (hasPresetType) return "register";
     return "providerType";
+  };
+
+  const planDetails: Record<string, { name: string; price: string }> = {
+    starter: { name: "Starter Plan", price: "$49/mo" },
+    professional: { name: "Professional Plan", price: "$149/mo" },
+    free: { name: "Free Plan", price: "$0" },
   };
 
   const [step, setStep] = useState<"role" | "providerType" | "register">(
     getInitialStep()
   );
-  const [role, setRole] = useState<Role>(hasPresetRole ? urlRole! : "PROVIDER");
+  const [role, setRole] = useState<Role>(hasEffectiveRole ? (effectiveRole as Role) : "PROVIDER");
   const [providerType, setProviderType] = useState<ProvType>(hasPresetType ? urlType! : "AGENCY");
 
   // Store plan in sessionStorage for post-signup use
@@ -216,12 +229,25 @@ function SignUpForm() {
     return "Sign up as a Private Employer";
   };
 
-  // Step indicator logic
-  const totalSteps = role === "WORKER" ? 2 : 3;
-  const currentStep = step === "role" ? 1 : step === "providerType" ? 2 : (role === "WORKER" ? 2 : 3);
-  const stepLabels = role === "WORKER"
-    ? ["Role Selection", "Registration Form"]
-    : ["Role Selection", "Employer Type", "Registration Form"];
+  // Step indicator logic — count only the steps THIS user will actually see
+  const stepsUserSees: string[] = (() => {
+    const steps: string[] = [];
+    if (!hasEffectiveRole && !urlPlan) steps.push("Role Selection");
+    if (role === "PROVIDER" && !hasPresetType) steps.push("Employer Type");
+    steps.push("Registration Form");
+    return steps;
+  })();
+  const totalSteps = stepsUserSees.length;
+  const currentStepIndex = (() => {
+    if (step === "role") return 0;
+    if (step === "providerType") {
+      return (!hasEffectiveRole && !urlPlan) ? 1 : 0;
+    }
+    // register step
+    return totalSteps - 1;
+  })();
+  const currentStep = currentStepIndex + 1;
+  const stepLabels = stepsUserSees;
 
   return (
     <div
@@ -240,6 +266,17 @@ function SignUpForm() {
             </span>
           </Link>
         </div>
+
+        {/* Plan Banner (#4) */}
+        {urlPlan && planDetails[urlPlan] && (
+          <div className="mb-4 rounded-xl bg-cyan-50 border border-cyan-200 p-3 text-center">
+            <p className="text-sm text-cyan-800 font-medium">
+              You&apos;re signing up for the{" "}
+              <span className="font-bold">{planDetails[urlPlan].name}</span>{" "}
+              &mdash; {planDetails[urlPlan].price}
+            </p>
+          </div>
+        )}
 
         {/* Card */}
         <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
@@ -402,7 +439,25 @@ function SignUpForm() {
                     I Need Staff
                   </h3>
                   <p className="text-sm text-slate-500">
-                    Post shifts and find qualified healthcare workers
+                    Healthcare agencies and employers posting shifts
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRole("PROVIDER");
+                    setProviderType("PRIVATE");
+                    setStep("register");
+                  }}
+                  className="relative text-left p-6 rounded-2xl border-2 bg-violet-50 border-violet-200 hover:border-violet-400 transition-all duration-200 group"
+                >
+                  <Heart size={28} className="text-violet-600 mb-2" />
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">
+                    I Need Home Care
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Find trusted caregivers for yourself or a loved one
                   </p>
                 </button>
 
@@ -652,6 +707,23 @@ function SignUpForm() {
                   )}
                 </div>
 
+                {/* Verification Timeline Info (workers only) */}
+                {role === "WORKER" && (
+                  <div className="bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3.5 flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center mt-0.5">
+                      <Clock size={16} className="text-cyan-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-cyan-900">
+                        Start accepting shifts immediately
+                      </p>
+                      <p className="text-xs text-cyan-700 mt-0.5 leading-relaxed">
+                        Get provisional access right away while your credentials are verified (typically 7-14 days).
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Terms Checkbox (#12) */}
                 <div className="flex items-start gap-3">
                   <input
@@ -706,6 +778,14 @@ function SignUpForm() {
             </p>
           </div>
           </>)}
+        </div>
+
+        {/* Social Proof (#9) */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
+            <Shield size={12} className="text-slate-400" />
+            500+ verified healthcare workers &middot; 2,400+ shifts filled
+          </p>
         </div>
       </div>
     </div>

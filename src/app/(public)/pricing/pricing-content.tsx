@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X as XIcon, ArrowRight, Shield, Calculator, TrendingUp } from "lucide-react";
+import { Check, X as XIcon, ArrowRight, Shield, Calculator, TrendingUp, Lock, UserCheck } from "lucide-react";
 
 const MONTHLY_PRICES = { Free: "$0", Starter: "$49", Professional: "$149" };
 const ANNUAL_PRICES = { Free: "$0", Starter: "$39", Professional: "$119" };
@@ -337,6 +337,23 @@ export function PricingContent() {
                 )}
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Trust Badges */}
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
+          {[
+            { icon: <Shield size={14} />, label: "HIPAA Compliant" },
+            { icon: <Lock size={14} />, label: "Secure Payments" },
+            { icon: <UserCheck size={14} />, label: "Background Checked" },
+          ].map((b) => (
+            <span
+              key={b.label}
+              className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium px-3.5 py-2 rounded-full"
+            >
+              {b.icon}
+              {b.label}
+            </span>
           ))}
         </div>
 

@@ -10,16 +10,44 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISS_KEY = "pwa-install-dismissed";
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const PAGE_VISIT_KEY = "pwa-page-visits";
+const MIN_PAGE_VISITS = 2;
+const MIN_TIME_ON_SITE_MS = 30_000; // 30 seconds
 
 export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
+  const [eligible, setEligible] = useState(false);
+
+  // Track page visits and time on site to avoid showing prompt on first visit
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Increment page visit counter in sessionStorage
+    const currentCount = parseInt(sessionStorage.getItem(PAGE_VISIT_KEY) || "0", 10);
+    const newCount = currentCount + 1;
+    sessionStorage.setItem(PAGE_VISIT_KEY, String(newCount));
+
+    // If enough page visits, mark eligible immediately
+    if (newCount >= MIN_PAGE_VISITS) {
+      setEligible(true);
+      return;
+    }
+
+    // Otherwise, set a 30-second timeout as fallback
+    const timer = setTimeout(() => {
+      setEligible(true);
+    }, MIN_TIME_ON_SITE_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Only show on mobile-width screens
     if (typeof window === "undefined") return;
     if (window.innerWidth > 768) return;
+    if (!eligible) return;
 
     // Check if dismissed recently
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
@@ -38,7 +66,7 @@ export function PWAInstallPrompt() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
     };
-  }, []);
+  }, [eligible]);
 
   function dismiss() {
     setVisible(false);

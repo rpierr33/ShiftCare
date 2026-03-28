@@ -7,7 +7,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signInAction } from "@/actions/auth";
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -25,6 +25,17 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Inline validation state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const fieldErrors: Record<string, string> = {};
+  if (touched.email && !email.trim()) fieldErrors.email = "Email is required";
+  if (touched.password && !password.trim()) fieldErrors.password = "Password is required";
+
+  const isFormValid = email.trim() !== "" && password.trim() !== "";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -141,11 +152,18 @@ function LoginForm() {
                   name="email"
                   type="email"
                   placeholder="you@example.com"
-                  required
                   autoComplete="email"
-                  className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                  className={`pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                    fieldErrors.email ? "border-red-300 focus:ring-red-500 focus:border-red-500" : ""
+                  }`}
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div>
@@ -164,9 +182,13 @@ function LoginForm() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  required
                   autoComplete="current-password"
-                  className="pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+                  className={`pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                    fieldErrors.password ? "border-red-300 focus:ring-red-500 focus:border-red-500" : ""
+                  }`}
                 />
                 <button
                   type="button"
@@ -177,6 +199,9 @@ function LoginForm() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+              )}
               <div className="mt-1 text-right">
                 <Link href="/forgot-password" className="text-sm text-cyan-600 hover:underline">
                   Forgot your password?
@@ -186,8 +211,9 @@ function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all"
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               loading={loading}
+              disabled={!isFormValid || loading}
             >
               Sign In
               <ArrowRight size={16} />
@@ -205,6 +231,14 @@ function LoginForm() {
               </Link>
             </p>
           </div>
+        </div>
+
+        {/* Social Proof (#9) */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
+            <Shield size={12} className="text-slate-400" />
+            Trusted by 120+ Florida healthcare employers
+          </p>
         </div>
       </div>
     </div>

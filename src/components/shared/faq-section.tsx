@@ -110,8 +110,20 @@ function WaitlistForm({ variant = "inline" }: { variant?: "inline" | "standalone
 
   if (submitted) {
     return (
-      <div className={`bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 ${variant === "inline" ? "mt-4" : ""}`}>
-        You&apos;re on the list! We&apos;ll notify you when ShiftCare launches in {submittedState}.
+      <div className={`bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 ${variant === "inline" ? "mt-4" : ""}`}>
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
+            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">You&apos;re on the list!</p>
+            <p className="text-sm text-emerald-700 mt-0.5">
+              We&apos;ll notify you when ShiftCare launches in {submittedState}.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
