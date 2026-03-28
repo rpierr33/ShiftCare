@@ -32,7 +32,7 @@ import { EarningsCalculator } from "@/components/shared/earnings-calculator";
 const SHIFT_DATA = [
   {
     role: "RN",
-    location: "Tampa, FL",
+    location: "Fort Lauderdale, FL",
     rate: "$38/hr",
     time: "7AM-3PM Tomorrow",
     workers: [
@@ -45,7 +45,7 @@ const SHIFT_DATA = [
   },
   {
     role: "CNA",
-    location: "Orlando, FL",
+    location: "Miami, FL",
     rate: "$26/hr",
     time: "3PM-11PM Today",
     workers: [
@@ -58,7 +58,7 @@ const SHIFT_DATA = [
   },
   {
     role: "LPN",
-    location: "St. Petersburg, FL",
+    location: "West Palm Beach, FL",
     rate: "$32/hr",
     time: "11PM-7AM Tonight",
     workers: [
@@ -72,12 +72,12 @@ const SHIFT_DATA = [
 ];
 
 const TICKER_ITEMS = [
-  "CNA shift filled in Tampa · 12 min ago",
-  "RN accepted shift in Orlando · 3 min ago",
-  "New LPN available in Clearwater",
+  "CNA shift filled in Fort Lauderdale · 12 min ago",
+  "RN accepted shift in Miami · 3 min ago",
+  "New LPN available in West Palm Beach",
   "3 shifts filled in the last hour",
-  "CNA shift filled in St. Petersburg · 8 min ago",
-  "RN posted in Jacksonville · just now",
+  "CNA shift filled in Hollywood · 8 min ago",
+  "RN posted in Boca Raton · just now",
 ];
 
 /* ─── Shift Fulfillment Machine ─── */
@@ -771,7 +771,7 @@ export default function LandingPage() {
                     </div>
                     <p className="text-sm font-bold text-white">
                       RN <span className="text-slate-500">·</span>{" "}
-                      <span className="text-slate-300 font-medium">Tampa, FL</span>{" "}
+                      <span className="text-slate-300 font-medium">Fort Lauderdale, FL</span>{" "}
                       <span className="text-slate-500">·</span>{" "}
                       <span className="text-cyan-400 font-bold">$38/hr</span>
                     </p>
@@ -946,7 +946,7 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {["Tampa", "Orlando", "Miami", "Jacksonville", "St. Petersburg", "Fort Lauderdale", "Clearwater", "Gainesville"].map((city) => (
+            {["Fort Lauderdale", "Miami", "West Palm Beach", "Hollywood", "Boca Raton", "Pompano Beach", "Coral Springs", "Deerfield Beach"].map((city) => (
               <div
                 key={city}
                 className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3"
@@ -957,7 +957,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="text-center text-slate-400 text-sm mt-8 font-medium">
-            Expanding to Georgia, Texas, and California in 2026
+            Expanding to Tampa, Orlando in Q4 2026. Georgia, Texas, California in 2027.
           </p>
         </div>
       </section>

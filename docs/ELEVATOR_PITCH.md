@@ -1,6 +1,6 @@
 # ShiftCare — Elevator Pitch
 
-**Updated: March 2026**
+**Updated: April 2026**
 
 ---
 
@@ -147,15 +147,15 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 - 174+ source files, 25,000+ lines of production TypeScript
 - 20+ database models, 17 API endpoints, 4 automated cron jobs
 - Full codebase audit: 24 bugs found and fixed, 32/32 regression tests passing
-- Beta launch: April 2026 in Tampa + Orlando
+- Beta launch: June 2026 in South Florida (Fort Lauderdale, Miami, West Palm Beach)
 
 ---
 
 ## The Ask
 
-ShiftCare is launching its Florida beta in April 2026. We're looking for:
+ShiftCare is launching its South Florida beta in June 2026. We're looking for:
 
-- **Home health agencies** in Tampa, Orlando, Miami, and Jacksonville to pilot the platform
+- **Home health agencies** in Fort Lauderdale, Miami, and West Palm Beach to pilot the platform
 - **Healthcare professionals** (CNAs, HHAs, RNs, LPNs) to join the worker marketplace
 - **Families** seeking home care in Florida
 - **Strategic investors** aligned with healthcare workforce innovation

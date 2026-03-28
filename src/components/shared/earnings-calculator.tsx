@@ -11,7 +11,7 @@ const ROLES = [
   { label: "Companion", min: 15, max: 20 },
 ];
 
-const CITIES = ["Tampa", "Orlando", "Miami", "Jacksonville", "St. Petersburg"];
+const CITIES = ["Fort Lauderdale", "Miami", "West Palm Beach", "Hollywood", "Boca Raton"];
 const SHIFTS_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
 const HOURS_OPTIONS = [4, 8, 12];
 
@@ -21,7 +21,7 @@ const PLATFORM_FEE = 0.10;
    based on role, city, shifts per week, and hours per shift minus platform fee */
 export function EarningsCalculator() {
   const [roleIndex, setRoleIndex] = useState(2); // CNA default
-  const [city, setCity] = useState("Tampa");
+  const [city, setCity] = useState("Fort Lauderdale");
   const [shiftsPerWeek, setShiftsPerWeek] = useState(3);
   const [hoursPerShift, setHoursPerShift] = useState(8);
 

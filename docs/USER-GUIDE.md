@@ -1,6 +1,6 @@
 # ShiftCare User Guide
 
-**Version 1.0 — April 2026**
+**Version 1.0 — June 2026**
 **Platform:** https://shiftcare-app-rho.vercel.app
 
 ---
@@ -462,7 +462,7 @@ No contracts, no commitments. Cancel your subscription anytime. The free plan ne
 Workers choose Same Day Pay (paid within hours) or Standard Pay (released 4 hours after employer confirms). All fees are transparent — workers see exact take-home before accepting.
 
 **Is ShiftCare available outside of Florida?**
-We're currently serving Florida (Tampa, Orlando, Miami, Jacksonville, St. Petersburg, Fort Lauderdale, Clearwater, Gainesville). Expanding to Georgia, Texas, and California in 2026.
+We're currently serving South Florida (Fort Lauderdale, Miami, West Palm Beach). Expanding to Tampa, Orlando, Jacksonville in Q4 2026 and Georgia, Texas, California in 2027.
 
 ---
 

@@ -110,9 +110,9 @@ export default function AboutPage() {
               Where We Operate
             </h2>
             <p className="text-slate-500 leading-relaxed">
-              Based in Florida, serving Tampa, Orlando, Miami, Jacksonville, and
-              growing. We&apos;re expanding to Georgia, Texas, and California in
-              2026.
+              Based in Florida, serving South Florida &mdash; Fort Lauderdale, Miami,
+              and West Palm Beach &mdash; with Tampa and Orlando expansion coming
+              Q4 2026.
             </p>
           </div>
         </section>

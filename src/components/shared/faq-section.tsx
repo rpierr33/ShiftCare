@@ -58,7 +58,7 @@ const FAQ_ITEMS = [
   {
     question: "Is ShiftCare available outside of Florida?",
     answer:
-      "We\u2019re currently launching in Florida with plans to expand to Georgia, Texas, and California in 2026. Join our waitlist to be notified when we\u2019re available in your state.",
+      "We\u2019re currently serving South Florida \u2014 Fort Lauderdale, Miami, and West Palm Beach areas. We\u2019re expanding to Tampa and Orlando in Q4 2026, with Georgia, Texas, and California planned for 2027.",
     key: "expansion",
   },
 ];

@@ -1,6 +1,6 @@
 # ShiftCare Business Plan
 
-**Prepared:** March 2026
+**Prepared:** April 2026
 **Founders:** Ralph Pierre, Rose Jean Baptiste, Noelle Pierre, Elle Pierre
 **Development Partner:** Kalocode (Development Agency)
 **Platform:** https://shiftcare-app-rho.vercel.app
@@ -36,7 +36,7 @@ ShiftCare generates revenue through three channels:
 2. **Worker service fees** (10% per shift)
 3. **Employer per-shift surcharges** (15% for non-subscribers)
 
-The platform launched in beta in Florida (April 2026) with plans to expand to Georgia, Texas, and California within 12 months.
+The platform is launching beta in South Florida (June 2026) with plans to expand to Tampa and Orlando in Q4 2026, then Georgia, Texas, and California in 2027.
 
 ---
 
@@ -70,7 +70,7 @@ Florida is the ideal launch market:
 - **High per-diem demand** — tourism and seasonal residents create variable staffing needs
 - **Regulatory tailwinds** — AHCA pushing for technology adoption in care coordination
 
-**Target Cities (Launch):** Tampa, Orlando, Miami, Jacksonville, St. Petersburg, Fort Lauderdale, Clearwater, Gainesville
+**Target Cities (Launch):** Fort Lauderdale, Miami, West Palm Beach (South Florida tri-county: Broward, Miami-Dade, Palm Beach)
 
 **Serviceable Addressable Market (SAM):** $240M (Florida home health shift staffing)
 **Serviceable Obtainable Market (SOM):** $2.4M in Year 1 (1% capture)
@@ -172,14 +172,14 @@ This creates a natural upgrade path: at 4+ shifts/month, the Starter plan ($49) 
 
 ## 5. Financial Projections
 
-### Year 1 (April 2026 – March 2027) — Florida Beta + Growth
+### Year 1 (June 2026 – May 2027) — Florida Beta + Growth
 
 | Quarter | Employers | Workers | Shifts/Month | MRR | Revenue |
 |---------|-----------|---------|-------------|-----|---------|
-| Q1 (Apr-Jun) | 15 | 50 | 120 | $2,850 | $8,550 |
-| Q2 (Jul-Sep) | 45 | 150 | 450 | $10,500 | $31,500 |
-| Q3 (Oct-Dec) | 100 | 350 | 1,200 | $28,000 | $84,000 |
-| Q4 (Jan-Mar) | 180 | 600 | 2,400 | $52,000 | $156,000 |
+| Q1 (Jun-Aug) | 15 | 50 | 120 | $2,850 | $8,550 |
+| Q2 (Sep-Nov) | 45 | 150 | 450 | $10,500 | $31,500 |
+| Q3 (Dec-Feb) | 100 | 350 | 1,200 | $28,000 | $84,000 |
+| Q4 (Mar-May) | 180 | 600 | 2,400 | $52,000 | $156,000 |
 | **Year 1 Total** | | | | | **$280,050** |
 
 **MRR Breakdown (Q4):**
@@ -188,7 +188,7 @@ This creates a natural upgrade path: at 4+ shifts/month, the Starter plan ($49) 
 - Employer surcharges: 600 shifts (non-sub) × $200 × 15% = $18,000
 - Total: ~$52,000/mo (run rate of $624K ARR)
 
-### Year 2 (April 2027 – March 2028) — Multi-State Expansion
+### Year 2 (June 2027 – May 2028) — Multi-State Expansion
 
 | Quarter | Employers | Workers | Shifts/Month | MRR | Revenue |
 |---------|-----------|---------|-------------|-----|---------|
@@ -198,7 +198,7 @@ This creates a natural upgrade path: at 4+ shifts/month, the Starter plan ($49) 
 | Q4 | 1,000 | 4,000 | 20,000 | $430,000 | $1,290,000 |
 | **Year 2 Total** | | | | | **$2,925,000** |
 
-### Year 3 (April 2028 – March 2029) — National Scale
+### Year 3 (June 2028 – May 2029) — National Scale
 
 | Metric | Projection |
 |--------|-----------|
@@ -288,21 +288,21 @@ Full-stack development partner responsible for building and maintaining the Shif
 
 ## 8. Go-To-Market Strategy
 
-### Phase 1: Florida Beta (April - June 2026)
-- **Target:** 15 home health agencies in Tampa/Orlando
+### Phase 1: South Florida Beta (June - September 2026)
+- **Target:** 15 home health agencies in Broward, Dade, and Palm Beach counties
 - **Approach:** Direct outreach to agency owners, emphasizing "fill shifts in 30 minutes"
 - **Worker acquisition:** Facebook/Instagram ads targeting CNA/HHA certification groups
 - **Pricing:** Free tier + Starter plan
 - **KPI:** 120 shifts filled/month, 50 active workers
 
-### Phase 2: Florida Growth (July - December 2026)
+### Phase 2: Florida Growth (October 2026 - March 2027)
 - **Target:** 100 agencies across all Florida metro areas
 - **Approach:** Referral program (agencies refer agencies), content marketing (blog articles targeting "CNA jobs Tampa")
 - **Worker acquisition:** Same-day pay as primary differentiator in ads
 - **Pricing:** Full tier rollout including Professional
 - **KPI:** 1,200 shifts/month, 350 workers, $28K MRR
 
-### Phase 3: Multi-State Expansion (January 2027+)
+### Phase 3: Multi-State Expansion (April 2027+)
 - **Target:** Georgia, Texas, California
 - **Approach:** Replicate Florida playbook per state, hire local market managers
 - **KPI:** 4,500 shifts/month, 1,000 workers, $95K MRR
@@ -428,16 +428,16 @@ The platform as built represents approximately **$400,000-600,000** in equivalen
 
 | Date | Milestone |
 |------|-----------|
-| April 2026 | Beta launch in Tampa + Orlando |
-| May 2026 | 50 active workers, 15 agencies |
-| June 2026 | Stripe live, first revenue |
-| July 2026 | Expand to Miami + Jacksonville |
-| September 2026 | 350 workers, 100 agencies, $28K MRR |
-| December 2026 | All Florida metros, mobile app (React Native) |
-| January 2027 | Georgia expansion |
-| March 2027 | $52K MRR, 600 workers, 180 agencies |
-| June 2027 | Texas expansion |
-| September 2027 | California expansion |
+| June 2026 | Beta launch in Fort Lauderdale, Miami, West Palm Beach |
+| July 2026 | 50 active workers, 15 agencies |
+| August 2026 | Stripe live, first revenue |
+| October 2026 | Expand to Tampa + Orlando |
+| November 2026 | 350 workers, 100 agencies, $28K MRR |
+| Q1 2027 | All Florida metros, mobile app (React Native) |
+| Q2 2027 | Georgia expansion |
+| May 2027 | $52K MRR, 600 workers, 180 agencies |
+| Q3 2027 | Texas expansion |
+| Q4 2027 | California expansion |
 | December 2027 | $430K MRR, 4,000 workers, 1,000 agencies |
 | 2028 | Series A fundraise ($5-10M) at $50M+ valuation |
 
