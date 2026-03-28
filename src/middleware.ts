@@ -22,13 +22,21 @@ export default auth((req) => {
 
   // Admin routes — allow authenticated users (admin check done in page)
   if (pathname.startsWith("/admin")) {
-    if (!user) return NextResponse.redirect(new URL("/login", req.nextUrl));
+    if (!user) {
+      const loginUrl = new URL("/login", req.nextUrl);
+      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("reason", "auth");
+      return NextResponse.redirect(loginUrl);
+    }
     return NextResponse.next();
   }
 
-  // Not logged in — redirect to login
+  // Not logged in — redirect to login with context
   if (!user) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
+    const loginUrl = new URL("/login", req.nextUrl);
+    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("reason", "auth");
+    return NextResponse.redirect(loginUrl);
   }
 
   // Onboarding not completed — redirect to onboarding

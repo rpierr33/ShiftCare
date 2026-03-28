@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Shield,
   Clock,
@@ -19,7 +19,13 @@ import {
   Activity,
   Building2,
   UserCheck,
+  Menu,
+  X,
 } from "lucide-react";
+import { PublicNav } from "@/components/shared/public-nav";
+import { PublicFooter } from "@/components/shared/public-footer";
+import { FAQSection } from "@/components/shared/faq-section";
+import { TestimonialsSection } from "@/components/shared/testimonials-section";
 
 /* ─── Shift Fulfillment Data ─── */
 const SHIFT_DATA = [
@@ -65,23 +71,37 @@ const SHIFT_DATA = [
 ];
 
 const TICKER_ITEMS = [
-  "CNA shift filled in Tampa \u00b7 12 min ago",
-  "RN accepted shift in Orlando \u00b7 3 min ago",
+  "CNA shift filled in Tampa · 12 min ago",
+  "RN accepted shift in Orlando · 3 min ago",
   "New LPN available in Clearwater",
   "3 shifts filled in the last hour",
-  "CNA shift filled in St. Petersburg \u00b7 8 min ago",
-  "RN posted in Jacksonville \u00b7 just now",
+  "CNA shift filled in St. Petersburg · 8 min ago",
+  "RN posted in Jacksonville · just now",
 ];
 
 /* ─── Shift Fulfillment Machine ─── */
 function ShiftFulfillmentEngine() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [phase, setPhase] = useState(0); // 0=posted, 1=matching, 2=accepted, 3=confirmed
   const [shiftIndex, setShiftIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
+  // Check reduced motion preference on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      if (mq.matches) {
+        setPrefersReducedMotion(true);
+        setPhase(3);
+        setProgress(100);
+      }
+    }
+  }, []);
+
   const shift = SHIFT_DATA[shiftIndex];
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
     const interval = setInterval(() => {
       setPhase((prev) => {
         if (prev >= 3) {
@@ -93,7 +113,7 @@ function ShiftFulfillmentEngine() {
       });
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [prefersReducedMotion]);
 
   useEffect(() => {
     const progressMap = [12, 50, 75, 100];
@@ -107,7 +127,7 @@ function ShiftFulfillmentEngine() {
     "text-emerald-400",
     "text-emerald-400",
   ];
-  const phaseDotColors = [
+  const phaseDotBgActive = [
     "bg-blue-400",
     "bg-amber-400",
     "bg-emerald-400",
@@ -133,11 +153,22 @@ function ShiftFulfillmentEngine() {
         </div>
       </div>
 
-      {/* Phase indicator */}
-      <div className="flex items-center gap-2 mb-4">
-        <span
-          className={`inline-flex h-2 w-2 rounded-full transition-colors duration-500 ${phaseDotColors[phase]}`}
-        />
+      {/* Phase dots — all 4 always visible, active one highlighted */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-1.5">
+          {phaseLabels.map((_, i) => (
+            <span
+              key={i}
+              className={`inline-flex rounded-full transition-all duration-500 ${
+                i === phase
+                  ? `h-2.5 w-2.5 ${phaseDotBgActive[phase]} shadow-sm shadow-current`
+                  : i < phase
+                  ? `h-2 w-2 ${phaseDotBgActive[i]} opacity-40`
+                  : "h-2 w-2 bg-white/10"
+              }`}
+            />
+          ))}
+        </div>
         <span
           className={`text-xs font-bold uppercase tracking-wider transition-colors duration-500 ${phaseColors[phase]}`}
         >
@@ -158,26 +189,44 @@ function ShiftFulfillmentEngine() {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm font-bold text-white">
-              {shift.role} <span className="text-slate-500">\u00b7</span>{" "}
+              {shift.role} <span className="text-slate-500">·</span>{" "}
               <span className="text-slate-300 font-medium">{shift.location}</span>{" "}
-              <span className="text-slate-500">\u00b7</span>{" "}
+              <span className="text-slate-500">·</span>{" "}
               <span className="text-cyan-400 font-bold">{shift.rate}</span>
             </span>
             <p className="text-xs text-slate-500 mt-1">{shift.time}</p>
           </div>
-          {phase === 3 && (
-            <div className="transition-all duration-500 flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                <Check size={16} className="text-white" strokeWidth={3} />
-              </div>
+          <div
+            className="flex-shrink-0 transition-opacity duration-500"
+            style={{ opacity: phase === 3 ? 1 : 0 }}
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+              <Check size={16} className="text-white" strokeWidth={3} />
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Workers section */}
-      <div className="mb-4 min-h-[72px]">
-        {phase >= 1 && (
+      {/* Workers section — crossfade between phase content */}
+      <div className="mb-4 min-h-[72px] relative">
+        {/* Phase 0: Broadcasting */}
+        <div
+          className="transition-opacity duration-500 absolute inset-0"
+          style={{ opacity: phase === 0 ? 1 : 0, pointerEvents: phase === 0 ? "auto" : "none" }}
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+            <p className="text-xs text-slate-500">
+              Broadcasting to available workers...
+            </p>
+          </div>
+        </div>
+
+        {/* Phase 1-3: Workers + text */}
+        <div
+          className="transition-opacity duration-500"
+          style={{ opacity: phase >= 1 ? 1 : 0, pointerEvents: phase >= 1 ? "auto" : "none" }}
+        >
           <div className="space-y-3">
             {/* Worker avatars */}
             <div className="flex items-center gap-2">
@@ -211,56 +260,51 @@ function ShiftFulfillmentEngine() {
                 </div>
               ))}
 
-              {/* Scanning line effect */}
-              {phase === 1 && (
-                <div className="ml-2 flex items-center gap-1.5">
-                  <Search size={12} className="text-amber-400 animate-pulse" />
-                  <span className="text-[11px] text-amber-400 font-medium">
-                    Scanning...
-                  </span>
-                </div>
-              )}
+              {/* Scanning line effect — crossfade */}
+              <div
+                className="ml-2 flex items-center gap-1.5 transition-opacity duration-500"
+                style={{ opacity: phase === 1 ? 1 : 0 }}
+              >
+                <Search size={12} className="text-amber-400 animate-pulse" />
+                <span className="text-[11px] text-amber-400 font-medium">
+                  Scanning...
+                </span>
+              </div>
             </div>
 
-            {/* Phase text */}
-            <div className="transition-all duration-500">
-              {phase === 1 && (
-                <p className="text-xs text-slate-400">
-                  Matching{" "}
-                  <span className="text-amber-400 font-semibold">
-                    3 qualified workers
-                  </span>
-                  ...
-                </p>
-              )}
-              {phase === 2 && (
-                <p className="text-xs text-slate-400">
-                  <span className="text-emerald-400 font-semibold">
-                    {shift.accepted.name}
-                  </span>{" "}
-                  accepted \u00b7 {shift.accepted.title} \u00b7{" "}
-                  {shift.accepted.exp} \u00b7{" "}
-                  <span className="text-amber-300">\u2605</span>{" "}
-                  {shift.accepted.rating}
-                </p>
-              )}
-              {phase === 3 && (
-                <p className="text-xs text-emerald-400 font-semibold">
-                  Shift filled in {shift.fillTime}
-                </p>
-              )}
+            {/* Phase text — crossfade between states */}
+            <div className="relative min-h-[18px]">
+              <p
+                className="text-xs text-slate-400 absolute inset-0 transition-opacity duration-500"
+                style={{ opacity: phase === 1 ? 1 : 0 }}
+              >
+                Matching{" "}
+                <span className="text-amber-400 font-semibold">
+                  3 qualified workers
+                </span>
+                ...
+              </p>
+              <p
+                className="text-xs text-slate-400 absolute inset-0 transition-opacity duration-500"
+                style={{ opacity: phase === 2 ? 1 : 0 }}
+              >
+                <span className="text-emerald-400 font-semibold">
+                  {shift.accepted.name}
+                </span>{" "}
+                accepted · {shift.accepted.title} ·{" "}
+                {shift.accepted.exp} ·{" "}
+                <span className="text-amber-300">&#9733;</span>{" "}
+                {shift.accepted.rating}
+              </p>
+              <p
+                className="text-xs text-emerald-400 font-semibold absolute inset-0 transition-opacity duration-500"
+                style={{ opacity: phase === 3 ? 1 : 0 }}
+              >
+                Shift filled in {shift.fillTime}
+              </p>
             </div>
           </div>
-        )}
-
-        {phase === 0 && (
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            <p className="text-xs text-slate-500">
-              Broadcasting to available workers...
-            </p>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -318,10 +362,28 @@ function ShiftFulfillmentEngine() {
 function useCountUp(target: number, duration: number = 1000, start: boolean = true) {
   const [count, setCount] = useState(0);
   const frameRef = useRef<number | null>(null);
+  const hasPlayedRef = useRef(false);
 
   useEffect(() => {
     if (!start) {
       setCount(0);
+      return;
+    }
+
+    // Check reduced motion preference
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Check sessionStorage for already-played animation
+    const storageKey = `counter-played-${target}`;
+    const alreadyPlayed =
+      typeof window !== "undefined" &&
+      sessionStorage.getItem(storageKey) === "true";
+
+    if (prefersReducedMotion || alreadyPlayed) {
+      setCount(target);
+      hasPlayedRef.current = true;
       return;
     }
 
@@ -335,6 +397,14 @@ function useCountUp(target: number, duration: number = 1000, start: boolean = tr
       setCount(Math.floor(eased * target));
       if (progress < 1) {
         frameRef.current = requestAnimationFrame(animate);
+      } else {
+        // Mark animation as played in sessionStorage
+        try {
+          sessionStorage.setItem(storageKey, "true");
+        } catch {
+          // sessionStorage may be unavailable
+        }
+        hasPlayedRef.current = true;
       }
     }
 
@@ -428,10 +498,89 @@ function AnimatedStat({
   return (
     <div ref={ref} className={`text-center ${showDivider ? "stat-divider" : ""}`}>
       <div className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight font-mono">
-        {visible ? animated.toLocaleString() : "0"}
+        {visible
+          ? String(animated).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          : "0"}
         {suffix}
       </div>
       <div className="text-sm text-slate-500 mt-1 font-medium">{label}</div>
+    </div>
+  );
+}
+
+/* ─── Mobile Nav Menu ─── */
+function MobileNavMenu() {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        close();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open, close]);
+
+  return (
+    <div ref={menuRef} className="md:hidden relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label="Open navigation menu"
+        className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+      >
+        {open ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {open && (
+        <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
+          <a
+            href="#how-it-works"
+            onClick={close}
+            className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            How It Works
+          </a>
+          <Link
+            href="/pricing"
+            onClick={close}
+            className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/login"
+            onClick={close}
+            className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Sign In
+          </Link>
+          <div className="px-4 pt-2 pb-1">
+            <Link
+              href="/signup"
+              onClick={close}
+              className="block text-center text-sm font-semibold bg-cyan-600 text-white px-4 py-2.5 rounded-xl hover:bg-cyan-700 transition-all"
+            >
+              Get Started Free
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -486,58 +635,7 @@ export default function LandingPage() {
       `}</style>
 
       {/* ─── Navigation ─── */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-xl z-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-cyan-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-            <span className="text-xl font-bold text-slate-900">
-              Shift<span className="text-cyan-600">Care</span>
-            </span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <a
-              href="#how-it-works"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              How It Works
-            </a>
-            <Link
-              href="/pricing"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="text-sm font-semibold bg-cyan-600 text-white px-5 py-2.5 rounded-xl hover:bg-cyan-700 transition-all shadow-lg shadow-cyan-600/20 hover:shadow-cyan-600/30"
-            >
-              Get Started Free
-            </Link>
-          </div>
-          <div className="md:hidden flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-slate-600"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="text-sm font-semibold bg-cyan-600 text-white px-4 py-2 rounded-xl"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav currentPage="home" />
 
       {/* ─── Hero Section ─── */}
       <section className="hero-gradient pt-28 pb-0 sm:pt-36 sm:pb-0 px-4">
@@ -568,7 +666,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <Building2 className="h-5 w-5 text-teal-600" />
                   <h3 className="text-sm font-bold text-teal-800 uppercase tracking-wide">
-                    For Providers
+                    For Employers
                   </h3>
                 </div>
                 <p className="text-slate-700 text-sm leading-relaxed mb-4">
@@ -630,6 +728,37 @@ export default function LandingPage() {
               </div>
             </div>
 
+            {/* Mobile-only simplified shift card */}
+            <div className="mt-6 lg:hidden">
+              <div className="bg-slate-950 rounded-xl p-4 ring-1 ring-white/10 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                        Confirmed
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold text-white">
+                      RN <span className="text-slate-500">·</span>{" "}
+                      <span className="text-slate-300 font-medium">Tampa, FL</span>{" "}
+                      <span className="text-slate-500">·</span>{" "}
+                      <span className="text-cyan-400 font-bold">$38/hr</span>
+                    </p>
+                    <p className="text-xs text-emerald-400 font-semibold mt-1">
+                      Shift filled in 8 minutes
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <Check size={16} className="text-white" strokeWidth={3} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Social proof */}
             <div className="mt-8 flex items-center gap-3">
               <div className="flex -space-x-2">
@@ -667,7 +796,7 @@ export default function LandingPage() {
       {/* ─── Stats Bar ─── */}
       <section className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 lg:gap-0">
             <AnimatedStat value={2400} suffix="+" label="Shifts Filled" showDivider={true} />
             <AnimatedStat value={500} suffix="+" label="Healthcare Workers" showDivider={true} />
             <AnimatedStat value={120} suffix="+" label="Employers" showDivider={true} />
@@ -795,6 +924,12 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── Testimonials ──��� */}
+      <TestimonialsSection />
+
+      {/* ─── FAQ ─── */}
+      <FAQSection />
+
       {/* ─── Final CTA ─── */}
       <section className="py-20 sm:py-28 px-4 bg-white">
         <div className="max-w-4xl mx-auto text-center">
@@ -825,63 +960,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-cyan-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xs">S</span>
-              </div>
-              <span className="text-lg font-bold text-white">
-                Shift<span className="text-cyan-400">Care</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-8">
-              <Link
-                href="/pricing"
-                className="text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="/#how-it-works"
-                className="text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                How It Works
-              </Link>
-              <Link
-                href="/login"
-                className="text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} ShiftCare. All rights
-              reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link href="/terms" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/privacy" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-                Privacy Policy
-              </Link>
-              <a href="mailto:support@shiftcare.com" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-                Contact
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
@@ -953,7 +1032,7 @@ function HowItWorksTabs() {
       number: 2,
       title: "Accept Instantly",
       description:
-        "Apply with one tap. Get confirmed fast -- no phone tag, no waiting around.",
+        "Apply with one tap. Get confirmed fast \u2014 no phone tag, no waiting around.",
       icon: <Zap size={22} className="text-cyan-600" />,
     },
     {

@@ -22,6 +22,18 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: true,
   },
+  openGraph: {
+    title: "ShiftCare — Fill Healthcare Shifts Fast",
+    description: "Healthcare shift fulfillment platform. Connect with verified professionals to fill open shifts in hours, not days.",
+    url: "https://shiftcare-app-rho.vercel.app",
+    siteName: "ShiftCare",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ShiftCare — Fill Healthcare Shifts Fast",
+    description: "Healthcare shift fulfillment platform. Fill open shifts in hours, not days.",
+  },
 };
 
 export const viewport: Viewport = {

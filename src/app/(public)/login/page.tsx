@@ -7,7 +7,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signInAction } from "@/actions/auth";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -20,8 +20,11 @@ export default function LoginPage() {
 function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
+  const redirectPath = searchParams.get("redirect");
+  const reason = searchParams.get("reason");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,7 +41,9 @@ function LoginForm() {
     }
 
     // Redirect based on role returned from server
-    if (callbackUrl) {
+    if (redirectPath) {
+      window.location.href = redirectPath;
+    } else if (callbackUrl) {
       window.location.href = callbackUrl;
     } else {
       const role = result.data?.role;
@@ -70,6 +75,13 @@ function LoginForm() {
           </Link>
         </div>
 
+        {/* Auth redirect banner */}
+        {reason === "auth" && (
+          <div className="mb-4 rounded-xl bg-cyan-50 border border-cyan-200 p-3 text-center">
+            <p className="text-sm text-cyan-800">Please sign in to access your dashboard.</p>
+          </div>
+        )}
+
         {/* Card */}
         <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
           <div className="text-center mb-8">
@@ -77,7 +89,7 @@ function LoginForm() {
               Welcome back
             </h1>
             <p className="text-sm text-slate-500">
-              Sign in to manage your shifts
+              Sign in to your ShiftCare account
             </p>
           </div>
 
@@ -130,6 +142,7 @@ function LoginForm() {
                   type="email"
                   placeholder="you@example.com"
                   required
+                  autoComplete="email"
                   className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
@@ -149,11 +162,20 @@ function LoginForm() {
                 <Input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   required
-                  className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  autoComplete="current-password"
+                  className="pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
               <div className="mt-1 text-right">
                 <Link href="/forgot-password" className="text-sm text-cyan-600 hover:underline">

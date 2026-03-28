@@ -17,6 +17,8 @@ import {
   Lock,
   Building2,
   Home,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export default function SignUpPage() {
@@ -44,6 +46,11 @@ function SignUpForm() {
   const [providerType, setProviderType] = useState<ProvType>("AGENCY");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   function handleRoleSelect(selectedRole: Role) {
     setRole(selectedRole);
@@ -59,12 +66,30 @@ function SignUpForm() {
     setStep("register");
   }
 
+  function handleConfirmPasswordBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const form = e.target.closest("form");
+    const passwordInput = form?.querySelector<HTMLInputElement>('input[name="password"]');
+    if (passwordInput && e.target.value && passwordInput.value !== e.target.value) {
+      setConfirmPasswordError("Passwords do not match");
+    } else {
+      setConfirmPasswordError("");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+
+    if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
     formData.set("role", role);
     formData.set("providerType", providerType);
     if (urlPlan) formData.set("plan", urlPlan);
@@ -86,6 +111,13 @@ function SignUpForm() {
     return "Sign up as a Private Employer";
   };
 
+  // Step indicator logic
+  const totalSteps = role === "WORKER" ? 2 : 3;
+  const currentStep = step === "role" ? 1 : step === "providerType" ? 2 : (role === "WORKER" ? 2 : 3);
+  const stepLabels = role === "WORKER"
+    ? ["Role Selection", "Registration Form"]
+    : ["Role Selection", "Employer Type", "Registration Form"];
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
@@ -106,6 +138,23 @@ function SignUpForm() {
 
         {/* Card */}
         <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+
+          {/* Step Indicator (#8) */}
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {stepLabels.map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                    i + 1 <= currentStep ? "bg-cyan-500" : "bg-slate-200"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 text-center">
+              Step {currentStep} of {totalSteps}
+            </p>
+          </div>
 
           {/* Step 1: Role Selection */}
           {step === "role" && (
@@ -283,6 +332,7 @@ function SignUpForm() {
                       name="name"
                       placeholder="John Doe"
                       required
+                      autoComplete="name"
                       className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                     />
                   </div>
@@ -302,6 +352,7 @@ function SignUpForm() {
                       type="email"
                       placeholder="you@example.com"
                       required
+                      autoComplete="email"
                       className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                     />
                   </div>
@@ -318,19 +369,99 @@ function SignUpForm() {
                     <Input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="Minimum 8 characters"
                       required
                       minLength={8}
-                      className="pl-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                      autoComplete="new-password"
+                      className="pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
+                </div>
+
+                {/* Confirm Password (#9) */}
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Lock size={16} className="text-slate-400" />
+                    </div>
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Re-enter your password"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (confirmPasswordError) setConfirmPasswordError("");
+                      }}
+                      onBlur={handleConfirmPasswordBlur}
+                      className={`pl-10 pr-10 rounded-xl border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                        confirmPasswordError ? "border-red-300 focus:ring-red-500 focus:border-red-500" : ""
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {confirmPasswordError && (
+                    <p className="text-red-500 text-xs mt-1">{confirmPasswordError}</p>
+                  )}
+                </div>
+
+                {/* Terms Checkbox (#12) */}
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                  />
+                  <label htmlFor="terms" className="text-sm text-slate-500 leading-snug">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      className="text-cyan-600 hover:text-cyan-700 font-medium underline"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      className="text-cyan-600 hover:text-cyan-700 font-medium underline"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </label>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all"
+                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl py-3 h-12 font-semibold shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   loading={loading}
+                  disabled={!agreedToTerms || loading}
                 >
                   Create Account
                   <ArrowRight size={16} />
