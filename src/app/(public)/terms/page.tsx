@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
   title: "Terms of Service | ShiftCare",
-  description: "ShiftCare Terms of Service — Read our terms and conditions.",
+  description: "ShiftCare terms of service and usage agreement.",
 };
 
 export default function TermsPage() {

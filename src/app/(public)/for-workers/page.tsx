@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   DollarSign,
@@ -15,6 +16,12 @@ import {
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
 import { EarningsCalculator } from "@/components/shared/earnings-calculator";
+
+export const metadata: Metadata = {
+  title: "Healthcare Worker Jobs — Same Day Pay | ShiftCare",
+  description:
+    "Pick up healthcare shifts that fit your schedule. CNA, RN, LPN, HHA jobs in Florida with same-day pay and transparent fees.",
+};
 
 const FEATURES = [
   {

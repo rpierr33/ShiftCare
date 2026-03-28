@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
   title: "Privacy Policy | ShiftCare",
-  description: "ShiftCare Privacy Policy — How we collect, use, and protect your data.",
+  description: "ShiftCare privacy policy — how we collect, use, and protect your data.",
 };
 
 export default function PrivacyPage() {

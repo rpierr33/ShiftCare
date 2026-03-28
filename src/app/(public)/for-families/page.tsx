@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -13,6 +14,12 @@ import {
 } from "lucide-react";
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
+
+export const metadata: Metadata = {
+  title: "Home Care for Your Loved Ones | ShiftCare",
+  description:
+    "Find verified, background-checked caregivers for your loved ones. HHA, CNA, and companion care in Florida. No contracts, pay by the hour.",
+};
 
 const FEATURES = [
   {

@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Building2, Users, Activity } from "lucide-react";
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
+
+export const metadata: Metadata = {
+  title: "Healthcare Staffing Resources & Guides | ShiftCare",
+  description:
+    "Expert guides on healthcare staffing, shift management, and Florida healthcare regulations. Resources for agencies, workers, and families.",
+};
 
 type Category = "Employers" | "Workers" | "Industry";
 
