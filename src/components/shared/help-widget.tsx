@@ -176,6 +176,7 @@ export function HelpWidget() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(!open)}
+        aria-label="Get help"
         className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105 ${
           open
             ? "bg-slate-700 hover:bg-slate-800"

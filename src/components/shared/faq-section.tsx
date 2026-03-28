@@ -136,6 +136,7 @@ function WaitlistForm({ variant = "inline" }: { variant?: "inline" | "standalone
         <div className="flex-1 min-w-0">
           <input
             type="email"
+            name="email"
             placeholder="your@email.com"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: undefined })); }}
@@ -145,6 +146,7 @@ function WaitlistForm({ variant = "inline" }: { variant?: "inline" | "standalone
         </div>
         <div>
           <select
+            name="state"
             value={state}
             onChange={(e) => { setState(e.target.value); setErrors((prev) => ({ ...prev, state: undefined })); }}
             className={`w-full px-3 py-2 text-sm border rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${errors.state ? "border-red-300" : "border-slate-200"}`}

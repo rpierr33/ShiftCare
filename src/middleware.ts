@@ -8,7 +8,7 @@ export default auth((req) => {
 
   // Public routes that don't require authentication
   // BUG FIX: Added /api/cron to match config.ts authorized callback — cron endpoints were being blocked
-  const publicPaths = ["/", "/pricing", "/for-workers", "/for-families", "/resources", "/demo", "/forgot-password", "/reset-password", "/terms", "/privacy", "/api/auth", "/api/webhooks", "/api/cron", "/how-it-works"];
+  const publicPaths = ["/", "/pricing", "/for-workers", "/for-families", "/resources", "/demo", "/forgot-password", "/reset-password", "/terms", "/privacy", "/contact", "/api/auth", "/api/webhooks", "/api/cron", "/how-it-works", "/about"];
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
   }

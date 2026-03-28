@@ -457,6 +457,13 @@ function ActivityTicker() {
 
   return (
     <div className="w-full overflow-hidden bg-slate-950/60 backdrop-blur border-t border-b border-white/5 py-3">
+      <div className="flex items-center gap-1.5 px-4 mb-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Live Activity</span>
+      </div>
       <div className="ticker-track flex items-center gap-8 whitespace-nowrap flex-nowrap">
         {doubled.map((item, i) => (
           <span key={i} className="inline-flex items-center gap-2 text-sm flex-shrink-0">

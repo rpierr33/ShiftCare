@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
 
@@ -12,10 +12,19 @@ export const metadata: Metadata = {
 
 type Category = "Employers" | "Workers" | "Industry";
 
+const CATEGORIES: ("All" | Category)[] = ["All", "Employers", "Workers", "Industry"];
+
 const CATEGORY_STYLES: Record<Category, string> = {
   Employers: "text-cyan-600 bg-cyan-50 border-cyan-200",
   Workers: "text-emerald-600 bg-emerald-50 border-emerald-200",
   Industry: "text-violet-600 bg-violet-50 border-violet-200",
+};
+
+const CATEGORY_FILTER_STYLES: Record<string, string> = {
+  All: "bg-slate-900 text-white",
+  Employers: "bg-cyan-600 text-white",
+  Workers: "bg-emerald-600 text-white",
+  Industry: "bg-violet-600 text-white",
 };
 
 const ARTICLES: {
@@ -81,9 +90,28 @@ const ARTICLES: {
   },
 ];
 
-/* Resources hub page — static article previews categorized by Employers/Workers/Industry.
-   Full articles are coming soon; currently serves as SEO-friendly content placeholder. */
-export default function ResourcesPage() {
+/* Resources hub page — article previews with category filtering and search.
+   Uses URL params for server-side filtering: /resources?category=employers&q=search */
+export default async function ResourcesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; q?: string }>;
+}) {
+  const params = await searchParams;
+  const activeCategory = params.category
+    ? (params.category.charAt(0).toUpperCase() + params.category.slice(1).toLowerCase())
+    : "All";
+  const searchQuery = params.q?.toLowerCase() || "";
+
+  const filteredArticles = ARTICLES.filter((article) => {
+    const matchesCategory = activeCategory === "All" || article.category === activeCategory;
+    const matchesSearch =
+      !searchQuery ||
+      article.title.toLowerCase().includes(searchQuery) ||
+      article.excerpt.toLowerCase().includes(searchQuery);
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <>
       <PublicNav currentPage="resources" />
@@ -108,35 +136,93 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      {/* Articles Grid */}
-      <section className="py-12 sm:py-16 px-4">
+      {/* Filters + Search */}
+      <section className="px-4 pb-2">
         <div className="max-w-4xl mx-auto">
-          <div className="grid gap-8">
-            {ARTICLES.map((article) => (
-              <article
-                key={article.title}
-                className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8"
-              >
-                <span
-                  className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border mb-3 ${
-                    CATEGORY_STYLES[article.category]
-                  }`}
-                >
-                  {article.category}
-                </span>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">
-                  {article.title}
-                </h2>
-                <div className="space-y-4">
-                  {article.content.map((paragraph, i) => (
-                    <p key={i} className="text-sm text-slate-600 leading-relaxed">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </article>
-            ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Category Filters */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {CATEGORIES.map((cat) => {
+                const isActive = cat === activeCategory;
+                const slug = cat === "All" ? "" : cat.toLowerCase();
+                const href = slug
+                  ? `/resources?category=${slug}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`
+                  : `/resources${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`;
+
+                return (
+                  <Link
+                    key={cat}
+                    href={href}
+                    className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      isActive
+                        ? CATEGORY_FILTER_STYLES[cat] || "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {cat}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Search */}
+            <form action="/resources" method="GET" className="flex-1 w-full sm:w-auto">
+              {activeCategory !== "All" && (
+                <input type="hidden" name="category" value={activeCategory.toLowerCase()} />
+              )}
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={searchQuery}
+                  placeholder="Search articles..."
+                  className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors"
+                />
+              </div>
+            </form>
           </div>
+        </div>
+      </section>
+
+      {/* Articles Grid */}
+      <section className="py-8 sm:py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          {filteredArticles.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-slate-500 text-sm">No articles found matching your filters.</p>
+              <Link href="/resources" className="text-cyan-600 text-sm font-medium hover:underline mt-2 inline-block">
+                Clear filters
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-8">
+              {filteredArticles.map((article) => (
+                <article
+                  key={article.title}
+                  className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8"
+                >
+                  <span
+                    className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border mb-3 ${
+                      CATEGORY_STYLES[article.category]
+                    }`}
+                  >
+                    {article.category}
+                  </span>
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">
+                    {article.title}
+                  </h2>
+                  <div className="space-y-4">
+                    {article.content.map((paragraph, i) => (
+                      <p key={i} className="text-sm text-slate-600 leading-relaxed">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

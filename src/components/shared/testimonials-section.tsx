@@ -1,4 +1,4 @@
-import { Building2, Heart, Stethoscope, BadgeCheck } from "lucide-react";
+import { Building2, Heart, Stethoscope, BadgeCheck, Landmark } from "lucide-react";
 
 const TESTIMONIALS = [
   {
@@ -108,19 +108,22 @@ export function TestimonialsSection() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-base font-bold text-slate-900">
                       {t.name}
                     </p>
                     {t.verified && (
-                      <BadgeCheck size={14} className="text-cyan-500" />
+                      <BadgeCheck size={15} className="text-cyan-500" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-slate-600 font-medium">
                     {t.role}
                   </p>
-                  <p className="text-xs text-slate-400">
-                    {t.facility}
-                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Landmark size={11} className="text-slate-400" />
+                    <p className="text-sm text-slate-400">
+                      {t.facility}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

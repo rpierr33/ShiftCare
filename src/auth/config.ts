@@ -177,7 +177,7 @@ export const authConfig: NextAuthConfig = {
       const publicPaths = [
         "/", "/login", "/signup", "/pricing", "/for-workers", "/for-families",
         "/resources", "/demo", "/forgot-password", "/reset-password",
-        "/terms", "/privacy", "/how-it-works",
+        "/terms", "/privacy", "/contact", "/how-it-works", "/about",
       ];
       // Allow public pages, auth API, webhooks, and cron endpoints
       const isPublic = publicPaths.some(

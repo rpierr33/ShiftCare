@@ -209,6 +209,26 @@ export default function DemoPage() {
               </button>
             </form>
           )}
+
+          {/* Booking Calendar */}
+          <div className="mt-12">
+            <h2 className="text-xl font-bold text-slate-900 mb-4 text-center">Or Schedule a Call</h2>
+            {process.env.NEXT_PUBLIC_CALENDLY_URL ? (
+              <iframe
+                src={process.env.NEXT_PUBLIC_CALENDLY_URL}
+                width="100%"
+                height="600"
+                frameBorder="0"
+                title="Schedule a call"
+                className="rounded-2xl border border-slate-200"
+              />
+            ) : (
+              <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+                <p className="text-slate-500 text-sm">Calendar booking coming soon.</p>
+                <p className="text-slate-400 text-xs mt-2">In the meantime, fill out the form above and we&apos;ll reach out within 24 hours.</p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

@@ -50,6 +50,12 @@ export function PublicFooter() {
               <Link href="/#how-it-works" className="text-sm text-slate-400 hover:text-white transition-colors">
                 How It Works
               </Link>
+              <Link href="/about" className="text-sm text-slate-400 hover:text-white transition-colors">
+                About
+              </Link>
+              <Link href="/contact" className="text-sm text-slate-400 hover:text-white transition-colors">
+                Contact
+              </Link>
             </div>
           </div>
 
@@ -78,9 +84,9 @@ export function PublicFooter() {
             <Link href="/privacy" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
               Privacy Policy
             </Link>
-            <a href="mailto:support@shiftcare.com" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            <Link href="/contact" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
               Contact
-            </a>
+            </Link>
           </div>
         </div>
       </div>

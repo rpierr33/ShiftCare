@@ -91,14 +91,13 @@ function ComparisonCell({ value }: { value: string }) {
   return <span className="text-sm font-medium text-slate-700">{value}</span>;
 }
 
-/* Interactive calculator comparing per-shift fees (15%) vs. flat Starter plan ($49/mo).
-   Helps employers determine when upgrading to a paid plan saves money. */
-function BreakEvenCalculator() {
+/* Interactive calculator comparing per-shift fees (15%) vs. flat Starter plan.
+   Accepts starterPrice prop so it reflects the annual/monthly toggle. */
+function BreakEvenCalculator({ starterPrice }: { starterPrice: number }) {
   const [shifts, setShifts] = useState(10);
   const [avgValue, setAvgValue] = useState(200);
 
   const perShiftCost = shifts * avgValue * 0.15;
-  const starterPrice = 49;
   const savings = perShiftCost - starterPrice;
   const starterWins = savings > 0;
 
@@ -173,7 +172,7 @@ function BreakEvenCalculator() {
               Starter Plan
             </p>
             <p className="text-2xl font-extrabold text-slate-900">
-              $49
+              ${starterPrice}
               <span className="text-sm font-normal text-slate-500">/mo</span>
             </p>
             <p className="text-xs text-slate-400 mt-1">
@@ -472,7 +471,7 @@ export function PricingContent() {
       </section>
 
       {/* Break-Even Calculator */}
-      <BreakEvenCalculator />
+      <BreakEvenCalculator starterPrice={annual ? 39 : 49} />
     </>
   );
 }
