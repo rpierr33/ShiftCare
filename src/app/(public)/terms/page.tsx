@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 export const metadata = {
   title: "Terms of Service | ShiftCare",
   description: "ShiftCare terms of service and usage agreement.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

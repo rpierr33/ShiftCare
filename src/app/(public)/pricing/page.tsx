@@ -6,8 +6,8 @@ import { PricingContent } from "./pricing-content";
 
 export const metadata: Metadata = {
   title: "Pricing | ShiftCare",
-  description:
-    "Simple pricing for healthcare shift fulfillment. Workers always free.",
+  description: "Simple pricing for healthcare shift fulfillment. Workers always free.",
+  alternates: { canonical: "/pricing" },
 };
 
 /* Server-rendered pricing page wrapper with nav, interactive pricing content, FAQ, and footer */

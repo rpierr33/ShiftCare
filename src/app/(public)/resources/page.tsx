@@ -6,8 +6,8 @@ import { PublicFooter } from "@/components/shared/public-footer";
 
 export const metadata: Metadata = {
   title: "Healthcare Staffing Resources & Guides | ShiftCare",
-  description:
-    "Expert guides on healthcare staffing, shift management, and Florida healthcare regulations. Resources for agencies, workers, and families.",
+  description: "Expert guides on healthcare staffing, shift management, and Florida healthcare regulations. Resources for agencies, workers, and families.",
+  alternates: { canonical: "/resources" },
 };
 
 type Category = "Employers" | "Workers" | "Industry";

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Create Account | ShiftCare",
-  description:
-    "Join ShiftCare — healthcare shift fulfillment for employers, families, and workers. Free to start, no contracts.",
+  description: "Join ShiftCare — healthcare shift fulfillment for employers, families, and workers. Free to start, no contracts.",
+  alternates: { canonical: "/signup" },
 };
 
 export default function SignupLayout({

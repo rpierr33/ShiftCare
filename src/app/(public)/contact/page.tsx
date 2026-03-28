@@ -9,6 +9,8 @@ const SUBJECTS = ["General", "Support", "Billing", "Partnership"] as const;
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -16,16 +18,38 @@ export default function ContactPage() {
     message: "",
   });
 
+  // Derive field-level errors from touched state
+  const fieldErrors: Record<string, string> = {};
+  if (touched.name && !form.name.trim()) fieldErrors.name = "Name is required";
+  if (touched.email && !form.email.trim()) fieldErrors.email = "Email is required";
+  if (touched.email && form.email.trim() && !form.email.includes("@")) fieldErrors.email = "Valid email is required";
+  if (touched.message && !form.message.trim()) fieldErrors.message = "Message is required";
+
+  const isFormValid = form.name.trim() && form.email.includes("@") && form.message.trim();
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Mark all fields as touched to show errors on submit attempt
+    if (!isFormValid) {
+      setTouched({ name: true, email: true, message: true });
+      return;
+    }
+
+    setLoading(true);
 
     // Store to localStorage
     const existing = JSON.parse(localStorage.getItem("shiftcare_contacts") || "[]");
     existing.push({ ...form, submittedAt: new Date().toISOString() });
     localStorage.setItem("shiftcare_contacts", JSON.stringify(existing));
 
-    setSubmitted(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+    }, 500);
   }
+
+  const handleBlur = (field: string) => setTouched((prev) => ({ ...prev, [field]: true }));
 
   return (
     <>
@@ -108,12 +132,13 @@ export default function ContactPage() {
                   <input
                     id="name"
                     type="text"
-                    required
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors"
+                    onBlur={() => handleBlur("name")}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors ${fieldErrors.name ? "border-red-300" : "border-slate-200"}`}
                     placeholder="Your name"
                   />
+                  {fieldErrors.name && <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>}
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -122,12 +147,13 @@ export default function ContactPage() {
                   <input
                     id="email"
                     type="email"
-                    required
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors"
+                    onBlur={() => handleBlur("email")}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors ${fieldErrors.email ? "border-red-300" : "border-slate-200"}`}
                     placeholder="you@example.com"
                   />
+                  {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
                 </div>
               </div>
               <div>
@@ -153,17 +179,19 @@ export default function ContactPage() {
                 </label>
                 <textarea
                   id="message"
-                  required
                   rows={5}
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors resize-none"
+                  onBlur={() => handleBlur("message")}
+                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 transition-colors resize-none ${fieldErrors.message ? "border-red-300" : "border-slate-200"}`}
                   placeholder="How can we help?"
                 />
+                {fieldErrors.message && <p className="text-xs text-red-500 mt-1">{fieldErrors.message}</p>}
               </div>
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg shadow-cyan-600/20 transition-all"
+                disabled={loading}
+                className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-3 rounded-xl text-sm shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Send Message
               </button>

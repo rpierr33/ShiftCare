@@ -149,9 +149,10 @@ export function HelpWidget() {
           {/* Question input */}
           <div className="p-4">
             {sent ? (
-              <p className="text-sm text-emerald-600 font-medium text-center py-2">
-                We&apos;ll get back to you shortly!
-              </p>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+                <p className="text-sm font-semibold text-emerald-700">Thanks for your message!</p>
+                <p className="text-xs text-emerald-600 mt-1">We&apos;ll respond within 24 hours.</p>
+              </div>
             ) : (
               <form onSubmit={handleSendQuestion} className="flex gap-2">
                 <input

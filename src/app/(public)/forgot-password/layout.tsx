@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Reset Password | ShiftCare",
   description: "Reset your ShiftCare account password.",
+  alternates: { canonical: "/forgot-password" },
 };
 
 export default function ForgotPasswordLayout({

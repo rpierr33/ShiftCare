@@ -17,8 +17,8 @@ import { PublicFooter } from "@/components/shared/public-footer";
 
 export const metadata: Metadata = {
   title: "Home Care for Your Loved Ones | ShiftCare",
-  description:
-    "Find verified, background-checked caregivers for your loved ones. HHA, CNA, and companion care in Florida. No contracts, pay by the hour.",
+  description: "Find verified, background-checked caregivers for your loved ones. HHA, CNA, and companion care in Florida. No contracts, pay by the hour.",
+  alternates: { canonical: "/for-families" },
 };
 
 const FEATURES = [
@@ -26,29 +26,25 @@ const FEATURES = [
     icon: <ShieldCheck size={24} className="text-violet-500" />,
     iconBg: "bg-violet-50",
     title: "Background Checked",
-    description:
-      "Every caregiver is credentialed and verified before their first shift.",
+    description: "Every caregiver is credentialed and verified before their first shift.",
   },
   {
     icon: <Clock size={24} className="text-cyan-500" />,
     iconBg: "bg-cyan-50",
     title: "Flexible Hours",
-    description:
-      "Book care by the hour — mornings, evenings, weekends, or overnight.",
+    description: "Book care by the hour — mornings, evenings, weekends, or overnight.",
   },
   {
     icon: <DollarSign size={24} className="text-emerald-500" />,
     iconBg: "bg-emerald-50",
     title: "Transparent Pricing",
-    description:
-      "See exact costs upfront. No hidden fees, no long-term contracts.",
+    description: "See exact costs upfront. No hidden fees, no long-term contracts.",
   },
   {
     icon: <Zap size={24} className="text-amber-500" />,
     iconBg: "bg-amber-50",
     title: "Same-Day Availability",
-    description:
-      "Need care today? Many caregivers available within hours.",
+    description: "Need care today? Many caregivers available within hours.",
   },
 ];
 
@@ -56,20 +52,17 @@ const STEPS = [
   {
     number: "1",
     title: "Tell Us About Your Care Needs",
-    description:
-      "Share your loved one's requirements — schedule, location, and type of care needed.",
+    description: "Share your loved one's requirements — schedule, location, and type of care needed.",
   },
   {
     number: "2",
     title: "Browse Verified Caregivers",
-    description:
-      "See profiles, ratings, experience, and availability. Every caregiver is background-checked.",
+    description: "See profiles, ratings, experience, and availability. Every caregiver is background-checked.",
   },
   {
     number: "3",
     title: "Book and Manage Shifts",
-    description:
-      "Schedule care with a few taps. Track shifts, communicate with caregivers, and pay securely.",
+    description: "Schedule care with a few taps. Track shifts, communicate with caregivers, and pay securely.",
   },
 ];
 

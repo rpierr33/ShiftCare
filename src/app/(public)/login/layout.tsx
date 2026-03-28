@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign In | ShiftCare",
-  description:
-    "Sign in to your ShiftCare account to manage shifts, view earnings, and connect with healthcare professionals.",
+  description: "Sign in to your ShiftCare account to manage shifts, view earnings, and connect with healthcare professionals.",
+  alternates: { canonical: "/login" },
 };
 
 export default function LoginLayout({

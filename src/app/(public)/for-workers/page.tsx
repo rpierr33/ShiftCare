@@ -19,8 +19,8 @@ import { EarningsCalculator } from "@/components/shared/earnings-calculator";
 
 export const metadata: Metadata = {
   title: "Healthcare Worker Jobs — Same Day Pay | ShiftCare",
-  description:
-    "Pick up healthcare shifts that fit your schedule. CNA, RN, LPN, HHA jobs in Florida with same-day pay and transparent fees.",
+  description: "Pick up healthcare shifts that fit your schedule. CNA, RN, LPN, HHA jobs in Florida with same-day pay and transparent fees.",
+  alternates: { canonical: "/for-workers" },
 };
 
 const FEATURES = [
@@ -28,29 +28,25 @@ const FEATURES = [
     icon: <DollarSign size={24} className="text-emerald-500" />,
     iconBg: "bg-emerald-50",
     title: "Same-Day Pay",
-    description:
-      "Get paid within hours of completing your shift. No more waiting two weeks for a paycheck.",
+    description: "Get paid within hours of completing your shift. No more waiting two weeks for a paycheck.",
   },
   {
     icon: <Calendar size={24} className="text-cyan-500" />,
     iconBg: "bg-cyan-50",
     title: "Flexible Scheduling",
-    description:
-      "Pick shifts that fit your life. Work when you want, where you want. No minimum hours.",
+    description: "Pick shifts that fit your life. Work when you want, where you want. No minimum hours.",
   },
   {
     icon: <Eye size={24} className="text-amber-500" />,
     iconBg: "bg-amber-50",
     title: "Transparent Fees",
-    description:
-      "See your exact take-home pay before accepting any shift. No hidden deductions, no surprises.",
+    description: "See your exact take-home pay before accepting any shift. No hidden deductions, no surprises.",
   },
   {
     icon: <ShieldCheck size={24} className="text-violet-500" />,
     iconBg: "bg-violet-50",
     title: "Verified Employers",
-    description:
-      "Every agency and employer on ShiftCare is licensed and verified. Work with confidence.",
+    description: "Every agency and employer on ShiftCare is licensed and verified. Work with confidence.",
   },
 ];
 
@@ -59,22 +55,19 @@ const STEPS = [
     icon: <UserPlus size={24} className="text-white" />,
     number: "1",
     title: "Create Your Profile",
-    description:
-      "Sign up in 2 minutes. Add your certifications, availability, and preferred work areas.",
+    description: "Sign up in 2 minutes. Add your certifications, availability, and preferred work areas.",
   },
   {
     icon: <Search size={24} className="text-white" />,
     number: "2",
     title: "Browse Shifts",
-    description:
-      "See available shifts in your area with pay rates, times, and locations upfront.",
+    description: "See available shifts in your area with pay rates, times, and locations upfront.",
   },
   {
     icon: <CheckCircle size={24} className="text-white" />,
     number: "3",
     title: "Accept & Earn",
-    description:
-      "Accept a shift with one tap. Show up, complete the work, and get paid the same day.",
+    description: "Accept a shift with one tap. Show up, complete the work, and get paid the same day.",
   },
 ];
 
