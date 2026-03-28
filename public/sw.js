@@ -40,3 +40,33 @@ self.addEventListener("fetch", (event) => {
     }).catch(() => caches.match(request).then((c) => c || caches.match("/")))
   );
 });
+
+// ─── Push Notifications ────────────────────────────────────────
+
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || "ShiftCare";
+  const options = {
+    body: data.body || "",
+    icon: "/icons/icon-192.svg",
+    badge: "/icons/icon-192.svg",
+    data: { url: data.url || "/" },
+    vibrate: [200, 100, 200],
+    tag: data.tag || "shiftcare-" + Date.now(),
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(url) && "focus" in client) return client.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});

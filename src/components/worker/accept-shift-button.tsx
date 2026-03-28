@@ -101,34 +101,87 @@ export function AcceptShiftButton({
     );
   }
 
-  // ─── ERROR: Visible with retry ───────────────────────────────
+  // ─── ERROR: Context-aware messages with actions ─────────────
   if (status === "error") {
+    const isTaken = errorMessage?.includes("taken") || errorMessage?.includes("no longer available") || errorMessage?.includes("already been assigned");
+    const isCredential = errorMessage?.includes("credentials") || errorMessage?.includes("credential") || errorMessage?.includes("provisional");
+    const isSuspended = errorMessage?.includes("suspended");
+    const isOverlap = errorMessage?.includes("already have a shift");
+
     return (
       <div className="w-full space-y-3">
-        <div className="rounded-xl bg-red-50 border-2 border-red-200 p-4">
+        <div className={`rounded-xl border-2 p-4 ${
+          isTaken ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200"
+        }`}>
           <div className="flex items-center gap-2 mb-2">
-            <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-            <p className="text-sm font-semibold text-red-800">
-              {errorMessage}
+            {isTaken ? (
+              <Calendar className="h-5 w-5 text-amber-500 flex-shrink-0" />
+            ) : (
+              <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+            )}
+            <p className={`text-sm font-semibold ${isTaken ? "text-amber-800" : "text-red-800"}`}>
+              {isTaken ? "This shift was just taken" : errorMessage}
             </p>
           </div>
+          {isTaken && (
+            <p className="text-xs text-amber-700 mb-2">
+              Another worker accepted this shift moments ago. New shifts are posted every few minutes — check back or browse similar ones.
+            </p>
+          )}
+          {isCredential && (
+            <p className="text-xs text-red-700 mb-2">
+              Your credentials need attention before you can accept shifts.
+            </p>
+          )}
+          {isOverlap && (
+            <p className="text-xs text-red-700 mb-2">
+              You have a conflicting shift during this time. Check your schedule.
+            </p>
+          )}
           <div className="flex items-center gap-3 mt-3">
-            <button
-              onClick={() => {
-                setStatus("idle");
-                setErrorMessage(null);
-              }}
-              className="text-sm font-semibold text-red-700 hover:text-red-800 underline underline-offset-2 transition-colors"
-            >
-              Try Again
-            </button>
-            <Link
-              href="/worker/shifts"
-              className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-            >
-              Browse other shifts
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            {isTaken ? (
+              <Link
+                href="/worker/shifts"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 hover:text-amber-800 transition-colors"
+              >
+                Browse similar shifts
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : isCredential ? (
+              <Link
+                href="/worker/profile"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-700 hover:text-red-800 transition-colors"
+              >
+                Go to Profile
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : isSuspended ? (
+              <span className="text-xs text-red-600">Contact support to resolve your account suspension.</span>
+            ) : isOverlap ? (
+              <Link
+                href="/worker/my-shifts"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-700 hover:text-red-800 transition-colors"
+              >
+                View My Shifts
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={() => { setStatus("idle"); setErrorMessage(null); }}
+                  className="text-sm font-semibold text-red-700 hover:text-red-800 underline underline-offset-2 transition-colors"
+                >
+                  Try Again
+                </button>
+                <Link
+                  href="/worker/shifts"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  Browse other shifts
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

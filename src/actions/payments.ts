@@ -4,14 +4,13 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-utils";
 import type { ActionResult } from "@/types";
 
-// Platform fee rate — 10% default, $2 minimum
-const PLATFORM_FEE_RATE = 0.10;
-const MIN_PLATFORM_FEE = 2.00;
+import { calculateShiftPayments } from "@/lib/fees";
 
-function calculateFees(shiftAmount: number) {
-  const platformFee = Math.max(shiftAmount * PLATFORM_FEE_RATE, MIN_PLATFORM_FEE);
-  const workerPayout = shiftAmount - platformFee;
-  return { platformFee: Math.round(platformFee * 100) / 100, workerPayout: Math.round(workerPayout * 100) / 100 };
+function calculateFees(shiftAmount: number, hours: number = 1) {
+  // Derive hourly rate from total amount and hours for the canonical fee calc
+  const hourlyRate = hours > 0 ? shiftAmount / hours : shiftAmount;
+  const result = calculateShiftPayments(hourlyRate, hours, true); // assume subscribed for legacy path
+  return { platformFee: result.workerFee, workerPayout: result.workerPayout };
 }
 
 // ─── Add Payment Method (stub for Stripe) ────────────────────────

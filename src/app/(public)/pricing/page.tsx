@@ -21,14 +21,14 @@ const tiers = [
       "Email support",
     ],
     cta: "Get Started Free",
-    href: "/signup?role=PROVIDER",
+    href: "/signup?role=PROVIDER&plan=free",
     highlighted: false,
   },
   {
     name: "Starter",
     price: "$49",
     period: "/mo",
-    description: "For growing agencies that need reliable coverage.",
+    description: "For growing employers that need reliable coverage.",
     features: [
       "25 shift postings per month",
       "15 worker profile unlocks",
@@ -37,7 +37,7 @@ const tiers = [
       "Priority email support",
     ],
     cta: "Start with Starter",
-    href: "/signup?role=PROVIDER",
+    href: "/signup?role=PROVIDER&plan=starter",
     highlighted: true,
   },
   {
@@ -54,7 +54,7 @@ const tiers = [
       "API access",
     ],
     cta: "Go Professional",
-    href: "/signup?role=PROVIDER",
+    href: "/signup?role=PROVIDER&plan=professional",
     highlighted: false,
   },
 ];
@@ -68,7 +68,7 @@ export default function PricingPage() {
           Simple, Transparent Pricing
         </h1>
         <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto mt-5 leading-relaxed">
-          Workers are always free. Providers pay only when they need more.
+          Workers are always free. Employers subscribe to remove per-shift fees.
         </p>
       </section>
 
@@ -141,6 +141,27 @@ export default function PricingPage() {
             className="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-emerald-500 transition-colors text-sm"
           >
             Sign Up as a Worker
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {/* No subscription option */}
+        <div className="mt-8 max-w-2xl mx-auto text-center bg-slate-800/50 border border-white/10 rounded-2xl p-8">
+          <h3 className="text-xl font-bold text-white mb-2">
+            No Subscription? No Problem.
+          </h3>
+          <p className="text-slate-400 text-sm leading-relaxed mb-2">
+            Any employer can post shifts without subscribing.
+            A 15% platform fee applies per shift when you don&apos;t have an active plan.
+          </p>
+          <p className="text-slate-500 text-xs leading-relaxed mb-6">
+            Subscribe to any paid plan to remove the per-shift fee entirely.
+          </p>
+          <Link
+            href="/signup?role=PROVIDER"
+            className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/15 border border-white/10 transition-colors text-sm"
+          >
+            Get Started
             <ArrowRight size={16} />
           </Link>
         </div>

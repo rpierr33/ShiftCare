@@ -8,6 +8,10 @@ export {
   CredentialType,
   CredentialStatus,
   DayOfWeek,
+  PaymentStatus,
+  StripeAccountStatus,
+  ComplianceStatus,
+  AgencyType,
 } from "@prisma/client";
 
 // ─── Plan Limits ─────────────────────────────────────────────────
@@ -45,7 +49,7 @@ export interface SessionUser {
   id: string;
   email: string;
   name: string;
-  role: "PROVIDER" | "WORKER";
+  role: "PROVIDER" | "WORKER" | null;
   onboardingCompleted: boolean;
 }
 

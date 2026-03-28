@@ -1,16 +1,21 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { SignOutButton } from "./sign-out-button";
+import { WorkerMobileNav } from "./worker-mobile-nav";
+import { ProviderDesktopNav, WorkerDesktopNav } from "./desktop-nav";
+import { PushRegistration } from "@/components/shared/push-registration";
 
 const ROLE_LABELS: Record<string, string> = {
-  RN: "Registered Nurse",
-  LPN: "Licensed Practical Nurse",
-  CNA: "Certified Nursing Assistant",
-  HHA: "Home Health Aide",
-  MEDICAL_ASSISTANT: "Medical Assistant",
+  RN: "RN",
+  LPN: "LPN",
+  CNA: "CNA",
+  HHA: "HHA",
+  MEDICAL_ASSISTANT: "Med Assist",
   COMPANION: "Companion",
-  OTHER: "Healthcare Professional",
+  OTHER: "Healthcare",
 };
 
 export default async function AuthLayout({
@@ -34,6 +39,14 @@ export default async function AuthLayout({
       : "Healthcare Professional";
   }
 
+  // Get unread notification count for workers
+  let unreadCount = 0;
+  if (!isProvider) {
+    unreadCount = await db.notification.count({
+      where: { userId: user.id, read: false },
+    });
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Top navigation bar */}
@@ -47,71 +60,12 @@ export default async function AuthLayout({
             >
               ShiftCare
             </Link>
-            <nav className="flex items-center gap-1 flex-wrap">
+            {/* Desktop nav — hidden on mobile for workers (they use bottom tab bar) */}
+            <nav className={`items-center gap-1 flex-wrap ${isProvider ? "flex" : "hidden md:flex"}`}>
               {isProvider ? (
-                <>
-                  <Link
-                    href="/provider/dashboard"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/provider/shifts/new"
-                    className="bg-cyan-600 text-white px-4 py-2 text-sm font-semibold rounded-xl hover:bg-cyan-700 shadow-sm transition-colors"
-                  >
-                    Post Shift
-                  </Link>
-                  <Link
-                    href="/provider/workers"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    Workers
-                  </Link>
-                  <Link
-                    href="/provider/payments"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    Payments
-                  </Link>
-                  <Link
-                    href="/provider/billing"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    Billing
-                  </Link>
-                </>
+                <ProviderDesktopNav />
               ) : (
-                <>
-                  <Link
-                    href="/worker/shifts"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors flex items-center gap-1.5"
-                  >
-                    Available Shifts
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                    </span>
-                  </Link>
-                  <Link
-                    href="/worker/my-shifts"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    My Shifts
-                  </Link>
-                  <Link
-                    href="/worker/profile"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/worker/earnings"
-                    className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 rounded-md transition-colors"
-                  >
-                    Earnings
-                  </Link>
-                </>
+                <WorkerDesktopNav unreadCount={unreadCount} />
               )}
             </nav>
           </div>
@@ -125,7 +79,7 @@ export default async function AuthLayout({
               {user.name}
             </span>
             <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              className={`text-xs px-2 py-0.5 rounded-full font-medium hidden sm:inline ${
                 isProvider
                   ? "bg-cyan-100 text-cyan-700"
                   : "bg-emerald-100 text-emerald-700"
@@ -141,10 +95,16 @@ export default async function AuthLayout({
       {/* Gradient accent line */}
       <div className="h-0.5 bg-gradient-to-r from-cyan-500 to-emerald-500" />
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main content — add bottom padding on mobile for workers to account for bottom nav */}
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ${!isProvider ? "pb-24 md:pb-8" : ""}`}>
         {children}
       </main>
+
+      {/* Mobile bottom tab bar for workers */}
+      {!isProvider && <WorkerMobileNav unreadCount={unreadCount} />}
+
+      {/* Push notification registration (subtle, renders its own UI) */}
+      <PushRegistration />
     </div>
   );
 }

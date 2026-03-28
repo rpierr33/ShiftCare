@@ -18,6 +18,7 @@ interface ProviderOnboardingInput {
   einNumber?: string;
   licenseNumber?: string;
   licenseState?: string;
+  licenseExpiryDate?: string;
   contactPerson?: string;
   contactPersonEmail?: string;
   contactPersonPhone?: string;
@@ -55,6 +56,7 @@ export async function completeProviderOnboarding(
         einNumber: input.einNumber,
         licenseNumber: input.licenseNumber,
         licenseState: input.licenseState,
+        licenseExpiryDate: input.licenseExpiryDate ? new Date(input.licenseExpiryDate) : undefined,
         contactPerson: input.contactPerson,
         contactPersonEmail: input.contactPersonEmail,
         contactPersonPhone: input.contactPersonPhone,
@@ -71,6 +73,7 @@ export async function completeProviderOnboarding(
         einNumber: input.einNumber,
         licenseNumber: input.licenseNumber,
         licenseState: input.licenseState,
+        licenseExpiryDate: input.licenseExpiryDate ? new Date(input.licenseExpiryDate) : undefined,
         contactPerson: input.contactPerson,
         contactPersonEmail: input.contactPersonEmail,
         contactPersonPhone: input.contactPersonPhone,
@@ -170,6 +173,44 @@ export async function completeWorkerOnboarding(
         ...(input.phone ? { phone: input.phone } : {}),
       },
     });
+  });
+
+  return { success: true };
+}
+
+// ─── Set user role (for Google OAuth users who signed up without a role) ─────
+
+export async function setUserRole(
+  role: "PROVIDER" | "WORKER",
+  providerType?: "AGENCY" | "PRIVATE"
+): Promise<ActionResult> {
+  const user = await getSessionUser();
+
+  // Only allow setting role if it's not already set
+  const dbUser = await db.user.findUnique({ where: { id: user.id } });
+  if (!dbUser) return { success: false, error: "User not found." };
+  if (dbUser.role) return { success: false, error: "Role is already set." };
+
+  await db.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: user.id },
+      data: { role },
+    });
+
+    // If provider, create initial provider profile with type
+    if (role === "PROVIDER") {
+      await tx.providerProfile.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          providerType: providerType || "AGENCY",
+          companyName: "",
+        },
+        update: {
+          providerType: providerType || "AGENCY",
+        },
+      });
+    }
   });
 
   return { success: true };

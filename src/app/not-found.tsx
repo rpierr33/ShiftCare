@@ -1,40 +1,38 @@
-import { Shield, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ArrowLeft, Home } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-          {/* Branding */}
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <div className="p-2 bg-blue-600 rounded-xl">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">ShiftCare</span>
-          </div>
-
-          {/* 404 Badge */}
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100">
-            <span className="text-3xl font-bold text-gray-400">404</span>
-          </div>
-
-          {/* Message */}
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Page not found
-          </h1>
-          <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-            The page you are looking for does not exist or has been moved.
-            Check the URL or head back to the dashboard.
-          </p>
-
-          {/* Action */}
-          <Link href="/" className="w-full">
-            <Button className="w-full">
-              <ArrowLeft className="h-4 w-4" />
-              Go back home
-            </Button>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="text-center max-w-md">
+        <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto mb-6">
+          <span className="text-3xl font-bold text-cyan-600">404</span>
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Page Not Found</h1>
+        <p className="text-slate-500 mb-8">
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white font-semibold rounded-xl hover:bg-cyan-700 transition-colors"
+          >
+            <Home size={16} />
+            Go Home
+          </Link>
+          <Link
+            href="/worker/shifts"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Worker Dashboard
+          </Link>
+          <Link
+            href="/agency/dashboard"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Employer Dashboard
           </Link>
         </div>
       </div>

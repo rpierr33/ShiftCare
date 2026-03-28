@@ -1,12 +1,18 @@
 import { getWorkerEarnings, getPaymentMethods } from "@/actions/payments";
+import { getWorkerProfile } from "@/actions/worker";
+import { getMonthlyEarnings } from "@/actions/earnings";
+import Link from "next/link";
 import {
   DollarSign,
   TrendingUp,
   Clock,
   CheckCircle,
   Landmark,
+  ArrowRight,
 } from "lucide-react";
 import { WithdrawButton, AddBankAccountForm } from "./earnings-actions";
+import { StripeConnectButton } from "./stripe-connect-button";
+import EarningsChart from "@/components/worker/earnings-chart";
 
 function PayoutStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -28,10 +34,14 @@ function PayoutStatusBadge({ status }: { status: string }) {
 }
 
 export default async function WorkerEarningsPage() {
-  const [earnings, paymentMethods] = await Promise.all([
+  const [earnings, paymentMethods, workerProfile, monthlyEarnings] = await Promise.all([
     getWorkerEarnings(),
     getPaymentMethods(),
+    getWorkerProfile(),
+    getMonthlyEarnings(),
   ]);
+
+  const stripeAccountStatus = workerProfile?.stripeAccountStatus ?? "NOT_STARTED";
 
   if (!earnings) {
     return (
@@ -48,6 +58,37 @@ export default async function WorkerEarningsPage() {
 
   const bankAccount = paymentMethods.find((m) => m.type === "bank_account");
   const availableAmount = earnings.available.amount;
+
+  const hasAnyEarnings =
+    parseFloat(String(earnings.pending.amount)) > 0 ||
+    parseFloat(String(earnings.available.amount)) > 0 ||
+    parseFloat(String(earnings.paid.amount)) > 0 ||
+    earnings.payouts.length > 0;
+
+  if (!hasAnyEarnings) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold text-slate-900 mb-4">Earnings</h1>
+        <div className="bg-white rounded-2xl border border-dashed border-slate-200 py-16 px-6 text-center">
+          <DollarSign className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+          <p className="text-slate-900 font-semibold text-lg mb-2">
+            You haven&apos;t earned yet
+          </p>
+          <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 leading-relaxed">
+            After completing your first shift, earnings will appear here. Most
+            workers in Florida earn $18–$32/hr depending on role.
+          </p>
+          <Link
+            href="/worker/shifts"
+            className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-cyan-600/20 hover:bg-cyan-700 transition-all duration-200"
+          >
+            Find a Shift Near You
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -123,6 +164,15 @@ export default async function WorkerEarningsPage() {
           </p>
         </div>
       </div>
+
+      {/* ── Monthly Earnings Chart ─────────────────────────────────────── */}
+      <EarningsChart data={monthlyEarnings} />
+
+      {/* ── Stripe Connect Setup ──────────────────────────────────────── */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Direct Deposit Setup</h2>
+        <StripeConnectButton stripeAccountStatus={stripeAccountStatus} />
+      </section>
 
       {/* ── Payout Method ────────────────────────────────────────────── */}
       <section className="mb-10">

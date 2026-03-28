@@ -1,5 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { getWorkerShifts } from "@/actions/shifts";
+import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth-utils";
 import {
   MapPin,
   Calendar,
@@ -7,33 +11,20 @@ import {
   XCircle,
   ArrowRight,
   Briefcase,
-  DollarSign,
   Clock,
   TrendingUp,
   BadgeDollarSign,
+  ClipboardList,
+  AlertTriangle,
 } from "lucide-react";
+import { ClockInBanner } from "./clock-in-banner";
+import { ClockOutBanner } from "./clock-out-banner";
+import { CancelShiftButton } from "./cancel-shift-button";
+import { RatingPrompt } from "@/components/shared/rating-prompt";
+import { StarDisplay } from "@/components/shared/star-display";
+import { formatShiftDateTime as formatShiftDateTimeTz, formatTime as formatTimeTz, getTimezoneLabel } from "@/lib/timezone";
 
-function formatShiftDateTime(start: Date, end: Date): string {
-  const dateStr = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(start);
-
-  const startTime = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(start);
-
-  const endTime = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(end);
-
-  return `${dateStr} \u00B7 ${startTime} \u2013 ${endTime}`;
-}
+// Removed: inline formatShiftDateTime — now using timezone-aware version from @/lib/timezone
 
 function getHours(start: Date, end: Date): number {
   return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
@@ -93,21 +84,67 @@ type ShiftData = {
   payRate: number | { toString(): string };
   status: string;
   notes: string | null;
+  providerId: string;
   provider: {
     name: string | null;
     providerProfile: { companyName: string | null } | null;
   } | null;
+  timeEntries?: {
+    id: string;
+    clockInTime: Date;
+    clockInStatus: string;
+    distanceMiles: number | null;
+    clockOutTime: Date | null;
+    actualHours: number | null;
+  }[];
 };
 
 export default async function MyShiftsPage() {
+  const user = await getSessionUser();
+  const userRecord = await db.user.findUnique({
+    where: { id: user.id },
+    select: { timezone: true },
+  });
+  const tz = userRecord?.timezone || null;
+  const tzLabel = getTimezoneLabel(tz);
+
   const shifts = await getWorkerShifts();
 
-  const now = new Date();
-  const upcoming = shifts.filter(
-    (s) => new Date(s.startTime) >= now && s.status !== "CANCELLED" && s.status !== "COMPLETED"
+  // Query which shifts the worker has already rated
+  const userRatings = await db.rating.findMany({
+    where: { raterId: user.id },
+    select: { shiftId: true },
+  });
+  const ratedShiftIds = new Set(userRatings.map((r) => r.shiftId));
+
+  // Query employer ratings for all providers in this shift list
+  const providerIds = [...new Set(shifts.map((s) => s.providerId))];
+  const providerRatings = providerIds.length > 0
+    ? await db.rating.groupBy({
+        by: ["rateeId"],
+        where: { rateeId: { in: providerIds } },
+        _avg: { score: true },
+        _count: true,
+      })
+    : [];
+  const providerRatingsMap = new Map(
+    providerRatings.map((r) => [r.rateeId, { average: r._avg.score ?? 0, count: r._count }])
   );
+
+  const now = new Date();
+  // "In Progress" — started but not ended (regardless of status — a COMPLETED shift mid-window is still visible here)
+  const inProgress = shifts.filter(
+    (s) => new Date(s.startTime) <= now && new Date(s.endTime) > now && s.status !== "CANCELLED"
+  );
+  const inProgressIds = new Set(inProgress.map((s) => s.id));
+  // "Upcoming" — hasn't started yet, not cancelled
+  const upcoming = shifts.filter(
+    (s) => new Date(s.startTime) > now && s.status !== "CANCELLED"
+  );
+  const upcomingIds = new Set(upcoming.map((s) => s.id));
+  // "Past" — everything else (ended, or cancelled)
   const past = shifts.filter(
-    (s) => new Date(s.startTime) < now || s.status === "CANCELLED" || s.status === "COMPLETED"
+    (s) => !inProgressIds.has(s.id) && !upcomingIds.has(s.id)
   );
 
   // Earnings calculation: only completed shifts
@@ -135,6 +172,33 @@ export default async function MyShiftsPage() {
       }, upcoming[0])
     : null;
 
+  // Find shifts that need clock-in: ASSIGNED, start time within 15min window, not yet clocked in
+  const clockInEligible = shifts.filter((s) => {
+    if (s.status !== "ASSIGNED") return false;
+    const start = new Date(s.startTime);
+    const end = new Date(s.endTime);
+    const earlyWindow = new Date(start);
+    earlyWindow.setMinutes(earlyWindow.getMinutes() - 15);
+    const hasClockedIn = s.timeEntries && s.timeEntries.length > 0;
+    return !hasClockedIn && now >= earlyWindow && now <= end;
+  });
+
+  // Find shifts that need clock-out: IN_PROGRESS, clocked in, NOT clocked out, shift hasn't ended yet
+  const clockOutEligible = shifts.filter((s) => {
+    if (s.status !== "IN_PROGRESS") return false;
+    const hasClockedIn = s.timeEntries && s.timeEntries.length > 0;
+    const hasClockedOut = hasClockedIn && s.timeEntries![0].clockOutTime;
+    return hasClockedIn && !hasClockedOut && new Date(s.endTime) > now;
+  });
+
+  // Find shifts where worker forgot to clock out: IN_PROGRESS, clocked in, NOT clocked out, shift endTime has passed
+  const missedClockOut = shifts.filter((s) => {
+    if (s.status !== "IN_PROGRESS") return false;
+    const hasClockedIn = s.timeEntries && s.timeEntries.length > 0;
+    const hasClockedOut = hasClockedIn && s.timeEntries![0].clockOutTime;
+    return hasClockedIn && !hasClockedOut && new Date(s.endTime) <= now;
+  });
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -145,19 +209,82 @@ export default async function MyShiftsPage() {
         </p>
       </div>
 
+      {/* CLOCK-IN BANNER — Big, bold, unmissable */}
+      {clockInEligible.map((shift) => (
+        <ClockInBanner
+          key={shift.id}
+          shiftId={shift.id}
+          shiftTitle={shift.title || `${ROLE_LABELS[shift.role] || shift.role} Shift`}
+          location={shift.location}
+          startTime={new Date(shift.startTime).toISOString()}
+          endTime={new Date(shift.endTime).toISOString()}
+          providerName={
+            shift.provider?.providerProfile?.companyName ||
+            shift.provider?.name ||
+            "Provider"
+          }
+        />
+      ))}
+
+      {/* CLOCK-OUT BANNER — For shifts that are in progress */}
+      {clockOutEligible.map((shift) => (
+        <ClockOutBanner
+          key={`clockout-${shift.id}`}
+          shiftId={shift.id}
+          shiftTitle={shift.title || `${ROLE_LABELS[shift.role] || shift.role} Shift`}
+          location={shift.location}
+          startTime={new Date(shift.startTime).toISOString()}
+          endTime={new Date(shift.endTime).toISOString()}
+          providerName={
+            shift.provider?.providerProfile?.companyName ||
+            shift.provider?.name ||
+            "Provider"
+          }
+          clockInTime={shift.timeEntries![0].clockInTime.toISOString()}
+        />
+      ))}
+
+      {/* MISSED CLOCK-OUT WARNING — Shift ended but worker never clocked out */}
+      {missedClockOut.map((shift) => (
+        <div
+          key={`missed-clockout-${shift.id}`}
+          className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                Missed Clock-Out: {shift.title || `${ROLE_LABELS[shift.role] || shift.role} Shift`}
+              </p>
+              <p className="mt-1 text-sm text-amber-700">
+                You didn&apos;t clock out for this shift. The scheduled end time will be used as
+                your clock-out. If you worked different hours, contact support.
+              </p>
+              <p className="mt-1.5 text-xs text-amber-600">
+                Shift ended{" "}
+                {formatShiftDateTimeTz(new Date(shift.startTime), new Date(shift.endTime), tz)}
+                {tzLabel && ` ${tzLabel}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+
       {shifts.length === 0 ? (
         <div className="rounded-xl border border-gray-100 bg-white shadow-sm py-16 px-6 text-center">
-          <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-800 font-medium mb-2">
-            Ready to earn?
+          <ClipboardList className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+          <p className="text-gray-800 font-semibold text-lg mb-2">
+            No shifts yet
           </p>
-          <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
-            Accept your first shift and start building your schedule. New shifts
-            are posted daily by providers in your area.
+          <p className="text-gray-500 text-sm max-w-md mx-auto mb-6 leading-relaxed">
+            New shifts are posted daily — most fill within 30 minutes. Workers
+            who accept quickly earn 40% more per month.
           </p>
           <Link
             href="/worker/shifts"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm shadow-blue-600/20 hover:bg-blue-500 transition-all duration-200"
+            className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-cyan-600/20 hover:bg-cyan-700 transition-all duration-200"
           >
             Browse Available Shifts
             <ArrowRight className="h-4 w-4" />
@@ -176,7 +303,7 @@ export default async function MyShiftsPage() {
                 <p className="text-3xl font-bold text-emerald-600">
                   ${monthlyEarnings.toFixed(2)}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Total earned</p>
+                <p className="text-xs text-gray-500 mt-1">Gross earnings</p>
               </div>
               <div>
                 <p className="text-3xl font-bold text-gray-900">
@@ -195,15 +322,30 @@ export default async function MyShiftsPage() {
                 </p>
               </div>
             </div>
-            {/* Motivational line */}
-            <p className="mt-4 text-xs text-indigo-600 font-medium">
-              You&apos;re in the top 20% of workers this month
+            <p className="mt-4 text-xs text-gray-400">
+              Before platform fee. <Link href="/worker/earnings" className="text-indigo-600 underline">View net earnings</Link>
             </p>
           </div>
 
-          {/* Next Shift Highlight */}
-          {nextShift && (
-            <NextShiftCard shift={nextShift} />
+          {/* In Progress Shifts */}
+          {inProgress.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                </span>
+                In Progress
+                <span className="text-sm font-normal text-gray-500">
+                  ({inProgress.length})
+                </span>
+              </h2>
+              <div className="space-y-3">
+                {inProgress.map((shift) => (
+                  <ShiftCard key={shift.id} shift={shift} variant="active" providerRating={providerRatingsMap.get(shift.providerId)} timezone={tz} tzLabel={tzLabel} />
+                ))}
+              </div>
+            </section>
           )}
 
           {/* Upcoming Shifts */}
@@ -231,7 +373,15 @@ export default async function MyShiftsPage() {
             ) : (
               <div className="space-y-3">
                 {upcoming.map((shift) => (
-                  <ShiftCard key={shift.id} shift={shift} variant="upcoming" />
+                  <ShiftCard
+                    key={shift.id}
+                    shift={shift}
+                    variant="upcoming"
+                    showCancel={shift.status === "ASSIGNED"}
+                    providerRating={providerRatingsMap.get(shift.providerId)}
+                    timezone={tz}
+                    tzLabel={tzLabel}
+                  />
                 ))}
               </div>
             )}
@@ -248,7 +398,15 @@ export default async function MyShiftsPage() {
               </h2>
               <div className="space-y-3">
                 {past.map((shift) => (
-                  <ShiftCard key={shift.id} shift={shift} variant="past" />
+                  <ShiftCard
+                    key={shift.id}
+                    shift={shift}
+                    variant="past"
+                    hasRated={ratedShiftIds.has(shift.id)}
+                    providerRating={providerRatingsMap.get(shift.providerId)}
+                    timezone={tz}
+                    tzLabel={tzLabel}
+                  />
                 ))}
               </div>
             </section>
@@ -259,12 +417,14 @@ export default async function MyShiftsPage() {
   );
 }
 
-function NextShiftCard({ shift }: { shift: ShiftData }) {
+function NextShiftCard({ shift, timezone, tzLabel }: { shift: ShiftData; timezone: string | null; tzLabel: string }) {
   const companyName =
     shift.provider?.providerProfile?.companyName ||
     shift.provider?.name ||
     "Unknown Provider";
   const countdown = formatCountdown(new Date(shift.startTime));
+
+  const hasClockedIn = shift.timeEntries && shift.timeEntries.length > 0;
 
   return (
     <div className="relative rounded-xl p-[2px] overflow-hidden">
@@ -277,9 +437,17 @@ function NextShiftCard({ shift }: { shift: ShiftData }) {
             <Clock className="h-5 w-5 text-blue-600" />
             <h2 className="text-base font-semibold text-blue-900">Next Shift</h2>
           </div>
-          <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
-            {countdown}
-          </span>
+          <div className="flex items-center gap-2">
+            {hasClockedIn && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <CheckCircle className="h-3 w-3" />
+                Clocked In
+              </span>
+            )}
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+              {countdown}
+            </span>
+          </div>
         </div>
         <div className="space-y-1.5">
           <p className="text-sm font-medium text-gray-800">{companyName}</p>
@@ -290,7 +458,8 @@ function NextShiftCard({ shift }: { shift: ShiftData }) {
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
             <span>
-              {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+              {formatShiftDateTimeTz(new Date(shift.startTime), new Date(shift.endTime), timezone)}
+              {tzLabel && <span className="text-gray-400 ml-1">{tzLabel}</span>}
             </span>
           </div>
           <p className="text-lg font-bold text-emerald-600 pt-1">
@@ -303,7 +472,7 @@ function NextShiftCard({ shift }: { shift: ShiftData }) {
   );
 }
 
-function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" | "past" }) {
+function ShiftCard({ shift, variant, showCancel, hasRated, providerRating, timezone, tzLabel }: { shift: ShiftData; variant: "upcoming" | "past" | "active"; showCancel?: boolean; hasRated?: boolean; providerRating?: { average: number; count: number }; timezone: string | null; tzLabel: string }) {
   const companyName =
     shift.provider?.providerProfile?.companyName ||
     shift.provider?.name ||
@@ -323,7 +492,10 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
   const rate = parseFloat(String(shift.payRate));
   const totalEarned = hours * rate;
 
-  const borderColor = variant === "upcoming" ? "border-l-emerald-500" : "border-l-gray-300";
+  const hasClockedIn = shift.timeEntries && shift.timeEntries.length > 0;
+  const clockInEntry = hasClockedIn ? shift.timeEntries![0] : null;
+
+  const borderColor = variant === "active" ? "border-l-cyan-500" : variant === "upcoming" ? "border-l-emerald-500" : "border-l-gray-300";
   const cardOpacity = shift.status === "CANCELLED" ? "opacity-60" : "";
 
   return (
@@ -343,6 +515,18 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
               {statusConfig.icon === "x" && <XCircle className="h-3 w-3" />}
               {statusConfig.label}
             </span>
+            {hasClockedIn && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                clockInEntry?.clockInStatus === "ON_SITE"
+                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  : clockInEntry?.clockInStatus === "OFF_SITE"
+                  ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                  : "bg-gray-50 text-gray-600 ring-1 ring-gray-200"
+              }`}>
+                <CheckCircle className="h-3 w-3" />
+                Clocked In{clockInEntry?.clockInStatus === "OFF_SITE" ? " (Off-site)" : ""}
+              </span>
+            )}
             {/* Payment processed badge for completed past shifts */}
             {isCompleted && isPast && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 ring-1 ring-emerald-200">
@@ -353,7 +537,12 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
           </div>
 
           {/* Provider */}
-          <p className="text-sm text-gray-500">{companyName}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-gray-500">{companyName}</p>
+            {providerRating && providerRating.count > 0 && (
+              <StarDisplay average={providerRating.average} count={providerRating.count} />
+            )}
+          </div>
 
           {/* Location */}
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
@@ -365,7 +554,8 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
             <span>
-              {formatShiftDateTime(new Date(shift.startTime), new Date(shift.endTime))}
+              {formatShiftDateTimeTz(new Date(shift.startTime), new Date(shift.endTime), timezone)}
+              {tzLabel && <span className="text-gray-400 ml-1">{tzLabel}</span>}
             </span>
           </div>
         </div>
@@ -389,8 +579,46 @@ function ShiftCard({ shift, variant }: { shift: ShiftData; variant: "upcoming" |
               {hours.toFixed(1)} hrs
             </p>
           )}
+          {isCompleted && clockInEntry?.clockOutTime && (
+            <div className="mt-1 space-y-0.5">
+              <p className="text-xs text-gray-500">
+                Clocked: {formatTimeTz(new Date(clockInEntry.clockInTime), timezone)}
+                {" \u2013 "}
+                {formatTimeTz(new Date(clockInEntry.clockOutTime), timezone)}
+                {clockInEntry.actualHours != null && ` (${clockInEntry.actualHours.toFixed(1)} hrs)`}
+              </p>
+              {clockInEntry.actualHours != null && Math.abs(clockInEntry.actualHours - hours) > 0.1 && (
+                <p className="text-xs font-medium text-amber-600">
+                  Scheduled: {hours.toFixed(1)}h | Actual: {clockInEntry.actualHours.toFixed(1)}h
+                </p>
+              )}
+            </div>
+          )}
+          {showCancel && (
+            <CancelShiftButton shiftId={shift.id} shiftStartTime={new Date(shift.startTime).toISOString()} />
+          )}
         </div>
       </div>
+      {/* View Details link */}
+      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+        <Link
+          href={`/worker/shifts/${shift.id}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors"
+        >
+          View Details
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+      {/* Rating prompt for completed, unrated shifts */}
+      {isCompleted && hasRated === false && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <RatingPrompt
+            shiftId={shift.id}
+            rateeName={companyName}
+            rateeRole="employer"
+          />
+        </div>
+      )}
     </div>
   );
 }

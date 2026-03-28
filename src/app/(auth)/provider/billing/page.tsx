@@ -22,7 +22,7 @@ const PLANS = [
   {
     key: "STARTER" as const,
     name: "Starter",
-    description: "For growing agencies that need more shifts and worker access.",
+    description: "For growing employers that need more shifts and worker access.",
     accent: "from-blue-500 to-blue-600",
   },
   {

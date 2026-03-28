@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -14,6 +16,9 @@ import {
   UserCheck,
   Info,
   Pencil,
+  CheckCircle,
+  AlertTriangle,
+  MapPinOff,
 } from "lucide-react";
 import { getShiftById } from "@/actions/shifts";
 import { ShiftActions } from "./shift-actions";
@@ -196,6 +201,86 @@ export default async function ShiftDetailPage({
                     </div>
                   )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clock-In Status */}
+      {(isAssigned || isCompleted) && shift.timeEntries && shift.timeEntries.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+          <div className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-400" />
+              Attendance
+            </h3>
+            {shift.timeEntries.map((entry) => {
+              const clockInTime = new Intl.DateTimeFormat("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              }).format(new Date(entry.clockInTime));
+
+              const isOnSite = entry.clockInStatus === "ON_SITE";
+              const isOffSite = entry.clockInStatus === "OFF_SITE";
+              const noLocation = entry.clockInStatus === "NO_LOCATION";
+
+              return (
+                <div key={entry.id} className="flex items-center gap-4">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isOnSite ? "bg-emerald-100" : isOffSite ? "bg-amber-100" : "bg-gray-100"
+                  }`}>
+                    {isOnSite && <CheckCircle className="h-5 w-5 text-emerald-600" />}
+                    {isOffSite && <AlertTriangle className="h-5 w-5 text-amber-600" />}
+                    {noLocation && <MapPinOff className="h-5 w-5 text-gray-400" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {entry.worker.name} clocked in at {clockInTime}
+                      </p>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        isOnSite
+                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20"
+                          : isOffSite
+                          ? "bg-amber-50 text-amber-700 ring-1 ring-amber-600/20"
+                          : "bg-gray-50 text-gray-600 ring-1 ring-gray-500/20"
+                      }`}>
+                        {isOnSite ? "On-site" : isOffSite ? "Off-site" : "No GPS"}
+                      </span>
+                    </div>
+                    {entry.distanceMiles != null && (
+                      <p className={`text-xs mt-0.5 ${isOnSite ? "text-emerald-600" : "text-amber-600"}`}>
+                        {entry.distanceMiles < 0.1
+                          ? "At shift location"
+                          : `${entry.distanceMiles} mi from shift location`}
+                      </p>
+                    )}
+                    {noLocation && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Worker did not share location
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* No clock-in yet for assigned shifts that have started */}
+      {isAssigned && shift.timeEntries && shift.timeEntries.length === 0 && new Date(shift.startTime) <= new Date() && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Worker has not clocked in yet
+              </p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                The shift has started but {shift.assignedWorker?.name || "the worker"} hasn&apos;t recorded their attendance.
+              </p>
             </div>
           </div>
         </div>

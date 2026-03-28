@@ -49,13 +49,13 @@ export default function RootLayout({
         <SessionProvider>{children}</SessionProvider>
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').catch(() => {});
-                });
-              }
-            `,
+            __html: process.env.NODE_ENV === "production"
+              ? `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`
+              : `if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for (var r of registrations) { r.unregister(); }
+                  });
+                }`,
           }}
         />
       </body>

@@ -38,6 +38,10 @@ export default function EditShiftPage() {
         setLoading(false);
         return;
       }
+      if (shift.status === "COMPLETED" || shift.status === "CANCELLED") {
+        router.replace(`/provider/shifts/${shiftId}`);
+        return;
+      }
       const start = new Date(shift.startTime);
       const end = new Date(shift.endTime);
       setForm({

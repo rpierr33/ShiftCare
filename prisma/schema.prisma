@@ -26,10 +26,38 @@ enum WorkerRole {
 
 enum ShiftStatus {
   OPEN
-  PENDING
   ASSIGNED
+  IN_PROGRESS
   COMPLETED
   CANCELLED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  UNPAID
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum StripeAccountStatus {
+  NOT_STARTED
+  PENDING
+  ACTIVE
+}
+
+enum ComplianceStatus {
+  PENDING
+  COMPLETE
+}
+
+enum AgencyType {
+  HOME_HEALTH
+  HOSPICE
+  HOSPITAL
+  NURSE_REGISTRY
+  STAFFING_COMPANY
+  PRIVATE_EMPLOYER
 }
 
 enum AssignmentStatus {
@@ -70,9 +98,15 @@ enum CredentialType {
 
 enum CredentialStatus {
   PENDING
+  PROVISIONAL
   VERIFIED
   EXPIRED
   REJECTED
+}
+
+enum PayCadence {
+  SAME_DAY    // Worker paid within hours of shift completion
+  STANDARD    // Biweekly payout cycle (industry standard)
 }
 
 enum DayOfWeek {
@@ -91,15 +125,19 @@ model User {
   id                  String    @id @default(cuid())
   email               String    @unique
   name                String
-  passwordHash        String
-  role                UserRole
+  passwordHash        String?
+  role                UserRole?
   phone               String?
   avatarUrl           String?
   emailVerified       DateTime?
+  timezone            String?   // IANA timezone e.g. "America/New_York"
   isActive            Boolean   @default(true)
   onboardingCompleted Boolean   @default(false)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
+
+  isSuspended         Boolean   @default(false)
+  suspendedAt         DateTime?
 
   workerProfile    WorkerProfile?
   providerProfile  ProviderProfile?
@@ -113,8 +151,17 @@ model User {
   workerShiftPays      ShiftPayment[]   @relation("WorkerShiftPayments")
   payouts              Payout[]
   notifications        Notification[]
+  timeEntries          TimeEntry[]
+  ratingsGiven         Rating[]         @relation("RatingsGiven")
+  ratingsReceived      Rating[]         @relation("RatingsReceived")
   sessions         Session[]
   accounts         Account[]
+  strikes              Strike[]
+  pushSubscriptions    PushSubscription[]
+  sentMessages         ShiftMessage[]   @relation("SentMessages")
+  preferredByProviders PreferredWorker[] @relation("PreferredWorkers")
+  preferredWorkers     PreferredWorker[] @relation("PreferredByProvider")
+  credentialAlerts     CredentialAlert[]
 
   @@map("users")
 }
@@ -178,9 +225,25 @@ model ProviderProfile {
   einNumber          String?
   licenseNumber      String?
   licenseState       String?
+  licenseExpiryDate  DateTime?
+  agencyType         AgencyType?
   contactPerson      String?       // If different from the account holder
+  contactTitle       String?
   contactPersonEmail String?
   contactPersonPhone String?
+  // Stripe
+  stripeCustomerId         String?
+  defaultPaymentMethodId   String?
+  // Subscription
+  subscriptionStatus       SubscriptionStatus @default(ACTIVE)
+  subscriptionPlan         SubscriptionPlan   @default(FREE)
+  shiftsPostedThisMonth    Int                @default(0)
+  onboardingComplete       Boolean            @default(false)
+  // Compliance
+  complianceStatus         ComplianceStatus   @default(PENDING)
+  ahcaLicenseNumber        String?
+  // Notification preferences
+  notificationPrefs        Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -212,6 +275,20 @@ model WorkerProfile {
   profileComplete      Boolean     @default(false)
   verificationDeadline DateTime?   // 30 days from signup — must upload docs by then
   verificationStatus   String      @default("pending") // pending, verified, suspended
+  // Credential verification
+  credentialStatus       CredentialStatus @default(PENDING)
+  credentialDocumentKey  String?          // S3 file key of uploaded credential document
+  credentialExpiryDate   DateTime?
+  credentialSubmittedAt  DateTime?        // When docs were first submitted — 14-day provisional window starts here
+  // Stripe Connect
+  stripeAccountId        String?
+  stripeAccountStatus    StripeAccountStatus @default(NOT_STARTED)
+  // Performance
+  reliabilityScore       Float?           // completed / accepted * 100
+  shiftsCompleted        Int              @default(0)
+  totalEarnings          Decimal          @default(0) @db.Decimal(10, 2)
+  // Notification preferences
+  notificationPrefs      Json?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
@@ -219,6 +296,7 @@ model WorkerProfile {
   assignments       Assignment[]
   availabilitySlots AvailabilitySlot[]
   credentials       Credential[]
+  blockedDates      BlockedDate[]
 
   @@map("worker_profiles")
 }
@@ -268,6 +346,9 @@ model Shift {
   role             WorkerRole
   title            String?
   location         String
+  latitude         Float?      // Geocoded from location address
+  longitude        Float?      // Geocoded from location address
+  geofenceRadius   Float       @default(0.5) // Miles — how close worker must be to clock in
   startTime        DateTime
   endTime          DateTime
   payRate          Float
@@ -276,8 +357,28 @@ model Shift {
   // Provider preferences — who can see/accept this shift
   minExperience    Int?        // Minimum years of experience (null = no minimum)
   minRating        Float?      // Minimum worker rating (null = no minimum) — reserved for future
+  requirements     String[]    @default([]) // BLS/CPR, Hoyer Lift, etc.
+  isUrgent         Boolean     @default(false)
+  payCadence       PayCadence  @default(STANDARD) // Same-day or biweekly payout
+  description      String?     @db.Text
   // Assignment tracking
   assignedWorkerId String?
+  assignedAt       DateTime?
+  // Payment / Escrow
+  paymentStatus          PaymentStatus @default(UNPAID)
+  stripePaymentIntentId  String?
+  stripeTransferId       String?
+  grossAmount            Decimal?  @db.Decimal(10, 2)
+  platformFeeAmount      Decimal?  @db.Decimal(10, 2)
+  workerPayoutAmount     Decimal?  @db.Decimal(10, 2)
+  // Completion
+  completionConfirmedAt  DateTime?
+  completionConfirmedBy  String?
+  // Dispute
+  disputeReason          String?
+  // Preferred worker invite system
+  isPublic         Boolean     @default(true)
+  inviteExpiresAt  DateTime?
   // Optimistic locking
   version          Int         @default(0)
   createdAt        DateTime    @default(now())
@@ -288,6 +389,10 @@ model Shift {
   assignments    Assignment[]
   shiftPayment   ShiftPayment?
   transactions   Transaction[]
+  timeEntries    TimeEntry[]
+  ratings        Rating[]
+  messages       ShiftMessage[]
+  strikes        Strike[]
 
   @@index([providerId])
   @@index([status])
@@ -317,6 +422,48 @@ model Assignment {
   @@index([shiftId])
   @@index([workerProfileId])
   @@map("assignments")
+}
+
+// ─── Time Entries (Clock-In) ─────────────────────────────────────
+
+enum ClockInStatus {
+  ON_SITE      // Within geofence radius
+  OFF_SITE     // Outside geofence radius
+  NO_LOCATION  // Worker denied location access
+}
+
+enum StrikeType {
+  NO_SHOW
+  LATE_CANCEL
+}
+
+model TimeEntry {
+  id              String        @id @default(cuid())
+  shiftId         String
+  workerId        String
+  clockInTime     DateTime
+  clockInLat      Float?
+  clockInLng      Float?
+  clockInStatus   ClockInStatus @default(NO_LOCATION)
+  distanceMiles   Float?        // Distance from shift location at clock-in
+  clockOutTime    DateTime?     // Set when worker clocks out
+  clockOutLat     Float?
+  clockOutLng     Float?
+  clockOutStatus  ClockInStatus?
+  clockOutDistanceMiles Float?
+  earlyClockOutReason   String?
+  actualHours     Float?        // Computed: clockOutTime - clockInTime in hours
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  shift  Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  worker User  @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, workerId]) // One clock-in per worker per shift
+  @@index([shiftId])
+  @@index([workerId])
+  @@map("time_entries")
 }
 
 // ─── Subscription & Usage ────────────────────────────────────────
@@ -526,17 +673,63 @@ model PlatformConfig {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  title     String
-  message   String
   type      String
-  isRead    Boolean  @default(false)
-  link      String?
+  title     String
+  body      String    @default("")
+  data      Json?
+  read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, isRead])
+  @@index([userId, read])
   @@map("notifications")
+}
+
+// ─── Ratings ─────────────────────────────────────────────────────
+
+model Rating {
+  id        String   @id @default(cuid())
+  shiftId   String
+  raterId   String   // User who gave the rating
+  rateeId   String   // User who received the rating
+  score     Int      // 1-5 stars (overall, auto-computed from sub-metrics when available)
+  comment   String?
+  // Worker sub-metrics (filled when provider rates worker)
+  punctuality     Int?  // 1-5
+  professionalism Int?  // 1-5
+  skillCompetence Int?  // 1-5
+  // Provider sub-metrics (filled when worker rates provider)
+  communication      Int?  // 1-5
+  workEnvironment    Int?  // 1-5
+  paymentReliability Int?  // 1-5
+  fairness           Int?  // 1-5
+  createdAt DateTime @default(now())
+
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  rater User  @relation("RatingsGiven", fields: [raterId], references: [id], onDelete: Cascade)
+  ratee User  @relation("RatingsReceived", fields: [rateeId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, raterId]) // One rating per user per shift
+  @@index([rateeId])
+  @@index([raterId])
+  @@map("ratings")
+}
+
+// ─── Blocked Dates (Worker Unavailability) ──────────────────────
+
+model BlockedDate {
+  id              String   @id @default(cuid())
+  workerProfileId String
+  date            DateTime @db.Date // The specific date blocked
+  reason          String?           // Optional: "vacation", "appointment", etc.
+  createdAt       DateTime @default(now())
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workerProfileId, date])
+  @@index([workerProfileId])
+  @@map("blocked_dates")
 }
 
 // ─── Rate Limiting ───────────────────────────────────────────────
@@ -572,4 +765,90 @@ model EmailVerificationToken {
 
   @@index([email])
   @@map("email_verification_tokens")
+}
+
+// ─── Push Subscriptions ─────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// ─── Strikes (Cancellation / No-Show Tracking) ─────────────────
+
+model Strike {
+  id        String     @id @default(cuid())
+  userId    String
+  type      StrikeType
+  shiftId   String
+  decayedAt DateTime?  // Set when 90 days of good behavior passes
+  createdAt DateTime   @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, decayedAt])
+  @@map("strikes")
+}
+
+// ─── Credential Expiration Alerts ───────────────────────────────
+
+model CredentialAlert {
+  id               String   @id @default(cuid())
+  userId           String
+  credentialId     String?  // null for provider license alerts
+  daysBeforeExpiry Int      // 60, 30, 14, 7, 0
+  sentAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, credentialId, daysBeforeExpiry])
+  @@index([userId])
+  @@map("credential_alerts")
+}
+
+// ─── Shift Messages ─────────────────────────────────────────────
+
+model ShiftMessage {
+  id        String   @id @default(cuid())
+  shiftId   String
+  senderId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  shift  Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  sender User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([shiftId, createdAt])
+  @@index([senderId])
+  @@map("shift_messages")
+}
+
+// ─── Preferred Workers ──────────────────────────────────────────
+
+model PreferredWorker {
+  id         String   @id @default(cuid())
+  providerId String
+  workerId   String
+  createdAt  DateTime @default(now())
+
+  provider User @relation("PreferredByProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  worker   User @relation("PreferredWorkers", fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, workerId])
+  @@index([providerId])
+  @@index([workerId])
+  @@map("preferred_workers")
 }

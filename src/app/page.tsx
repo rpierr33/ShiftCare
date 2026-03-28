@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Shield,
   Clock,
@@ -10,7 +10,6 @@ import {
   ArrowRight,
   CheckCircle,
   Users,
-  Briefcase,
   Calendar,
   MapPin,
   Star,
@@ -18,6 +17,8 @@ import {
   Check,
   Search,
   Activity,
+  Building2,
+  UserCheck,
 } from "lucide-react";
 
 /* ─── Shift Fulfillment Data ─── */
@@ -540,10 +541,16 @@ export default function LandingPage() {
 
       {/* ─── Hero Section ─── */}
       <section className="hero-gradient pt-28 pb-0 sm:pt-36 sm:pb-0 px-4">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-16 items-center pb-12 sm:pb-16">
-          {/* Left: Copy */}
-          <div>
-            <LiveShiftCounter />
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-5 gap-12 lg:gap-10 items-center pb-12 sm:pb-16">
+          {/* Left: Copy — takes 3 of 5 columns */}
+          <div className="lg:col-span-3">
+            <div className="inline-flex items-center gap-4 flex-wrap text-sm text-slate-500 mb-6">
+              <span className="font-semibold text-slate-700">2,400+ Shifts Filled</span>
+              <span className="text-slate-300">|</span>
+              <span className="font-semibold text-slate-700">500+ Healthcare Workers</span>
+              <span className="text-slate-300">|</span>
+              <span className="font-semibold text-slate-700">120+ Employers</span>
+            </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] text-slate-900">
               Fill Open Shifts
@@ -554,27 +561,73 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            <p className="mt-6 text-xl text-slate-500 max-w-2xl leading-relaxed">
-              The fastest way to connect healthcare agencies with qualified
-              nurses, aides, and caregivers. Post a shift. Get matched
-              instantly. Move on.
-            </p>
+            {/* Split Hero — Three-sided value prop */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Agency Column */}
+              <div className="bg-teal-50 border-l-4 border-teal-600 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Building2 className="h-5 w-5 text-teal-600" />
+                  <h3 className="text-sm font-bold text-teal-800 uppercase tracking-wide">
+                    For Providers
+                  </h3>
+                </div>
+                <p className="text-slate-700 text-sm leading-relaxed mb-4">
+                  Post a shift in 2 minutes.
+                  <br />
+                  Get matched instantly.
+                </p>
+                <Link
+                  href="/signup?role=PROVIDER"
+                  className="inline-flex items-center gap-2 bg-teal-600 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-teal-700 transition-all text-sm shadow-lg shadow-teal-600/20 hover:shadow-teal-600/30 hover:-translate-y-0.5"
+                >
+                  Post a Shift
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
 
-            <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
-              <Link
-                href="/signup?role=PROVIDER"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-cyan-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-cyan-700 transition-all text-base shadow-lg shadow-cyan-600/25 hover:shadow-xl hover:shadow-cyan-600/30 hover:-translate-y-0.5"
-              >
-                Post a Shift
-                <ArrowRight size={18} />
-              </Link>
-              <Link
-                href="/signup?role=WORKER"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-white text-slate-900 font-semibold px-8 py-4 rounded-xl border-2 border-slate-200 hover:border-cyan-300 hover:bg-slate-50 transition-all text-base hover:-translate-y-0.5"
-              >
-                Find Work
-                <ArrowRight size={18} />
-              </Link>
+              {/* Private Payer Column */}
+              <div className="bg-violet-50 border-l-4 border-violet-500 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="h-5 w-5 text-violet-600" />
+                  <h3 className="text-sm font-bold text-violet-800 uppercase tracking-wide">
+                    For Families
+                  </h3>
+                </div>
+                <p className="text-slate-700 text-sm leading-relaxed mb-4">
+                  Find trusted care for a loved one.
+                  <br />
+                  No subscription needed.
+                </p>
+                <Link
+                  href="/signup?role=PROVIDER"
+                  className="inline-flex items-center gap-2 bg-violet-600 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-violet-700 transition-all text-sm shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 hover:-translate-y-0.5"
+                >
+                  Hire a Caregiver
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+
+              {/* Worker Column */}
+              <div className="bg-slate-50 border-l-4 border-slate-400 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <UserCheck className="h-5 w-5 text-slate-600" />
+                  <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                    For Workers
+                  </h3>
+                </div>
+                <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                  Employer and private shifts.
+                  <br />
+                  Work when you want.
+                </p>
+                <Link
+                  href="/signup?role=WORKER"
+                  className="inline-flex items-center gap-2 bg-slate-700 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-slate-800 transition-all text-sm shadow-lg shadow-slate-700/20 hover:shadow-slate-700/30 hover:-translate-y-0.5"
+                >
+                  Find Work
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
 
             {/* Social proof */}
@@ -593,7 +646,7 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400">
                 Trusted by{" "}
                 <span className="text-slate-600 font-medium">
-                  120+ healthcare agencies
+                  120+ healthcare employers
                 </span>{" "}
                 across Florida
               </p>
@@ -601,7 +654,8 @@ export default function LandingPage() {
           </div>
 
           {/* Right: Shift Fulfillment Engine */}
-          <div className="hidden lg:block">
+          {/* Right: Graphic — takes 2 of 5 columns */}
+          <div className="hidden lg:block lg:col-span-2">
             <ShiftFulfillmentEngine />
           </div>
         </div>
@@ -616,7 +670,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0">
             <AnimatedStat value={2400} suffix="+" label="Shifts Filled" showDivider={true} />
             <AnimatedStat value={500} suffix="+" label="Healthcare Workers" showDivider={true} />
-            <AnimatedStat value={120} suffix="+" label="Agencies" showDivider={true} />
+            <AnimatedStat value={120} suffix="+" label="Employers" showDivider={true} />
             <AnimatedStat value={4} suffix="hr" label="Avg Fill Time" showDivider={false} />
           </div>
         </div>
@@ -699,29 +753,29 @@ export default function LandingPage() {
               Start Free. Scale When Ready.
             </h2>
             <p className="text-slate-500 text-lg mt-4 max-w-xl mx-auto leading-relaxed">
-              Post up to 3 shifts per month free. Workers always free. No
-              credit card required.
+              Subscribe to remove per-shift fees. Workers always free.
+              No credit card required to start.
             </p>
           </div>
           <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             <PricingCard
-              name="Starter"
-              price="Free"
+              name="Free"
+              price="$0"
               period=""
               description="3 shifts/month"
               highlight={false}
             />
             <PricingCard
-              name="Growth"
-              price="$99"
+              name="Starter"
+              price="$49"
               period="/mo"
               description="25 shifts/month"
               highlight={true}
             />
             <PricingCard
-              name="Enterprise"
-              price="Custom"
-              period=""
+              name="Professional"
+              price="$149"
+              period="/mo"
               description="Unlimited shifts"
               highlight={false}
             />
@@ -748,15 +802,15 @@ export default function LandingPage() {
             Ready to Fill Shifts Faster?
           </h2>
           <p className="text-slate-500 text-lg mt-4 max-w-xl mx-auto leading-relaxed">
-            Join 120+ agencies already using ShiftCare to keep their
-            facilities fully staffed.
+            Whether you run a healthcare business or need care for a loved one,
+            ShiftCare connects you with qualified healthcare professionals.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/signup?role=PROVIDER"
-              className="inline-flex items-center gap-2.5 bg-emerald-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-emerald-700 transition-all text-base shadow-lg shadow-emerald-600/25 hover:shadow-xl hover:shadow-emerald-600/30 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2.5 bg-cyan-600 text-white font-semibold px-8 py-4 rounded-xl hover:bg-cyan-700 transition-all text-base shadow-lg shadow-cyan-600/25 hover:shadow-xl hover:shadow-cyan-600/30 hover:-translate-y-0.5"
             >
-              Get Started Free
+              I Need to Hire
               <ArrowRight size={18} />
             </Link>
             <Link
@@ -789,12 +843,12 @@ export default function LandingPage() {
               >
                 Pricing
               </Link>
-              <a
-                href="#how-it-works"
+              <Link
+                href="/#how-it-works"
                 className="text-sm text-slate-400 hover:text-white transition-colors"
               >
                 How It Works
-              </a>
+              </Link>
               <Link
                 href="/login"
                 className="text-sm text-slate-400 hover:text-white transition-colors"
@@ -814,9 +868,17 @@ export default function LandingPage() {
               &copy; {new Date().getFullYear()} ShiftCare. All rights
               reserved.
             </p>
-            <p className="text-xs text-slate-600">
-              Made for healthcare. Built in Florida.
-            </p>
+            <div className="flex items-center gap-6">
+              <Link href="/terms" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                Terms of Service
+              </Link>
+              <Link href="/privacy" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                Privacy Policy
+              </Link>
+              <a href="mailto:support@shiftcare.com" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                Contact
+              </a>
+            </div>
           </div>
         </div>
       </footer>
@@ -827,11 +889,11 @@ export default function LandingPage() {
 /* ─── How It Works Tabs ─── */
 
 function HowItWorksTabs() {
-  const [activeTab, setActiveTab] = useState<"agencies" | "workers">(
-    "agencies"
+  const [activeTab, setActiveTab] = useState<"employers" | "families" | "workers">(
+    "employers"
   );
 
-  const agencySteps = [
+  const employerSteps = [
     {
       number: 1,
       title: "Post a Shift",
@@ -852,6 +914,30 @@ function HowItWorksTabs() {
       description:
         "A worker accepts, shows up, and you track everything from your dashboard.",
       icon: <CheckCircle size={22} className="text-cyan-600" />,
+    },
+  ];
+
+  const familySteps = [
+    {
+      number: 1,
+      title: "Tell Us What You Need",
+      description:
+        "Describe the care your loved one needs — role, schedule, and location. No paperwork required.",
+      icon: <Calendar size={22} className="text-violet-600" />,
+    },
+    {
+      number: 2,
+      title: "Get Matched",
+      description:
+        "We connect you with verified, background-checked caregivers in your area.",
+      icon: <Users size={22} className="text-violet-600" />,
+    },
+    {
+      number: 3,
+      title: "Care Delivered",
+      description:
+        "A caregiver accepts, arrives on time, and you only pay for completed care.",
+      icon: <CheckCircle size={22} className="text-violet-600" />,
     },
   ];
 
@@ -879,21 +965,31 @@ function HowItWorksTabs() {
     },
   ];
 
-  const steps = activeTab === "agencies" ? agencySteps : workerSteps;
+  const steps = activeTab === "employers" ? employerSteps : activeTab === "families" ? familySteps : workerSteps;
 
   return (
     <div>
       <div className="flex justify-center mb-14">
         <div className="inline-flex bg-slate-100 rounded-full p-1">
           <button
-            onClick={() => setActiveTab("agencies")}
+            onClick={() => setActiveTab("employers")}
             className={`px-7 py-2.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === "agencies"
+              activeTab === "employers"
                 ? "bg-white text-cyan-600 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            For Agencies
+            For Employers
+          </button>
+          <button
+            onClick={() => setActiveTab("families")}
+            className={`px-7 py-2.5 rounded-full text-sm font-semibold transition-all ${
+              activeTab === "families"
+                ? "bg-white text-violet-600 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            For Families
           </button>
           <button
             onClick={() => setActiveTab("workers")}

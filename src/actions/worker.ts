@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-utils";
+import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 import type { WorkerRole } from "@prisma/client";
 
@@ -52,6 +53,9 @@ export async function updateWorkerProfile(input: UpdateWorkerProfileInput): Prom
     },
   });
 
+  revalidatePath("/worker/shifts");
+  revalidatePath("/worker/my-shifts");
+
   return { success: true };
 }
 
@@ -59,7 +63,7 @@ export async function getWorkerProfile() {
   const user = await getSessionUser();
   if (user.role !== "WORKER") return null;
 
-  return db.workerProfile.findUnique({
+  const profile = await db.workerProfile.findUnique({
     where: { userId: user.id },
     include: {
       user: { select: { name: true, email: true, phone: true } },
@@ -67,6 +71,28 @@ export async function getWorkerProfile() {
       availabilitySlots: true,
     },
   });
+
+  if (!profile) return null;
+
+  // Serialize Decimal fields to numbers for client components
+  return {
+    ...profile,
+    totalEarnings: parseFloat(String(profile.totalEarnings)),
+  };
+}
+
+export async function initiateStripeConnect(): Promise<ActionResult<{ url: string }>> {
+  const user = await getSessionUser();
+  if (user.role !== "WORKER") return { success: false, error: "Only workers can set up payouts." };
+
+  try {
+    const { createWorkerConnectAccount } = await import("@/lib/stripe-actions");
+    const url = await createWorkerConnectAccount(user.id);
+    return { success: true, data: { url } };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Failed to set up payouts.";
+    return { success: false, error: msg };
+  }
 }
 
 export async function getAvailableWorkers(filters?: {
