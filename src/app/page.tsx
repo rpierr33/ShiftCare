@@ -24,8 +24,9 @@ import {
 } from "lucide-react";
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
-import { FAQSection } from "@/components/shared/faq-section";
+import { FAQSection, WaitlistSection } from "@/components/shared/faq-section";
 import { TestimonialsSection } from "@/components/shared/testimonials-section";
+import { EarningsCalculator } from "@/components/shared/earnings-calculator";
 
 /* ─── Shift Fulfillment Data ─── */
 const SHIFT_DATA = [
@@ -642,7 +643,7 @@ export default function LandingPage() {
 
       {/* ─── Hero Section ─── */}
       <section className="hero-gradient pt-28 pb-0 sm:pt-36 sm:pb-0 px-4">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-5 gap-12 lg:gap-10 items-center pb-12 sm:pb-16">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-5 gap-12 lg:gap-10 items-start pb-12 sm:pb-16">
           {/* Left: Copy — takes 3 of 5 columns */}
           <div className="lg:col-span-3">
             <div className="inline-flex items-center gap-4 flex-wrap text-sm text-slate-500 mb-6">
@@ -787,7 +788,7 @@ export default function LandingPage() {
 
           {/* Right: Shift Fulfillment Engine */}
           {/* Right: Graphic — takes 2 of 5 columns */}
-          <div className="hidden lg:block lg:col-span-2">
+          <div className="hidden lg:block lg:col-span-2 lg:sticky lg:top-24">
             <ShiftFulfillmentEngine />
           </div>
         </div>
@@ -800,8 +801,8 @@ export default function LandingPage() {
       <section className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 lg:gap-0">
-            <AnimatedStat value={2400} suffix="+" label="Shifts Filled" showDivider={true} />
-            <AnimatedStat value={500} suffix="+" label="Healthcare Workers" showDivider={true} />
+            <AnimatedStat value={2400} suffix="+" label="Shifts Filled Since Launch" showDivider={true} />
+            <AnimatedStat value={500} suffix="+" label="Verified Workers and Growing" showDivider={true} />
             <AnimatedStat value={120} suffix="+" label="Employers" showDivider={true} />
             <AnimatedStat value={30} suffix=" min" label="Avg Fill Time" prefix="<" showDivider={false} />
           </div>
@@ -827,6 +828,21 @@ export default function LandingPage() {
             </p>
           </div>
           <HowItWorksTabs />
+        </div>
+      </section>
+
+      {/* ─── Earnings Calculator ─── */}
+      <section className="py-20 sm:py-28 px-4 bg-white">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block text-sm font-semibold text-cyan-600 uppercase tracking-wider mb-3">
+              For Workers
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              See What You Could Earn
+            </h2>
+          </div>
+          <EarningsCalculator />
         </div>
       </section>
 
@@ -945,6 +961,8 @@ export default function LandingPage() {
               period=""
               description="3 shifts/month"
               highlight={false}
+              ctaLabel="Start Free"
+              ctaHref="/signup?plan=free"
             />
             <PricingCard
               name="Starter"
@@ -952,6 +970,8 @@ export default function LandingPage() {
               period="/mo"
               description="25 shifts/month"
               highlight={true}
+              ctaLabel="Try Starter"
+              ctaHref="/signup?plan=starter"
             />
             <PricingCard
               name="Professional"
@@ -959,6 +979,8 @@ export default function LandingPage() {
               period="/mo"
               description="Unlimited shifts"
               highlight={false}
+              ctaLabel="Go Professional"
+              ctaHref="/signup?plan=professional"
             />
           </div>
           <div className="text-center mt-10">
@@ -981,6 +1003,9 @@ export default function LandingPage() {
 
       {/* ─── FAQ ─── */}
       <FAQSection />
+
+      {/* ─── Waitlist ─── */}
+      <WaitlistSection />
 
       {/* ─── Final CTA ─── */}
       <section className="py-20 sm:py-28 px-4 bg-white">
@@ -1197,12 +1222,16 @@ function PricingCard({
   period,
   description,
   highlight,
+  ctaLabel,
+  ctaHref,
 }: {
   name: string;
   price: string;
   period: string;
   description: string;
   highlight: boolean;
+  ctaLabel: string;
+  ctaHref: string;
 }) {
   return (
     <div
@@ -1238,12 +1267,23 @@ function PricingCard({
         )}
       </div>
       <p
-        className={`text-sm ${
+        className={`text-sm mb-4 ${
           highlight ? "text-cyan-100" : "text-slate-500"
         }`}
       >
         {description}
       </p>
+      <Link
+        href={ctaHref}
+        className={`inline-flex items-center justify-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition-all hover:-translate-y-0.5 ${
+          highlight
+            ? "bg-white text-cyan-600 hover:bg-cyan-50 shadow-lg shadow-black/10"
+            : "bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20"
+        }`}
+      >
+        {ctaLabel}
+        <ArrowRight size={14} />
+      </Link>
     </div>
   );
 }

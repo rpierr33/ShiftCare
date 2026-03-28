@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MapPin, Loader2 } from "lucide-react";
 
 const US_STATES = [
   "Georgia",
@@ -62,69 +63,109 @@ const FAQ_ITEMS = [
   },
 ];
 
-function WaitlistForm() {
+function WaitlistForm({ variant = "inline" }: { variant?: "inline" | "standalone" }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submittedState, setSubmittedState] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; state?: string }>({});
 
-  function handleSubmit(e: React.FormEvent) {
+  function validate(): boolean {
+    const newErrors: { email?: string; state?: string } = {};
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!state) {
+      newErrors.state = "Please select a state";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !state) return;
+    if (!validate()) return;
+
+    setLoading(true);
+    setErrors({});
 
     // Store in localStorage for now; hook up to mailing list later
-    const existing = JSON.parse(localStorage.getItem("shiftcare-waitlist") || "[]");
-    existing.push({ email, state, date: new Date().toISOString() });
-    localStorage.setItem("shiftcare-waitlist", JSON.stringify(existing));
+    try {
+      const existing = JSON.parse(localStorage.getItem("shiftcare-waitlist") || "[]");
+      existing.push({ email, state, date: new Date().toISOString() });
+      localStorage.setItem("shiftcare-waitlist", JSON.stringify(existing));
+    } catch {
+      // silently continue
+    }
 
+    // Simulate brief network delay
+    await new Promise((r) => setTimeout(r, 600));
+    setLoading(false);
     setSubmittedState(state);
     setSubmitted(true);
   }
 
   if (submitted) {
     return (
-      <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700">
-        We&apos;ll notify you when ShiftCare launches in {submittedState}!
+      <div className={`bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-700 ${variant === "inline" ? "mt-4" : ""}`}>
+        You&apos;re on the list! We&apos;ll notify you when ShiftCare launches in {submittedState}.
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-end gap-2">
-      <input
-        type="email"
-        placeholder="your@email.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        className="flex-1 min-w-0 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-      />
-      <select
-        value={state}
-        onChange={(e) => setState(e.target.value)}
-        required
-        className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-      >
-        <option value="">Select state</option>
-        {US_STATES.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        className="px-4 py-2 text-sm font-semibold bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors whitespace-nowrap"
-      >
-        Notify Me
-      </button>
+    <form onSubmit={handleSubmit} className={`${variant === "inline" ? "mt-4" : ""} space-y-2`}>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <input
+            type="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: undefined })); }}
+            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${errors.email ? "border-red-300" : "border-slate-200"}`}
+          />
+          {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+        </div>
+        <div>
+          <select
+            value={state}
+            onChange={(e) => { setState(e.target.value); setErrors((prev) => ({ ...prev, state: undefined })); }}
+            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${errors.state ? "border-red-300" : "border-slate-200"}`}
+          >
+            <option value="">Select state</option>
+            {US_STATES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          {errors.state && <p className="text-xs text-red-500 mt-1">{errors.state}</p>}
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 text-sm font-semibold bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              Joining...
+            </>
+          ) : (
+            "Notify Me"
+          )}
+        </button>
+      </div>
     </form>
   );
 }
 
 export function FAQSection() {
   return (
-    <section className="py-20 sm:py-28 px-4 bg-white">
+    <section id="faq" className="py-20 sm:py-28 px-4 bg-white scroll-mt-20">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-14">
           <span className="inline-block text-sm font-semibold text-cyan-600 uppercase tracking-wider mb-3">
@@ -161,11 +202,32 @@ export function FAQSection() {
               </summary>
               <div className="px-6 pb-5 text-sm text-slate-600 leading-relaxed">
                 {item.answer}
-                {item.key === "expansion" && <WaitlistForm />}
+                {item.key === "expansion" && <WaitlistForm variant="inline" />}
               </div>
             </details>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+export function WaitlistSection() {
+  return (
+    <section className="py-16 sm:py-20 px-4 bg-slate-50 border-t border-slate-200">
+      <div className="max-w-xl mx-auto text-center">
+        <div className="flex justify-center mb-4">
+          <div className="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center">
+            <MapPin size={22} className="text-cyan-600" />
+          </div>
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Not in Florida yet?
+        </h2>
+        <p className="text-slate-500 text-base mt-3 mb-8 max-w-md mx-auto leading-relaxed">
+          We&apos;re expanding to new states soon. Join the waitlist and be the first to know when ShiftCare launches near you.
+        </p>
+        <WaitlistForm variant="standalone" />
       </div>
     </section>
   );

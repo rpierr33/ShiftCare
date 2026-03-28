@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, X as XIcon, ArrowRight, Shield } from "lucide-react";
+import { Check, X as XIcon, ArrowRight, Shield, Calculator, TrendingUp } from "lucide-react";
 
 const MONTHLY_PRICES = { Free: "$0", Starter: "$49", Professional: "$149" };
 const ANNUAL_PRICES = { Free: "$0", Starter: "$39", Professional: "$119" };
@@ -65,7 +65,7 @@ const COMPARISON_ROWS: {
   { feature: "Worker profile unlocks", free: "2", starter: "15", professional: "Unlimited" },
   { feature: "Same-day pay option", free: "check", starter: "check", professional: "check" },
   { feature: "Preferred worker invites", free: "x", starter: "check", professional: "check" },
-  { feature: "Priority support", free: "x", starter: "x", professional: "check" },
+  { feature: "Priority email support", free: "x", starter: "check", professional: "check" },
   { feature: "Analytics dashboard", free: "x", starter: "Basic", professional: "Advanced" },
   { feature: "Bulk shift posting", free: "x", starter: "check", professional: "check" },
   { feature: "Credential verification", free: "check", starter: "check", professional: "check" },
@@ -88,6 +88,122 @@ function ComparisonCell({ value }: { value: string }) {
     );
   }
   return <span className="text-sm font-medium text-slate-700">{value}</span>;
+}
+
+function BreakEvenCalculator() {
+  const [shifts, setShifts] = useState(10);
+  const [avgValue, setAvgValue] = useState(200);
+
+  const perShiftCost = shifts * avgValue * 0.15;
+  const starterPrice = 49;
+  const savings = perShiftCost - starterPrice;
+  const starterWins = savings > 0;
+
+  return (
+    <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-6 sm:p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
+            <Calculator size={20} className="text-cyan-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">
+              When Does Starter Pay for Itself?
+            </h3>
+            <p className="text-sm text-slate-500">
+              Compare per-shift fees vs. a flat monthly plan
+            </p>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Shifts per month
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={50}
+              value={shifts}
+              onChange={(e) => setShifts(Number(e.target.value))}
+              className="w-full accent-cyan-600"
+            />
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-xs text-slate-400">1</span>
+              <span className="text-lg font-bold text-cyan-600">{shifts}</span>
+              <span className="text-xs text-slate-400">50</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Average shift value ($)
+            </label>
+            <input
+              type="number"
+              min={50}
+              max={1000}
+              value={avgValue}
+              onChange={(e) => setAvgValue(Math.max(0, Number(e.target.value)))}
+              className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500"
+            />
+          </div>
+        </div>
+
+        {/* Comparison */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Per-Shift Fees (15%)
+            </p>
+            <p className="text-2xl font-extrabold text-slate-900">
+              ${Math.round(perShiftCost).toLocaleString()}
+              <span className="text-sm font-normal text-slate-500">/mo</span>
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              {shifts} shifts x ${avgValue} x 15%
+            </p>
+          </div>
+          <div className="bg-white rounded-xl border border-cyan-200 p-4">
+            <p className="text-xs font-semibold text-cyan-600 uppercase tracking-wider mb-1">
+              Starter Plan
+            </p>
+            <p className="text-2xl font-extrabold text-slate-900">
+              $49
+              <span className="text-sm font-normal text-slate-500">/mo</span>
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              Flat rate, no per-shift fees
+            </p>
+          </div>
+        </div>
+
+        {/* Result */}
+        <div
+          className={`rounded-xl p-4 flex items-center gap-3 ${
+            starterWins
+              ? "bg-emerald-50 border border-emerald-200"
+              : "bg-slate-50 border border-slate-200"
+          }`}
+        >
+          <TrendingUp
+            size={20}
+            className={starterWins ? "text-emerald-600" : "text-slate-400"}
+          />
+          <p
+            className={`text-sm font-semibold ${
+              starterWins ? "text-emerald-700" : "text-slate-600"
+            }`}
+          >
+            {starterWins
+              ? `Starter saves you $${Math.round(savings).toLocaleString()}/month vs. per-shift fees!`
+              : `Free plan is best for your volume. You'd pay $${Math.round(perShiftCost)}/mo in per-shift fees.`}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function PricingContent() {
@@ -332,6 +448,9 @@ export function PricingContent() {
           </div>
         </div>
       </section>
+
+      {/* Break-Even Calculator */}
+      <BreakEvenCalculator />
     </>
   );
 }

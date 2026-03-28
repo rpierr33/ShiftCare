@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PublicNav } from "@/components/shared/public-nav";
 import { PublicFooter } from "@/components/shared/public-footer";
+import { EarningsCalculator } from "@/components/shared/earnings-calculator";
 
 const FEATURES = [
   {
@@ -227,6 +228,13 @@ export default function ForWorkersPage() {
               {b.label}
             </span>
           ))}
+        </div>
+      </section>
+
+      {/* Earnings Calculator */}
+      <section className="py-20 sm:py-28 px-4 bg-white">
+        <div className="max-w-2xl mx-auto">
+          <EarningsCalculator />
         </div>
       </section>
 

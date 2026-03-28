@@ -199,11 +199,13 @@ function SignUpForm() {
     setLoading(false);
   }
 
-  // Auto-redirect after signup success
+  const [showNextSteps, setShowNextSteps] = useState(false);
+
+  // Show "What Happens Next" screen after checkmark animation
   useEffect(() => {
     if (!signupSuccess) return;
     const timer = setTimeout(() => {
-      window.location.href = "/onboarding";
+      setShowNextSteps(true);
     }, 2000);
     return () => clearTimeout(timer);
   }, [signupSuccess]);
@@ -243,7 +245,7 @@ function SignUpForm() {
         <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
 
           {/* Post-Signup Confirmation */}
-          {signupSuccess && (
+          {signupSuccess && !showNextSteps && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-5 animate-bounce">
                 <CheckCircle size={32} className="text-emerald-600" />
@@ -258,6 +260,79 @@ function SignUpForm() {
                 <Loader2 size={16} className="animate-spin" />
                 Setting up your account...
               </div>
+            </div>
+          )}
+
+          {/* What Happens Next */}
+          {signupSuccess && showNextSteps && (
+            <div className="py-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4 mx-auto">
+                <CheckCircle size={24} className="text-emerald-600" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">
+                What Happens Next
+              </h2>
+              <p className="text-sm text-slate-500 mb-6">
+                Here&apos;s what to expect, {signupName || "welcome"}
+              </p>
+
+              {role === "WORKER" ? (
+                <div className="space-y-3 text-left mb-8">
+                  <div className="flex items-start gap-3 bg-slate-50 rounded-xl p-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-sm font-bold">1</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Complete your profile</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Takes about 2 minutes</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 bg-slate-50 rounded-xl p-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-sm font-bold">2</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Submit credentials</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Provisional access in 24 hours</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 bg-slate-50 rounded-xl p-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-sm font-bold">3</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Browse and accept shifts</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Start earning on your schedule</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 text-left mb-8">
+                  <div className="flex items-start gap-3 bg-slate-50 rounded-xl p-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">1</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Complete company profile</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Takes about 3 minutes</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 bg-slate-50 rounded-xl p-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">2</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Post your first shift</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Go live in under 2 minutes</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 bg-slate-50 rounded-xl p-4">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">3</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Workers start accepting</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Within 30 minutes on average</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Link
+                href="/onboarding"
+                className="inline-flex items-center justify-center gap-2 w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg shadow-cyan-600/20 text-sm"
+              >
+                {role === "WORKER" ? "Set Up My Profile" : "Set Up My Agency"}
+                <ArrowRight size={16} />
+              </Link>
             </div>
           )}
 

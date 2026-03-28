@@ -6,7 +6,7 @@ export default auth((req) => {
   const user = req.auth?.user as { role?: string; onboardingCompleted?: boolean } | undefined;
 
   // Let public routes through
-  const publicPaths = ["/", "/pricing", "/for-workers", "/demo", "/forgot-password", "/reset-password", "/terms", "/privacy", "/api/auth", "/api/webhooks", "/how-it-works"];
+  const publicPaths = ["/", "/pricing", "/for-workers", "/for-families", "/resources", "/demo", "/forgot-password", "/reset-password", "/terms", "/privacy", "/api/auth", "/api/webhooks", "/how-it-works"];
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
   }

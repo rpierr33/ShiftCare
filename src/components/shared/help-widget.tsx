@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Mail, Phone, HelpCircle, Send } from "lucide-react";
-import Link from "next/link";
+import { MessageCircle, X, Mail, Phone, HelpCircle, Send, CheckCircle, Copy } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export function HelpWidget() {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [sent, setSent] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   // Close on outside click
   useEffect(() => {
@@ -48,41 +52,93 @@ export function HelpWidget() {
 
           {/* Quick links */}
           <div className="p-4 space-y-2">
-            <Link
-              href="/#faq"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
+            <button
+              onClick={() => {
+                setOpen(false);
+                if (pathname === "/") {
+                  document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  window.location.href = "/#faq";
+                }
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group text-left"
             >
               <HelpCircle
                 size={18}
                 className="text-slate-400 group-hover:text-cyan-600 transition-colors"
               />
               <span className="text-sm text-slate-700 font-medium">FAQ</span>
-            </Link>
-            <a
-              href="mailto:support@shiftcare.com"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
-            >
-              <Mail
-                size={18}
-                className="text-slate-400 group-hover:text-cyan-600 transition-colors"
-              />
-              <span className="text-sm text-slate-700 font-medium">
-                Email Us
-              </span>
-            </a>
-            <a
-              href="tel:+18005551234"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
-            >
-              <Phone
-                size={18}
-                className="text-slate-400 group-hover:text-cyan-600 transition-colors"
-              />
-              <span className="text-sm text-slate-700 font-medium">
-                Call Us
-              </span>
-            </a>
+            </button>
+
+            {/* Email Us */}
+            <div>
+              <button
+                onClick={() => {
+                  setShowEmail(!showEmail);
+                  setShowPhone(false);
+                  setEmailCopied(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group text-left"
+              >
+                <Mail
+                  size={18}
+                  className="text-slate-400 group-hover:text-cyan-600 transition-colors"
+                />
+                <span className="text-sm text-slate-700 font-medium">
+                  Email Us
+                </span>
+              </button>
+              {showEmail && (
+                <div className="flex items-center gap-2 px-3 py-2 ml-9 bg-slate-50 rounded-lg mt-1">
+                  <span className="text-sm text-slate-700 font-mono">support@shiftcare.com</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("support@shiftcare.com");
+                      setEmailCopied(true);
+                      setTimeout(() => setEmailCopied(false), 2000);
+                    }}
+                    className="ml-auto text-slate-400 hover:text-cyan-600 transition-colors p-1"
+                    title="Copy email"
+                  >
+                    {emailCopied ? (
+                      <CheckCircle size={14} className="text-emerald-500" />
+                    ) : (
+                      <Copy size={14} />
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Call Us */}
+            <div>
+              <button
+                onClick={() => {
+                  setShowPhone(!showPhone);
+                  setShowEmail(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group text-left"
+              >
+                <Phone
+                  size={18}
+                  className="text-slate-400 group-hover:text-cyan-600 transition-colors"
+                />
+                <span className="text-sm text-slate-700 font-medium">
+                  Call Us
+                </span>
+              </button>
+              {showPhone && (
+                <div className="flex items-center gap-2 px-3 py-2 ml-9 bg-slate-50 rounded-lg mt-1">
+                  <span className="text-sm text-slate-700 font-mono">(800) 555-0199</span>
+                  <a
+                    href="tel:+18005550199"
+                    className="ml-auto text-cyan-600 hover:text-cyan-700 text-xs font-semibold transition-colors"
+                  >
+                    Call
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Divider */}

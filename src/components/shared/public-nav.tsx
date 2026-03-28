@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 
 interface PublicNavProps {
-  currentPage?: "home" | "pricing" | "login" | "signup";
+  currentPage?: "home" | "pricing" | "login" | "signup" | "for-families" | "for-workers" | "resources";
 }
 
 export function PublicNav({ currentPage }: PublicNavProps) {
@@ -62,6 +62,12 @@ export function PublicNav({ currentPage }: PublicNavProps) {
           <Link href="/for-workers" className={linkClass("for-workers")}>
             For Workers
           </Link>
+          <Link href="/for-families" className={linkClass("for-families")}>
+            For Families
+          </Link>
+          <Link href="/resources" className={linkClass("resources")}>
+            Resources
+          </Link>
           <Link href="/pricing" className={linkClass("pricing")}>
             Pricing
           </Link>
@@ -88,36 +94,50 @@ export function PublicNav({ currentPage }: PublicNavProps) {
           </button>
 
           {open && (
-            <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
+            <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] max-w-[280px] bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
               <Link
                 href="/#how-it-works"
                 onClick={close}
-                className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 How It Works
               </Link>
               <Link
                 href="/for-workers"
                 onClick={close}
-                className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 For Workers
               </Link>
               <Link
+                href="/for-families"
+                onClick={close}
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                For Families
+              </Link>
+              <Link
+                href="/resources"
+                onClick={close}
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Resources
+              </Link>
+              <Link
                 href="/pricing"
                 onClick={close}
-                className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Pricing
               </Link>
               <Link
                 href="/login"
                 onClick={close}
-                className="block px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Sign In
               </Link>
-              <div className="px-4 pt-2 pb-1">
+              <div className="px-6 pt-2 pb-1">
                 <Link
                   href="/signup"
                   onClick={close}
