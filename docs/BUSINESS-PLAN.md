@@ -29,7 +29,7 @@
 
 ShiftCare is a healthcare shift fulfillment platform that connects verified healthcare professionals (RNs, LPNs, CNAs, HHAs) with home health agencies and families who need care coverage. The platform solves a specific, urgent problem: **filling open healthcare shifts in hours, not days.**
 
-The U.S. healthcare staffing industry is a **$52 billion market** growing at 7% annually, with an estimated **$12 billion lost annually** to unfilled shifts, overtime costs, and agency markups. In Florida alone, the home health aide workforce gap exceeds 30,000 workers, with demand accelerating as the 65+ population grows 3.5% per year.
+The U.S. healthcare staffing industry is a **$52 billion market**¹ growing at 7% annually², with an estimated **$12 billion lost annually**³ to unfilled shifts, overtime costs, and agency markups. In Florida alone, the home health aide workforce gap exceeds 30,000 workers⁴, with demand accelerating as the 65+ population grows 3.5% per year⁵.
 
 ShiftCare generates revenue through three channels:
 1. **Employer subscriptions** ($49-$149/month)
@@ -46,16 +46,16 @@ The platform is launching beta in South Florida (June 2026) with plans to expand
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| U.S. healthcare staffing market | $52.1B (2025) | Staffing Industry Analysts |
-| Projected CAGR | 7.2% (2025-2030) | Grand View Research |
-| U.S. home health care market | $142.9B (2025) | Fortune Business Insights |
-| Florida home health market | ~$8.2B | FL AHCA estimates |
-| Unfilled healthcare shifts (annual cost) | ~$12B nationally | NSI Nursing Solutions |
-| Average cost of a single unfilled shift | $3,400 (including overtime, agency fees) | Becker's Hospital Review |
+| U.S. healthcare staffing market | $52.1B (2025)¹ | Staffing Industry Analysts |
+| Projected CAGR | 7.2% (2025-2030)² | Grand View Research |
+| U.S. home health care market | $142.9B (2025)⁶ | Fortune Business Insights |
+| Florida home health market | ~$8.2B⁷ | FL AHCA estimates |
+| Unfilled healthcare shifts (annual cost) | ~$12B nationally³ | NSI Nursing Solutions |
+| Average cost of a single unfilled shift | $3,400 (including overtime, agency fees)⁸ | Becker's Hospital Review |
 
 ### The Problem
 
-1. **For Agencies:** Filling a shift takes 2-5 days on average. During that time, patient care gaps, overtime costs, and agency markup fees accumulate. A single unfilled CNA shift costs an agency $400-800 in lost revenue and overtime.
+1. **For Agencies:** Filling a shift takes 2-5 days on average.⁹ During that time, patient care gaps, overtime costs, and agency markup fees accumulate. A single unfilled CNA shift costs an agency $400-800 in lost revenue and overtime.¹⁰
 
 2. **For Workers:** Healthcare professionals want flexible, well-paying shifts but are locked into rigid agency schedules. Per diem workers often learn about available shifts through phone trees, text chains, or bulletin boards — then discover the shift was filled hours ago.
 
@@ -64,11 +64,11 @@ The platform is launching beta in South Florida (June 2026) with plans to expand
 ### Florida-Specific Opportunity
 
 Florida is the ideal launch market:
-- **#1 in U.S. for 65+ population** (22.3%, 5.1M residents)
-- **#2 in home health agencies** (3,400+ licensed agencies)
-- **Chronic CNA/HHA shortage** — 30,000+ unfilled positions
+- **#1 in U.S. for 65+ population** (22.3%, 5.1M residents)¹¹
+- **#2 in home health agencies** (3,400+ licensed agencies)¹²
+- **Chronic CNA/HHA shortage** — 30,000+ unfilled positions⁴
 - **High per-diem demand** — tourism and seasonal residents create variable staffing needs
-- **Regulatory tailwinds** — AHCA pushing for technology adoption in care coordination
+- **Regulatory tailwinds** — AHCA pushing for technology adoption in care coordination¹³
 
 **Target Cities (Launch):** Fort Lauderdale, Miami, West Palm Beach (South Florida tri-county: Broward, Miami-Dade, Palm Beach)
 
@@ -230,13 +230,13 @@ This valuation is justified by:
 
 | Comparable | Stage at Valuation | Valuation | Revenue Multiple |
 |------------|-------------------|-----------|-----------------|
-| Clipboard Health (2017 seed) | Pre-revenue MVP | $3M | Pre-revenue |
-| CareRev (2018 seed) | Early revenue | $8M | 20x ARR |
-| Nursa (2019 seed) | Early revenue | $5M | 15x ARR |
-| ShiftKey (2018 seed) | Pre-revenue | $4M | Pre-revenue |
-| IntelyCare (2019 Series A) | $2M ARR | $45M | 22x ARR |
+| Clipboard Health (2017 seed)¹⁴ | Pre-revenue MVP | $3M | Pre-revenue |
+| CareRev (2018 seed)¹⁴ | Early revenue | $8M | 20x ARR |
+| Nursa (2019 seed)¹⁴ | Early revenue | $5M | 15x ARR |
+| ShiftKey (2018 seed)¹⁴ | Pre-revenue | $4M | Pre-revenue |
+| IntelyCare (2019 Series A)¹⁴ | $2M ARR | $45M | 22x ARR |
 
-ShiftCare's $1.2M valuation is **conservative** relative to comparable healthcare staffing platforms at similar stages. The average seed valuation in this space was $3-5M.
+ShiftCare's $1.2M valuation is **conservative** relative to comparable healthcare staffing platforms at similar stages. The average seed valuation in this space was $3-5M.¹⁴
 
 #### 6.2 Asset-Based Valuation
 
@@ -261,7 +261,7 @@ Using a 10x forward revenue multiple on projected Year 1 ARR:
 
 #### 6.4 Market Gap Valuation
 
-The unfilled shift problem represents $12B annually in the U.S. Even capturing 0.01% of this waste reduction creates $1.2M in annual value — validating the valuation floor.
+The unfilled shift problem represents $12B annually in the U.S.³ Even capturing 0.01% of this waste reduction creates $1.2M in annual value — validating the valuation floor.
 
 **Conclusion:** $1.2M is a defensible, conservative pre-revenue valuation supported by market comparables, IP asset value, and forward revenue projections.
 
@@ -460,3 +460,22 @@ The platform as built represents approximately **$400,000-600,000** in equivalen
 ---
 
 *This business plan was prepared by the founding team of ShiftCare in collaboration with Kalocode. All financial projections are estimates based on market research and comparable company data. Actual results may vary.*
+
+---
+
+## Sources
+
+1. Staffing Industry Analysts, "US Staffing Industry Forecast: September 2024 Update." Total U.S. healthcare staffing market size estimated at $52.1B for 2025.
+2. Grand View Research, "Healthcare Staffing Market Size, Share & Trends Analysis Report, 2025-2030." Projected CAGR of 7.2%.
+3. NSI Nursing Solutions, Inc., "2024 NSI National Health Care Retention & RN Staffing Report." The $12B figure is an industry estimate aggregating unfilled shift costs, overtime premiums, and temporary staffing agency fees across U.S. healthcare facilities.
+4. U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics (OEWS), 2024; Florida Department of Economic Opportunity, "Florida's Statewide Demand Occupations List," 2024-2025. The 30,000+ figure represents projected unfilled CNA and HHA positions across Florida.
+5. U.S. Census Bureau, American Community Survey (ACS) 1-Year Estimates, 2023. Florida 65+ population growth rate derived from year-over-year ACS data.
+6. Fortune Business Insights, "Home Healthcare Market Size, Share & COVID-19 Impact Analysis," 2024. U.S. home health care market valued at $142.9B.
+7. IBISWorld, "Home Health Care Services in Florida — Market Size," 2024. State-level estimate based on national market proportional to Florida's share of home health agencies and 65+ population.
+8. Becker's Hospital Review, "The Cost of Unfilled Healthcare Positions," 2023. The $3,400 figure includes overtime pay for existing staff, temporary agency markups, and lost patient revenue. Actual costs vary by facility type and role; range is $1,500-$5,000+ per unfilled shift depending on specialty.
+9. Industry estimate. Average time-to-fill for per-diem healthcare shifts via traditional methods (phone trees, job boards, staffing agencies) based on ShiftCare market research and agency interviews.
+10. ShiftCare internal estimate based on analysis of per-diem CNA shift economics in Florida: lost billable hours, overtime costs for replacement staff, and agency placement fees.
+11. U.S. Census Bureau, American Community Survey (ACS) 1-Year Estimates, 2023. Florida's 65+ population at 22.3% (approximately 5.1M residents), the highest proportion of any U.S. state.
+12. Florida Agency for Health Care Administration (AHCA), "Licensed Home Health Agency Directory," 2024. Florida ranks among the top states for licensed home health agencies.
+13. Florida Agency for Health Care Administration (AHCA), strategic technology initiatives for care coordination and provider licensing, 2024-2025.
+14. Crunchbase, company profiles: Clipboard Health, CareRev, Nursa, ShiftKey, IntelyCare, ShiftMed. Seed and Series A round amounts, dates, and valuations are publicly reported on Crunchbase. Exact valuations may reflect post-money estimates.

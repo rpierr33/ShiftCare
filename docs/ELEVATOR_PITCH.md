@@ -14,9 +14,9 @@
 
 A nurse calls out sick at 6 AM. A CNA no-shows. A home health patient needs coverage by noon.
 
-The agency scrambles — calling down a phone list, texting personal contacts, posting on job boards that take days. Traditional staffing agencies charge 30-50% markups. Per diem workers hear about shifts through group texts and discover they were filled hours ago.
+The agency scrambles — calling down a phone list, texting personal contacts, posting on job boards that take days. Traditional staffing agencies charge 30-50% markups.³ Per diem workers hear about shifts through group texts and discover they were filled hours ago.
 
-**$12 billion is lost annually to unfilled healthcare shifts in the U.S.** In Florida alone, 30,000+ healthcare positions sit unfilled while qualified workers can't find flexible shifts that pay on time.
+**$12 billion is lost annually to unfilled healthcare shifts in the U.S.**¹ In Florida alone, 30,000+ healthcare positions sit unfilled² while qualified workers can't find flexible shifts that pay on time.
 
 ---
 
@@ -73,7 +73,7 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 | Workers choose their shifts | Shifts assigned by dispatcher |
 | Automated credential tracking | Manual phone verification |
 | Both parties rated | No accountability |
-| $49-149/mo flat subscription | Per-placement fees ($500-2,000) |
+| $49-149/mo flat subscription | Per-placement fees ($500-2,000)⁹ |
 
 ---
 
@@ -97,12 +97,12 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 
 | Metric | Value |
 |--------|-------|
-| U.S. healthcare staffing market | $52 billion |
-| Annual cost of unfilled shifts | $12 billion |
-| Florida home health market | $8.2 billion |
-| Florida home health agencies | 3,400+ licensed |
-| Florida 65+ population | 5.1 million (22.3%, #1 in U.S.) |
-| Unfilled CNA/HHA positions (FL) | 30,000+ |
+| U.S. healthcare staffing market | $52 billion⁴ |
+| Annual cost of unfilled shifts | $12 billion¹ |
+| Florida home health market | $8.2 billion⁵ |
+| Florida home health agencies | 3,400+ licensed⁶ |
+| Florida 65+ population | 5.1 million (22.3%, #1 in U.S.)⁷ |
+| Unfilled CNA/HHA positions (FL) | 30,000+² |
 
 **Target:** $240M serviceable market in Florida. 1% capture in Year 1 = $2.4M.
 
@@ -123,9 +123,9 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 
 **$1.2 million pre-revenue** — conservative relative to:
 
-- Clipboard Health seed ($3M, pre-revenue, 2017)
-- CareRev seed ($4.5M, early revenue, 2018)
-- Nursa seed ($3.5M, pre-revenue, 2020)
+- Clipboard Health seed ($3M, pre-revenue, 2017)⁸
+- CareRev seed ($4.5M, early revenue, 2018)⁸
+- Nursa seed ($3.5M, pre-revenue, 2020)⁸
 - ShiftCare IP replacement cost: $485K-705K
 - Forward revenue (10x Year 1 ARR, discounted): $1.24M
 
@@ -165,3 +165,17 @@ ShiftCare is launching its South Florida beta in June 2026. We're looking for:
 **Fill open shifts in hours, not days. Pay workers the same day. No agency markups.**
 
 **That's ShiftCare.**
+
+---
+
+## Sources
+
+1. NSI Nursing Solutions, Inc., "2024 NSI National Health Care Retention & RN Staffing Report." Industry estimate based on aggregated unfilled shift costs, overtime, and agency markup expenditures across U.S. healthcare facilities.
+2. U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics (OEWS), 2024; Florida Department of Economic Opportunity, "Florida's Statewide Demand Occupations List," 2024-2025.
+3. Staffing Industry Analysts, "Healthcare Staffing Buyer Survey," 2024. Agency markup rates vary by specialty; 30-50% represents the typical range for per-diem nursing and aide placements.
+4. Staffing Industry Analysts, "US Staffing Industry Forecast: September 2024 Update." Total U.S. healthcare staffing market size.
+5. IBISWorld, "Home Health Care Services in Florida — Market Size," 2024. State-level market estimate derived from national market data and Florida's proportional share.
+6. Florida Agency for Health Care Administration (AHCA), "Licensed Home Health Agency Directory," 2024.
+7. U.S. Census Bureau, American Community Survey (ACS) 1-Year Estimates, 2023. Florida 65+ population share and count.
+8. Crunchbase, company profiles for Clipboard Health, CareRev, and Nursa. Seed round amounts and dates are publicly reported on Crunchbase.
+9. American Staffing Association, "Staffing Industry Revenue and Pricing Models," 2024. Per-placement fees vary by role and specialty; $500-$2,000 represents the typical range for healthcare per-diem placements.
