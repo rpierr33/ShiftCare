@@ -87,7 +87,11 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 
 3. **Employer per-shift surcharge** — Non-subscribers pay 15% per shift. Creates natural upgrade path: 4+ shifts/month and the Starter plan saves money.
 
-**Unit economics:** $30 blended revenue per shift. At 2,400 shifts/month: $72K MRR.
+**Unit economics at scale (Year 1 Q4 target: 2,400 shifts/month):**
+- Worker fees (10% on all shifts): $48,000/mo
+- Employer surcharges (15% on non-subscriber shifts): $18,000/mo
+- Subscriptions (Starter + Professional): $3,700/mo
+- **Total: ~$70K MRR** ($840K annualized run rate)
 
 **Future streams:** Premium shift placement, background check fees, training marketplace, payroll integration, in-app advertising, workforce analytics, white-label licensing.
 
