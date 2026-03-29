@@ -147,26 +147,29 @@ Employers without a subscription pay a **15% surcharge** on each shift.
 
 This creates a natural upgrade path: at 4+ shifts/month, the Starter plan ($49) is cheaper than per-shift fees.
 
-### 4.2 Revenue Per Shift
+### 4.2 Revenue Per Shift (Illustrative)
 
-| Scenario | Worker Fee (10%) | Employer Fee | Total Platform Revenue |
-|----------|-----------------|-------------|----------------------|
-| Subscribed employer, $200 shift | $20 | $0 (covered by subscription) | $20 |
-| Non-subscribed employer, $200 shift | $20 | $30 (15% surcharge) | $50 |
+Shift values vary by role ($15-42/hr), duration (4-12 hours), and market conditions. Revenue is a percentage of total shift dollar volume, not a fixed per-shift amount.
+
+| Example Scenario | Shift Value | Worker Fee (10%) | Employer Fee | Platform Revenue |
+|----------|------------|-----------------|-------------|----------------------|
+| CNA 4-hr shift, subscribed employer | $100 | $10 | $0 | $10 |
+| RN 8-hr shift, subscribed employer | $304 | $30.40 | $0 | $30.40 |
+| HHA 6-hr shift, non-subscribed employer | $120 | $12 | $18 (15%) | $30 |
+| LPN 12-hr shift, non-subscribed employer | $384 | $38.40 | $57.60 (15%) | $96 |
 
 ### 4.3 Unit Economics
 
+Revenue scales with total shift dollar volume flowing through the platform. Key drivers: number of active employers, shifts per employer, and average shift value (which varies by role, hours, and market).
+
 | Metric | Value |
 |--------|-------|
-| Average shift value | $200 (8hr × $25/hr) |
-| Revenue per shift (subscribed) | $20 (10% worker fee) |
-| Revenue per shift (non-subscribed) | $50 (10% + 15%) |
-| Blended revenue per shift | $30 (assuming 60% subscribed) |
-| Average shifts per employer per month | 12 |
-| Monthly revenue per active employer (sub + fees) | $49 (sub) + $240 (worker fees from 12 shifts) = $289 |
+| Shift value range | $60 - $500+ (varies by role × hours) |
+| Platform take rate (subscribed employers) | 10% of shift value |
+| Platform take rate (non-subscribed employers) | 25% of shift value (10% worker + 15% employer) |
+| Subscription revenue | $49-149/mo per paying employer |
 | Customer acquisition cost (estimated) | $150 |
-| Lifetime value (24-month avg retention) | $6,936 |
-| LTV:CAC ratio | 46:1 |
+| Estimated 24-month LTV per employer | $3,000 - $7,000+ (varies with volume) |
 
 ---
 
@@ -182,11 +185,11 @@ This creates a natural upgrade path: at 4+ shifts/month, the Starter plan ($49) 
 | Q4 (Mar-May) | 180 | 600 | 2,400 | $52,000 | $156,000 |
 | **Year 1 Total** | | | | | **$280,050** |
 
-**MRR Breakdown (Q4):**
-- Subscriptions: 30 Starter ($49) + 15 Professional ($149) = $3,705
-- Worker fees: 2,400 shifts × $200 × 10% = $48,000
-- Employer surcharges: 600 shifts (non-sub) × $200 × 15% = $18,000
-- Total: ~$52,000/mo (run rate of $624K ARR)
+**MRR Breakdown (Q4 — illustrative, actual shift values will vary):**
+- Subscriptions: 30 Starter ($49) + 15 Professional ($149) = ~$3,700
+- Worker fees: 10% of total shift payroll volume flowing through platform
+- Employer surcharges: 15% on non-subscriber shift volume
+- Total MRR depends on shift volume × average shift value. Projections above assume a range of shift types and durations typical for the South Florida home health market.
 
 ### Year 2 (June 2027 – May 2028) — Multi-State Expansion
 

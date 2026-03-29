@@ -405,11 +405,14 @@ Navigate to `/admin` (requires admin email in ADMIN_EMAILS env var).
 | Starter | $49/mo ($39 annual) | Regular hiring (up to 25 shifts/month) |
 | Professional | $149/mo ($119 annual) | High-volume staffing (unlimited) |
 
-### Break-Even Calculator
-If you post more than 4 shifts/month at an average $200/shift, the Starter plan saves money vs. per-shift fees:
-- 4 shifts x $200 x 15% = $120/month in per-shift fees
-- Starter plan = $49/month
-- **Savings: $71/month**
+### Break-Even Example
+The Starter plan pays for itself quickly. Example scenario (your actual shift values will vary):
+- 4 shifts/month at $200 each (e.g., an 8-hr CNA shift at $25/hr)
+- Per-shift fees: 4 × $200 × 15% = $120/month
+- Starter plan: $49/month
+- **Savings: $71/month in this example**
+
+Use the break-even calculator on the pricing page with your own shift volume and values.
 
 ---
 
