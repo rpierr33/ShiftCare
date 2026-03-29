@@ -224,19 +224,40 @@ This creates a natural upgrade path: at 4+ shifts/month, the Starter plan ($49) 
 
 ### Pre-Revenue Valuation: $1.2 Million
 
-This valuation is justified by:
+This valuation is justified by multiple methodologies and reflects the **post-2022 correction** in startup valuations.
 
-#### 6.1 Market-Based Valuation
+#### 6.1 Market Context: Post-2022 Seed Valuations
 
-| Comparable | Stage at Valuation | Valuation | Revenue Multiple |
-|------------|-------------------|-----------|-----------------|
-| Clipboard Health (2017 seed)¹⁴ | Pre-revenue MVP | $3M | Pre-revenue |
-| CareRev (2018 seed)¹⁴ | Early revenue | $8M | 20x ARR |
-| Nursa (2019 seed)¹⁴ | Early revenue | $5M | 15x ARR |
-| ShiftKey (2018 seed)¹⁴ | Pre-revenue | $4M | Pre-revenue |
-| IntelyCare (2019 Series A)¹⁴ | $2M ARR | $45M | 22x ARR |
+The 2021-2022 funding bubble saw inflated seed valuations ($10-15M median). Since then, seed valuations have contracted 30-50%:
 
-ShiftCare's $1.2M valuation is **conservative** relative to comparable healthcare staffing platforms at similar stages. The average seed valuation in this space was $3-5M.¹⁴
+| Segment (2024-2025) | Pre-Revenue Seed Valuation Range | Source |
+|---------------------|----------------------------------|--------|
+| General tech seed | $3-6M pre-money | Carta State of Private Markets, 2024 |
+| Healthcare tech seed | $3-8M pre-money | PitchBook Healthcare IT Report, 2024 |
+| Marketplace/platform seed | $3-5M pre-money | Carta, AngelList syndicate data |
+| First-time founders, no LOIs | $1-2M pre-money | Industry consensus |
+
+ShiftCare's $1.2M valuation sits at the **conservative end** of the current range. With LOIs from pilot agencies, this valuation would reasonably move to $2-4M.
+
+#### 6.2 Historical Healthcare Staffing Comparables
+
+These are historical data points that demonstrate investor appetite for this market, adjusted for the 2023-2025 correction:
+
+| Comparable | Year | Stage | Valuation | Adjusted (30-50% correction) |
+|------------|------|-------|-----------|------------------------------|
+| Clipboard Health (seed)¹⁴ | 2017 | Pre-revenue MVP | $3M | $1.5-2M equivalent today |
+| CareRev (seed)¹⁴ | 2018 | Early revenue | $8M | $4-5.5M equivalent today |
+| Nursa (seed)¹⁴ | 2019 | Early revenue | $5M | $2.5-3.5M equivalent today |
+| ShiftKey (seed)¹⁴ | 2018 | Pre-revenue | $4M | $2-2.8M equivalent today |
+| IntelyCare (Series A)¹⁴ | 2019 | $2M ARR | $45M | N/A (revenue-stage) |
+
+**Post-correction, the equivalent pre-revenue seed in healthcare staffing is $1.5-3.5M.** ShiftCare's $1.2M is below this range — deliberately conservative to account for first-time founding team and pre-launch status.
+
+#### What Moves the Valuation to $2-4M
+- 3-5 LOIs (letters of intent) from South Florida agencies
+- 50+ workers on a waitlist or signed up
+- First paying customer (even one $49/mo Starter subscription)
+- Pilot data showing shifts filled within 30 minutes
 
 #### 6.2 Asset-Based Valuation
 

@@ -121,13 +121,17 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 
 ## Valuation
 
-**$1.2 million pre-revenue** — conservative relative to:
+**$1.2 million pre-revenue** — deliberately conservative for the current funding environment.
 
-- Clipboard Health seed ($3M, pre-revenue, 2017)⁸
-- CareRev seed ($4.5M, early revenue, 2018)⁸
-- Nursa seed ($3.5M, pre-revenue, 2020)⁸
-- ShiftCare IP replacement cost: $485K-705K
-- Forward revenue (10x Year 1 ARR, discounted): $1.24M
+Post-2022 seed valuations contracted 30-50%. Current pre-revenue healthcare tech seeds: $2-4M (Carta, 2024). Historical comps adjusted for correction:
+- Clipboard Health seed: $3M (2017) → ~$1.5-2M equivalent today⁸
+- CareRev seed: $4.5M (2018) → ~$2.5-3M equivalent today⁸
+- Nursa seed: $3.5M (2020) → ~$2-2.5M equivalent today⁸
+
+$1.2M is **below the adjusted floor.** Supported by:
+- IP replacement cost: $485K-705K
+- Forward revenue (10x Year 1 ARR, 80% execution discount): $1.24M
+- With pilot agency LOIs, valuation moves to $2-4M
 
 ---
 
