@@ -24,7 +24,7 @@ The agency scrambles — calling down a phone list, texting personal contacts, p
 
 ShiftCare is a shift fulfillment platform — not a job board, not a staffing agency — purpose-built for home healthcare.
 
-**For employers:** Post a shift in 30 seconds. Our matching algorithm notifies qualified, verified workers in your area instantly. Average fill time: under 30 minutes. One worker per shift, guaranteed — no double-booking, no confusion.
+**For employers:** Post a shift in 30 seconds. Our matching algorithm notifies qualified, verified workers in your area instantly. Average fill time: hours, not days. One worker per shift, guaranteed — no double-booking, no confusion.
 
 **For workers:** Browse shifts with transparent pay breakdowns, accept with one tap, get paid the same day. See exactly what you'll earn before you commit. No applications, no recruiter calls, no two-week pay cycles.
 
@@ -67,7 +67,7 @@ ShiftCare is not a prototype. It's a **production application** deployed and ope
 
 | ShiftCare | Traditional Staffing |
 |-----------|---------------------|
-| Shift filled in 30 minutes | 2-5 days |
+| Shift filled in hours | 2-5 days |
 | 10% worker fee, transparent | 30-50% agency markup, opaque |
 | Same-day pay option | Biweekly pay cycles |
 | Workers choose their shifts | Shifts assigned by dispatcher |

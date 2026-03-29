@@ -13,7 +13,7 @@ const TESTIMONIALS = [
     type: "agency" as const,
     verified: true,
     quote:
-      "ShiftCare cut our shift vacancy time from 3 days to under 30 minutes. The credential verification gives us peace of mind, and the same-day pay option means we always have workers available.",
+      "ShiftCare cut our shift vacancy time from 3 days to under a few hours. The credential verification gives us peace of mind, and the same-day pay option means we always have workers available.",
   },
   {
     name: "Marcus T.",

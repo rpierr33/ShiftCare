@@ -370,7 +370,7 @@ function SignUpForm() {
                     <span className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">3</span>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">Workers start accepting</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Within 30 minutes on average</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Shifts filled in hours, not days</p>
                     </div>
                   </div>
                 </div>

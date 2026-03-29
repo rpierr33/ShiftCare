@@ -40,7 +40,7 @@ const FAQ_ITEMS = [
   {
     question: "How quickly can I fill a shift?",
     answer:
-      "Most shifts are filled within 30 minutes. Urgent shifts (starting within 24 hours) are prioritized in our matching algorithm and sent as push notifications to qualified workers in your area.",
+      "Most shifts are filled within hours. Urgent shifts (starting within 24 hours) are prioritized in our matching algorithm and sent as push notifications to qualified workers in your area.",
     key: "fill-time",
   },
   {

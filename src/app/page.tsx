@@ -827,7 +827,7 @@ export default function LandingPage() {
             <AnimatedStat value={2400} suffix="+" label="Shifts Filled Since Launch" showDivider={true} />
             <AnimatedStat value={500} suffix="+" label="Verified Workers and Growing" showDivider={true} />
             <AnimatedStat value={120} suffix="+" label="Employers" showDivider={true} />
-            <AnimatedStat value={30} suffix=" min" label="Avg Fill Time" prefix="<" showDivider={false} />
+            <AnimatedStat value={4} suffix=" hrs" label="Avg Fill Time" prefix="<" showDivider={false} />
           </div>
         </div>
       </section>
@@ -895,7 +895,7 @@ export default function LandingPage() {
               icon={<Clock size={24} className="text-emerald-400" />}
               iconBg="bg-emerald-400/10"
               title="Shifts Filled Fast"
-              description="Average fill time under 30 minutes. Urgent shifts often get matched in under 10 minutes."
+              description="Average fill time within hours. Urgent shifts often get matched within the hour."
             />
             <TrustCard
               icon={<Lock size={24} className="text-amber-400" />}

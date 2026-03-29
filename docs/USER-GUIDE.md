@@ -453,7 +453,7 @@ Workers submit their license and certifications during signup. We verify credent
 Our 3-strike system protects employers. After 1 no-show, the worker sees 25% fewer shifts. After 3, their account is suspended. We automatically detect no-shows 30 minutes after shift start and reopen the shift.
 
 **How quickly can I fill a shift?**
-Most shifts are filled within 30 minutes. Urgent shifts are prioritized in our matching algorithm and sent as push notifications to qualified workers.
+Most shifts are filled within hours. Urgent shifts are prioritized in our matching algorithm and sent as push notifications to qualified workers.
 
 **Is there a contract or commitment?**
 No contracts, no commitments. Cancel your subscription anytime. The free plan never expires.

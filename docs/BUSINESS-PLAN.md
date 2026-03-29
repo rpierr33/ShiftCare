@@ -257,7 +257,7 @@ These are historical data points that demonstrate investor appetite for this mar
 - 3-5 LOIs (letters of intent) from South Florida agencies
 - 50+ workers on a waitlist or signed up
 - First paying customer (even one $49/mo Starter subscription)
-- Pilot data showing shifts filled within 30 minutes
+- Pilot data showing shifts filled within hours
 
 #### 6.2 Asset-Based Valuation
 
@@ -311,7 +311,7 @@ Full-stack development partner responsible for building and maintaining the Shif
 
 ### Phase 1: South Florida Beta (June - September 2026)
 - **Target:** 15 home health agencies in Broward, Dade, and Palm Beach counties
-- **Approach:** Direct outreach to agency owners, emphasizing "fill shifts in 30 minutes"
+- **Approach:** Direct outreach to agency owners, emphasizing "fill shifts in hours, not days"
 - **Worker acquisition:** Facebook/Instagram ads targeting CNA/HHA certification groups
 - **Pricing:** Free tier + Starter plan
 - **KPI:** 120 shifts filled/month, 50 active workers

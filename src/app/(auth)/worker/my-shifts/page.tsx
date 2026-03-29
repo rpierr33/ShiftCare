@@ -287,7 +287,7 @@ export default async function MyShiftsPage() {
             No shifts yet
           </p>
           <p className="text-gray-500 text-sm max-w-md mx-auto mb-6 leading-relaxed">
-            New shifts are posted daily — most fill within 30 minutes. Workers
+            New shifts are posted daily — most fill within hours. Workers
             who accept quickly earn 40% more per month.
           </p>
           <Link

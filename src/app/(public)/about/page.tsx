@@ -30,7 +30,7 @@ const VALUES = [
     icon: <Zap size={24} className="text-cyan-600" />,
     title: "Speed",
     description:
-      "Most shifts are filled within 30 minutes. Urgent shifts trigger instant notifications to qualified workers in the area so coverage is never left to chance.",
+      "Most shifts are filled within hours. Urgent shifts trigger instant notifications to qualified workers in the area so coverage is never left to chance.",
   },
 ];
 
